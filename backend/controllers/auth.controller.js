@@ -11,6 +11,7 @@ const {
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   sendWelcomeEmail,
+  sendTwoFactorCodeEmail,
 } = require('../utils/email.utils');
 
 // ─── Register ─────────────────────────────────────────────────────────────────
@@ -94,6 +95,29 @@ const login = async (req, res) => {
       });
     }
 
+    // ✅ If Two-Factor authentication is enabled, generate OTP and return early
+    if (user.isTwoFactorEnabled) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+      user.twoFactorCode = hashedOtp;
+      user.twoFactorExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+      await user.save();
+
+      console.log(`[2FA OTP FOR ${user.email}]: ${otp}`);
+
+      // Send verification email
+      sendTwoFactorCodeEmail(user, otp).catch((err) =>
+        console.error('Two-factor email failed to send:', err.message)
+      );
+
+      return res.json({
+        success: true,
+        twoFactorRequired: true,
+        email: user.email,
+        message: 'Two-step verification code sent to your email.'
+      });
+    }
+
     user.lastLogin = new Date();
 
     const accessToken = generateAccessToken(user._id, user.role);
@@ -117,6 +141,91 @@ const login = async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login.' });
+  }
+};
+
+// ─── Verify 2FA OTP ────────────────────────────────────────────────────────────
+const verify2FA = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and verification code are required.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (!user.twoFactorCode || !user.twoFactorExpires) {
+      return res.status(400).json({ success: false, message: 'No active two-step verification request found.' });
+    }
+
+    if (user.twoFactorExpires < Date.now()) {
+      return res.status(400).json({ success: false, message: 'Verification code has expired. Please request a new one.' });
+    }
+
+    const hashedOtp = crypto.createHash('sha256').update(otp.trim()).digest('hex');
+    if (user.twoFactorCode !== hashedOtp) {
+      return res.status(400).json({ success: false, message: 'Invalid verification code.' });
+    }
+
+    // Code matches, clear the OTP fields and log in
+    user.twoFactorCode = undefined;
+    user.twoFactorExpires = undefined;
+    user.lastLogin = new Date();
+
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+
+    if (user.refreshTokens.length >= 5) {
+      user.refreshTokens = user.refreshTokens.slice(-4);
+    }
+    user.refreshTokens.push({ token: hashToken(refreshToken) });
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: 'Login successful.',
+      data: {
+        user: user.toPublicJSON(),
+        accessToken,
+        refreshToken,
+      },
+    });
+  } catch (error) {
+    console.error('Verify 2FA error:', error);
+    res.status(500).json({ success: false, message: 'Server error during two-step verification.' });
+  }
+};
+
+// ─── Resend 2FA OTP ────────────────────────────────────────────────────────────
+const resend2FA = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+    user.twoFactorCode = hashedOtp;
+    user.twoFactorExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    console.log(`[RESENT 2FA OTP FOR ${user.email}]: ${otp}`);
+
+    await sendTwoFactorCodeEmail(user, otp);
+
+    return res.json({ success: true, message: 'Verification code resent to your email.' });
+  } catch (error) {
+    console.error('Resend 2FA error:', error);
+    res.status(500).json({ success: false, message: 'Failed to resend verification code.' });
   }
 };
 
@@ -347,4 +456,6 @@ module.exports = {
   resetPassword,
   changePassword,
   getMe,
+  verify2FA,
+  resend2FA,
 };

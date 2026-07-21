@@ -91,6 +91,10 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOADING' });
     try {
       const { data } = await authAPI.login(credentials);
+      if (data.twoFactorRequired) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return data;
+      }
       const { user, accessToken, refreshToken } = data.data;
       tokenStorage.setAccess(accessToken);
       tokenStorage.setRefresh(refreshToken);
@@ -98,6 +102,30 @@ export const AuthProvider = ({ children }) => {
       return data;
     } catch (error) {
       dispatch({ type: 'AUTH_ERROR', payload: error.response?.data?.message || 'Login failed' });
+      throw error;
+    }
+  }, []);
+
+  const verify2FA = useCallback(async (email, otp) => {
+    dispatch({ type: 'LOADING' });
+    try {
+      const { data } = await authAPI.verify2FA({ email, otp });
+      const { user, accessToken, refreshToken } = data.data;
+      tokenStorage.setAccess(accessToken);
+      tokenStorage.setRefresh(refreshToken);
+      dispatch({ type: 'AUTH_SUCCESS', payload: user });
+      return data;
+    } catch (error) {
+      dispatch({ type: 'AUTH_ERROR', payload: error.response?.data?.message || 'Verification failed' });
+      throw error;
+    }
+  }, []);
+
+  const resend2FA = useCallback(async (email) => {
+    try {
+      const { data } = await authAPI.resend2FA({ email });
+      return data;
+    } catch (error) {
       throw error;
     }
   }, []);
@@ -115,7 +143,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, register, login, logout, updateUser, isDarkMode, setIsDarkMode, toggleDarkMode }}>
+    <AuthContext.Provider value={{ ...state, register, login, logout, updateUser, verify2FA, resend2FA, isDarkMode, setIsDarkMode, toggleDarkMode }}>
       {children}
     </AuthContext.Provider>
   );

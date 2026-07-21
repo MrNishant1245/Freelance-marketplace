@@ -108,6 +108,18 @@ const templates = {
       </p>
     `),
   }),
+
+  twoFactorCode: (firstName, code) => ({
+    subject: 'Your 2-Step Verification Code',
+    html: emailWrapper(`
+      <h2>2-Step Verification</h2>
+      <p>Hi ${firstName}, here is your login verification code:</p>
+      <div class="token-box">${code}</div>
+      <div class="warning">
+        <p>⏰ This code is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
+      </div>
+    `),
+  }),
 };
 
 // ─── Send email function ──────────────────────────────────────────────────────
@@ -152,10 +164,16 @@ const sendWelcomeEmail = async (user) => {
   return sendEmail({ to: user.email, subject, html });
 };
 
+const sendTwoFactorCodeEmail = async (user, code) => {
+  const { subject, html } = templates.twoFactorCode(user.firstName, code);
+  return sendEmail({ to: user.email, subject, html });
+};
+
 module.exports = {
   sendEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   sendWelcomeEmail,
+  sendTwoFactorCodeEmail,
 };

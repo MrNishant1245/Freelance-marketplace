@@ -23,7 +23,7 @@ const ROLE_REDIRECTS = {
 };
 
 const LoginPage = () => {
-  const { login, logout } = useAuth();
+  const { login, logout, verify2FA, resend2FA } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,6 +33,11 @@ const LoginPage = () => {
   const [serverError, setServerError] = useState('');
   const [emailNotVerified, setEmailNotVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 2FA State
+  const [show2FA, setShow2FA] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
 
   // Support Form State
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -52,6 +57,14 @@ const LoginPage = () => {
     setIsSubmitting(true);
     try {
       const result = await login({ email, password });
+      
+      // If Two-Factor authentication is required, switch to OTP entry screen
+      if (result?.twoFactorRequired) {
+        setShow2FA(true);
+        setIsSubmitting(false);
+        return;
+      }
+
       const user = result?.data?.user;
       if (!user) throw new Error('No user data received');
       const userRole = normalizeRole(user.role);
@@ -80,6 +93,52 @@ const LoginPage = () => {
     }
   };
 
+  const handleVerify2FA = async (e) => {
+    e.preventDefault();
+    if (!otpCode || otpCode.length !== 6) {
+      setServerError('Please enter a valid 6-digit code.');
+      return;
+    }
+    setServerError('');
+    setIsSubmitting(true);
+    try {
+      const result = await verify2FA(email, otpCode);
+      const user = result?.data?.user;
+      if (!user) throw new Error('No user data received');
+      const userRole = normalizeRole(user.role);
+
+      if (userRole !== panelRole) {
+        await logout();
+        setShow2FA(false);
+        setOtpCode('');
+        setEmailNotVerified(false);
+        setServerError(`Invalid ${ROLE_LABELS[panelRole]} account. Please use the correct portal and login with the matching user.`);
+        return;
+      }
+
+      toast.success(`Welcome back, ${user.firstName}!`);
+      const redirect = location.state?.from?.pathname || ROLE_REDIRECTS[userRole] || '/dashboard';
+      navigate(redirect, { replace: true });
+    } catch (err) {
+      setServerError(err?.response?.data?.message || err?.message || 'Invalid or expired verification code.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    setIsResendingOtp(true);
+    try {
+      await resend2FA(email);
+      toast.success('New verification code sent to your email.');
+      setServerError('');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to resend code.');
+    } finally {
+      setIsResendingOtp(false);
+    }
+  };
+
   const handleSupportSubmit = (e) => {
     e.preventDefault();
     if (!supportName || !supportEmail || !supportMessage) {
@@ -102,64 +161,119 @@ const LoginPage = () => {
       <AuthPanel role={panelRole} />
       <div className="auth-form-side">
         <div className="auth-card">
-          <div style={{ marginBottom: 32 }}>
-            <div style={logoMark}>FM</div>
-            <h1 style={headingStyle}>Welcome back</h1>
-            <p style={subStyle}>
-              Sign in to your{' '}
-              <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{ROLE_LABELS[panelRole]}</span>{' '}account
-            </p>
-          </div>
+          {show2FA ? (
+            <div>
+              <div style={{ marginBottom: 24 }}>
+                <div style={logoMark}>FM</div>
+                <h1 style={headingStyle}>Two-step verification</h1>
+                <p style={subStyle}>
+                  We've sent a 6-digit verification code to <strong style={{ color: 'var(--ink)' }}>{email}</strong>.
+                </p>
+              </div>
 
-          {serverError && <Alert type="error">{serverError}</Alert>}
+              {serverError && <Alert type="error">{serverError}</Alert>}
 
-          <form onSubmit={onSubmit}>
-            <div className="form-group">
-              <label className="form-label">Email address <span style={{ color: 'red' }}>*</span></label>
-              <input type="email" className="form-input" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+              <form onSubmit={handleVerify2FA}>
+                <div className="form-group">
+                  <label className="form-label">6-digit Code</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="123456" 
+                    value={otpCode} 
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} 
+                    required 
+                    maxLength={6}
+                    style={{ fontSize: 20, letterSpacing: 8, textAlign: 'center', fontWeight: 700 }}
+                  />
+                </div>
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-full btn-lg" style={{ marginTop: 8 }}>
+                  {isSubmitting ? <><Spinner /> Verifying…</> : 'Verify Code'}
+                </button>
+              </form>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', marginTop: 24 }}>
+                <span 
+                  onClick={handleResendOTP} 
+                  style={{ fontSize: 13, color: isResendingOtp ? 'var(--muted)' : 'var(--brand)', fontWeight: 600, cursor: isResendingOtp ? 'not-allowed' : 'pointer', textDecoration: 'none' }}
+                >
+                  {isResendingOtp ? 'Resending code...' : "Didn't receive code? Resend"}
+                </span>
+
+                <span 
+                  onClick={() => {
+                    setShow2FA(false);
+                    setOtpCode('');
+                    setServerError('');
+                  }} 
+                  style={{ fontSize: 13, color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  ← Back to Login
+                </span>
+              </div>
             </div>
-            <div className="form-group" style={{ position: 'relative' }}>
-              <label className="form-label">Password <span style={{ color: 'red' }}>*</span></label>
-              <input type="password" className="form-input" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-              <Link to="/forgot-password" style={{ position: 'absolute', right: 0, top: 0, fontSize: 12.5, color: 'var(--brand)', fontWeight: 500 }}>Forgot password?</Link>
+          ) : (
+            <div>
+              <div style={{ marginBottom: 32 }}>
+                <div style={logoMark}>FM</div>
+                <h1 style={headingStyle}>Welcome back</h1>
+                <p style={subStyle}>
+                  Sign in to your{' '}
+                  <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{ROLE_LABELS[panelRole]}</span>{' '}account
+                </p>
+              </div>
+
+              {serverError && <Alert type="error">{serverError}</Alert>}
+
+              <form onSubmit={onSubmit}>
+                <div className="form-group">
+                  <label className="form-label">Email address <span style={{ color: 'red' }}>*</span></label>
+                  <input type="email" className="form-input" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                </div>
+                <div className="form-group" style={{ position: 'relative' }}>
+                  <label className="form-label">Password <span style={{ color: 'red' }}>*</span></label>
+                  <input type="password" className="form-input" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+                  <Link to="/forgot-password" style={{ position: 'absolute', right: 0, top: 0, fontSize: 12.5, color: 'var(--brand)', fontWeight: 500 }}>Forgot password?</Link>
+                </div>
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-full btn-lg" style={{ marginTop: 8 }}>
+                  {isSubmitting ? <><Spinner /> Signing in…</> : 'Sign in'}
+                </button>
+              </form>
+
+              <div style={roleSwitcher}>
+                {['client', 'freelancer', 'admin'].map((r) => (
+                  <Link key={r} to={`/login?as=${r}`} style={{ ...roleTab, ...(panelRole === r ? roleTabActive : {}) }}>
+                    {ROLE_LABELS[r]}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="divider">or</div>
+
+              <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--muted)' }}>
+                Don't have an account?{' '}
+                <Link to="/register" style={{ color: 'var(--brand)', fontWeight: 500 }}>Sign up free</Link>
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center', marginTop: 14 }}>
+                <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>Having trouble signing in?</span>
+                <span 
+                  onClick={() => setShowSupportModal(true)} 
+                  style={{ fontSize: 12.5, color: 'var(--brand)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Contact Support
+                </span>
+              </div>
+
+              <div style={unverifiedHint}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Email not verified?{' '}
+                <Link to={`/resend-verification?email=${encodeURIComponent(email)}`} style={{ color: 'inherit', textDecoration: 'underline' }}>Resend verification email</Link>
+              </div>
             </div>
-            <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-full btn-lg" style={{ marginTop: 8 }}>
-              {isSubmitting ? <><Spinner /> Signing in…</> : 'Sign in'}
-            </button>
-          </form>
-
-          <div style={roleSwitcher}>
-            {['client', 'freelancer', 'admin'].map((r) => (
-              <Link key={r} to={`/login?as=${r}`} style={{ ...roleTab, ...(panelRole === r ? roleTabActive : {}) }}>
-                {ROLE_LABELS[r]}
-              </Link>
-            ))}
-          </div>
-
-          <div className="divider">or</div>
-
-          <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--muted)' }}>
-            Don't have an account?{' '}
-            <Link to="/register" style={{ color: 'var(--brand)', fontWeight: 500 }}>Sign up free</Link>
-          </p>
-
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center', marginTop: 14 }}>
-            <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>Having trouble signing in?</span>
-            <span 
-              onClick={() => setShowSupportModal(true)} 
-              style={{ fontSize: 12.5, color: 'var(--brand)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              Contact Support
-            </span>
-          </div>
-
-          <div style={unverifiedHint}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            Email not verified?{' '}
-            <Link to={`/resend-verification?email=${encodeURIComponent(email)}`} style={{ color: 'inherit', textDecoration: 'underline' }}>Resend verification email</Link>
-          </div>
+          )}
         </div>
       </div>
 

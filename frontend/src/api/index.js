@@ -86,6 +86,8 @@ export const authAPI = {
   resetPassword:        (token, password) => api.post(`/auth/reset-password/${token}`, { password }),
   changePassword:       (data)            => api.put('/auth/change-password', data),
   refreshToken:         (token)           => api.post('/auth/refresh-token', { refreshToken: token }),
+  verify2FA:            (data)            => api.post('/auth/verify-2fa', data),
+  resend2FA:            (data)            => api.post('/auth/resend-2fa', data),
 };
 
 // ─── Profile API ──────────────────────────────────────────────────────────────

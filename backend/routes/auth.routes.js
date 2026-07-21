@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   register, login, refreshToken, logout, verifyEmail,
   resendVerificationEmail, forgotPassword, resetPassword,
-  changePassword, getMe,
+  changePassword, getMe, verify2FA, resend2FA,
 } = require('../controllers/auth.controller');
 const { protect } = require('../middlewares/auth.middleware');
 const {
@@ -19,6 +19,8 @@ router.get('/verify-email/:token', verifyEmail);
 router.post('/resend-verification', resendVerificationEmail);
 router.post('/forgot-password', forgotPasswordRules, validate, forgotPassword);
 router.post('/reset-password/:token', resetPasswordRules, validate, resetPassword);
+router.post('/verify-2fa', verify2FA);
+router.post('/resend-2fa', resend2FA);
 
 // Protected routes
 router.use(protect);
