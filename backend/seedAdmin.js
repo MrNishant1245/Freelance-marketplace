@@ -27,12 +27,23 @@ const seedAdmin = async () => {
       console.log('⚠️  An account with this email already exists:');
       console.log(`   Email: ${existing.email}`);
       console.log(`   Role:  ${existing.role}`);
+      
+      let modified = false;
       if (existing.role !== 'admin') {
         existing.role = 'admin';
-        await existing.save();
+        modified = true;
         console.log('✅ Existing account role updated to "admin".');
+      }
+      if (existing.isTwoFactorEnabled !== false) {
+        existing.isTwoFactorEnabled = false;
+        modified = true;
+        console.log('✅ Two-factor authentication disabled for admin.');
+      }
+      
+      if (modified) {
+        await existing.save();
       } else {
-        console.log('ℹ️  This account is already an admin. Nothing changed.');
+        console.log('ℹ️  This account is already configured. Nothing changed.');
       }
       process.exit(0);
     }
@@ -44,6 +55,7 @@ const seedAdmin = async () => {
       password: ADMIN_DETAILS.password, // will be hashed automatically by the pre-save hook
       role: ADMIN_DETAILS.role,
       isEmailVerified: true,   // skip email verification for admin
+      isTwoFactorEnabled: false, // disable Two-step verification by default for admin
       isActive: true,
       isProfileComplete: true,
     });
