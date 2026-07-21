@@ -169,6 +169,11 @@ const LoginPage = () => {
                 <p style={subStyle}>
                   We've sent a 6-digit verification code to <strong style={{ color: 'var(--ink)' }}>{email}</strong>.
                 </p>
+                {process.env.NODE_ENV !== 'production' && (
+                  <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(59,130,246,0.1)', border: '1px dashed #3b82f6', borderRadius: 8, fontSize: 12.5, color: '#60a5fa', textAlign: 'center' }}>
+                    ⚠️ Dev Mode: Enter <strong>123456</strong> to verify
+                  </div>
+                )}
               </div>
 
               {serverError && <Alert type="error">{serverError}</Alert>}
