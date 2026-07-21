@@ -1,0 +1,28 @@
+PORT=5000
+NODE_ENV=development
+MONGO_URI=mongodb+srv://nanu03385_db_user:Nishant_1245@cluster0.dcddg17.mongodb.net/freelance-marketplace?retryWrites=true&w=majority&appName=Cluster0
+CLIENT_URL=http://localhost:3000
+
+JWT_SECRET=a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+JWT_EXPIRE=7d
+JWT_REFRESH_SECRET=f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5
+JWT_REFRESH_EXPIRE=30d
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=rajputnishant769@gmail.com
+SMTP_PASS=jphnctmlidhiqius
+EMAIL_FROM=rajputnishant769@gmail.com
+EMAIL_FROM_NAME=Freelance Marketplace
+
+CLOUDINARY_CLOUD_NAME=dhcw3yq8g
+CLOUDINARY_API_KEY=613371479512862
+CLOUDINARY_API_SECRET=fIupSBOx_c0TEYPDO-ll4Zw2pMI
+
+# ── Razorpay (Test Keys) ──────────────────────────────────────────────────────
+RAZORPAY_KEY_ID=rzp_test_YOUR_KEY_ID
+RAZORPAY_KEY_SECRET=YOUR_RAZORPAY_SECRET
+
+# ── Stripe (Test Keys) ────────────────────────────────────────────────────────
+STRIPE_SECRET_KEY=sk_test_YOUR_STRIPE_SECRET_KEY
+STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_STRIPE_PUBLISHABLE_KEY
