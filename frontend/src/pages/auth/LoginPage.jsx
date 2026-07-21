@@ -34,6 +34,14 @@ const LoginPage = () => {
   const [emailNotVerified, setEmailNotVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Support Form State
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportName, setSupportName] = useState('');
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportCategory, setSupportCategory] = useState('Login Issue');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -70,6 +78,23 @@ const LoginPage = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSupportSubmit = (e) => {
+    e.preventDefault();
+    if (!supportName || !supportEmail || !supportMessage) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    setIsSubmittingSupport(true);
+    setTimeout(() => {
+      toast.success("Support ticket created! We will contact you soon.");
+      setSupportName('');
+      setSupportEmail('');
+      setSupportMessage('');
+      setShowSupportModal(false);
+      setIsSubmittingSupport(false);
+    }, 1000);
   };
 
   return (
@@ -118,6 +143,16 @@ const LoginPage = () => {
             <Link to="/register" style={{ color: 'var(--brand)', fontWeight: 500 }}>Sign up free</Link>
           </p>
 
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center', marginTop: 14 }}>
+            <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>Having trouble signing in?</span>
+            <span 
+              onClick={() => setShowSupportModal(true)} 
+              style={{ fontSize: 12.5, color: 'var(--brand)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Contact Support
+            </span>
+          </div>
+
           <div style={unverifiedHint}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
@@ -127,6 +162,90 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Support Modal overlay */}
+      {showSupportModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(9, 13, 22, 0.75)', display: 'grid', placeItems: 'center', zIndex: 1000, padding: 20 }}>
+          <div 
+            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 12, width: '100%', maxWidth: 420, color: '#fff', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>💬 Contact Support Agent</span>
+              <button onClick={() => setShowSupportModal(false)} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: 24, cursor: 'pointer', lineHeight: 1 }}>×</button>
+            </div>
+
+            <form onSubmit={handleSupportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>Your Name <span style={{ color: 'red' }}>*</span></label>
+                <input 
+                  type="text" 
+                  value={supportName} 
+                  onChange={e => setSupportName(e.target.value)} 
+                  placeholder="John Doe" 
+                  required 
+                  style={{ width: '100%', padding: '8px 12px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>Email address <span style={{ color: 'red' }}>*</span></label>
+                <input 
+                  type="email" 
+                  value={supportEmail} 
+                  onChange={e => setSupportEmail(e.target.value)} 
+                  placeholder="john@example.com" 
+                  required 
+                  style={{ width: '100%', padding: '8px 12px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>Issue Category</label>
+                <select 
+                  value={supportCategory} 
+                  onChange={e => setSupportCategory(e.target.value)} 
+                  style={{ width: '100%', padding: '8px 12px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#cbd5e1', fontSize: 13, outline: 'none', cursor: 'pointer' }}
+                >
+                  <option value="Login Issue">Login Issue</option>
+                  <option value="Account Verification">Account Verification</option>
+                  <option value="Billing & Invoices">Billing & Invoices</option>
+                  <option value="General Query">General Query</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>Message <span style={{ color: 'red' }}>*</span></label>
+                <textarea 
+                  value={supportMessage} 
+                  onChange={e => setSupportMessage(e.target.value)} 
+                  placeholder="Describe your issue in detail..." 
+                  required 
+                  rows={4}
+                  style={{ width: '100%', padding: '8px 12px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowSupportModal(false)}
+                  style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmittingSupport}
+                  style={{ padding: '8px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  {isSubmittingSupport ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
