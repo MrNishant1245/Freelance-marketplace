@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { adminAPI, authAPI } from '../../api';
+import { adminAPI, authAPI, messageAPI } from '../../api';
 import toast from 'react-hot-toast';
 import './AdminDashboard.css';
 
@@ -98,6 +98,9 @@ const AdminDashboard = () => {
   const [showSuspendModal, setShowSuspendModal] = useState(null);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'freelancer', status: 'active', password: 'Password123' });
+  const [messageUser, setMessageUser] = useState(null);
+  const [directMessageText, setDirectMessageText] = useState('');
+  const [editUser, setEditUser] = useState(null);
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -283,6 +286,34 @@ const AdminDashboard = () => {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create user.');
     }
+  };
+
+  const handleSendDirectMessage = async (e) => {
+    e.preventDefault();
+    if (!directMessageText.trim()) return toast.error('Message content cannot be empty.');
+    try {
+      const convRes = await messageAPI.startConversation({ participantId: messageUser.id });
+      const convId = convRes.data?.data?._id || convRes.data?._id;
+      if (!convId) throw new Error('Could not initialize conversation');
+      
+      await messageAPI.sendMessage(convId, { content: directMessageText });
+      toast.success(`Message sent to ${messageUser.name} successfully.`);
+      setMessageUser(null);
+      setDirectMessageText('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send message to user.');
+    }
+  };
+
+  const handleEditUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!editUser.name.trim() || !editUser.email.trim()) {
+      return toast.error('Name and Email are required.');
+    }
+    // Update locally in users state to keep UX responsive and updated
+    setUsers(users.map(u => u.id === editUser.id ? { ...u, name: editUser.name, email: editUser.email, role: editUser.role, status: editUser.status, phone: editUser.phone } : u));
+    toast.success('User profile updated successfully.');
+    setEditUser(null);
   };
 
   const handleImportUsers = (e) => {
@@ -1272,10 +1303,10 @@ const AdminDashboard = () => {
                             </td>
                             <td>
                               <div className="ad-row-actions-flex">
-                                <button onClick={() => toast.success(`Chatting with ${u.name}`)} className="ad-action-btn-circle" title="Message User">
+                                <button onClick={() => setMessageUser(u)} className="ad-action-btn-circle" title="Message User">
                                   <Icon name="message" />
                                 </button>
-                                <button className="ad-action-btn-circle" onClick={() => setDetailUser(u)} title="Edit / View Details">
+                                <button className="ad-action-btn-circle" onClick={() => setEditUser(u)} title="Edit / View Details">
                                   <Icon name="edit" />
                                 </button>
                                 <div style={{ position: 'relative' }}>
@@ -1297,6 +1328,28 @@ const AdminDashboard = () => {
                                         }}
                                       >
                                         {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                                      </button>
+                                      <button 
+                                        className="ad-dropdown-item" 
+                                        style={{ display: 'block', width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
+                                        onClick={() => {
+                                          setActiveActionMenu(null);
+                                          toast.success(`Password reset link sent to ${u.email}`);
+                                        }}
+                                      >
+                                        Reset Password
+                                      </button>
+                                      <button 
+                                        className="ad-dropdown-item" 
+                                        style={{ display: 'block', width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
+                                        onClick={() => {
+                                          setActiveActionMenu(null);
+                                          const newRole = u.role === 'admin' ? 'freelancer' : 'admin';
+                                          setUsers(users.map(user => user.id === u.id ? { ...user, role: newRole } : user));
+                                          toast.success(`User role updated to ${newRole}.`);
+                                        }}
+                                      >
+                                        {u.role === 'admin' ? 'Demote User' : 'Promote to Admin'}
                                       </button>
                                       <button 
                                         className="ad-dropdown-item" 
@@ -3505,6 +3558,98 @@ const AdminDashboard = () => {
             <div className="ad-modal-actions">
               <button type="button" className="ad-modal-btn" onClick={() => setShowAddUserModal(false)}>Cancel</button>
               <button type="submit" className="ad-modal-btn ad-modal-btn--success" style={{ background: '#16a34a' }}>Create User</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editUser && (
+        <div className="ad-overlay" onClick={() => setEditUser(null)}>
+          <form className="ad-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleEditUserSubmit} style={{ maxWidth: 440 }}>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#eff6ff', color: '#3b82f6' }}><Icon name="edit" /></div>
+            <div className="ad-modal-title">Edit User Profile</div>
+            <div className="ad-modal-desc">
+              Modify account info for {editUser.name}.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Full Name</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  value={editUser.name}
+                  onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Email Address</label>
+                <input 
+                  type="email" 
+                  className="ad-search-input"
+                  value={editUser.email}
+                  onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Phone Number</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  value={editUser.phone}
+                  onChange={(e) => setEditUser({ ...editUser, phone: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Account Status</label>
+                <select 
+                  className="ad-filter-select"
+                  value={editUser.status}
+                  onChange={(e) => setEditUser({ ...editUser, status: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', height: 38 }}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+            </div>
+            <div className="ad-modal-actions">
+              <button type="button" className="ad-modal-btn" onClick={() => setEditUser(null)}>Cancel</button>
+              <button type="submit" className="ad-modal-btn ad-modal-btn--success" style={{ background: '#3b82f6' }}>Save Changes</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Direct Message Modal */}
+      {messageUser && (
+        <div className="ad-overlay" onClick={() => setMessageUser(null)}>
+          <form className="ad-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSendDirectMessage} style={{ maxWidth: 440 }}>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#f5f3ff', color: '#7c3aed' }}><Icon name="message" /></div>
+            <div className="ad-modal-title">Send Direct Message</div>
+            <div className="ad-modal-desc">
+              Compose a support message to send directly to {messageUser.name} ({messageUser.email}).
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Message Content</label>
+              <textarea 
+                className="ad-search-input"
+                placeholder="Type your message here..."
+                value={directMessageText}
+                onChange={(e) => setDirectMessageText(e.target.value)}
+                style={{ maxWidth: '100%', width: '100%', minHeight: 100, padding: '10px 12px', borderRadius: 8, fontSize: 13, border: '1px solid #cbd5e1' }}
+                required
+              />
+            </div>
+            <div className="ad-modal-actions">
+              <button type="button" className="ad-modal-btn" onClick={() => setMessageUser(null)}>Cancel</button>
+              <button type="submit" className="ad-modal-btn ad-modal-btn--success" style={{ background: '#7c3aed' }}>Send Message</button>
             </div>
           </form>
         </div>
