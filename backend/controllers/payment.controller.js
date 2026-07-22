@@ -268,8 +268,8 @@ const getPaymentHistory = async (req, res) => {
 
     const [transactions, total] = await Promise.all([
       Transaction.find(filter)
-        .populate('client',     'firstName lastName email')
-        .populate('freelancer', 'firstName lastName email')
+        .populate('client',     'firstName lastName email profilePhoto')
+        .populate('freelancer', 'firstName lastName email profilePhoto')
         .populate('job',        'title')
         .sort({ createdAt: -1 })
         .skip(skip)
