@@ -486,6 +486,11 @@ const AdminDashboard = () => {
   const refundedTxPct = (refundedTxNum / totalStatusCount) * 100;
   const failedTxPct = (failedTxNum / totalStatusCount) * 100;
 
+  const completedAngle = -90;
+  const escrowAngle = completedAngle + (completedTxPct / 100) * 360;
+  const refundedAngle = escrowAngle + (escrowTxPct / 100) * 360;
+  const failedAngle = refundedAngle + (refundedTxPct / 100) * 360;
+
   // Donut payment method stats
   const bankTxNum = transactions.filter(t => t.method === 'Bank Transfer').length;
   const upiTxNum = transactions.filter(t => t.method === 'UPI').length;
@@ -497,6 +502,11 @@ const AdminDashboard = () => {
   const upiTxPct = (upiTxNum / totalMethodCount) * 100;
   const walletTxPct = (walletTxNum / totalMethodCount) * 100;
   const otherTxPct = (otherTxNum / totalMethodCount) * 100;
+
+  const bankAngle = -90;
+  const upiAngle = bankAngle + (bankTxPct / 100) * 360;
+  const walletAngle = upiAngle + (upiTxPct / 100) * 360;
+  const otherAngle = walletAngle + (walletTxPct / 100) * 360;
 
   // Group clients by total payment
   const clientSpentMap = {};
