@@ -108,6 +108,10 @@ const AdminDashboard = () => {
   const [showAdvancedTxFilters, setShowAdvancedTxFilters] = useState(false);
   const [minTxAmount, setMinTxAmount] = useState('');
   const [maxTxAmount, setMaxTxAmount] = useState('');
+  const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false);
+  const [showEscrowModal, setShowEscrowModal] = useState(false);
+  const [showHelpCenterModal, setShowHelpCenterModal] = useState(false);
+  const [newInvoiceData, setNewInvoiceData] = useState({ clientName: '', freelancerName: '', jobTitle: '', amount: '', status: 'completed', method: 'UPI' });
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -391,6 +395,67 @@ Thank you for choosing our platform!`;
     element.click();
     element.remove();
     toast.success('Transaction receipt downloaded.');
+  };
+
+  const handleCreateInvoiceSubmit = (e) => {
+    e.preventDefault();
+    if (!newInvoiceData.clientName.trim() || !newInvoiceData.freelancerName.trim() || !newInvoiceData.jobTitle.trim() || !newInvoiceData.amount) {
+      return toast.error('All fields are required.');
+    }
+    const val = parseFloat(newInvoiceData.amount);
+    const newTx = {
+      id: `txn_${Date.now()}`,
+      txnIdShort: Date.now().toString().slice(-6),
+      from: newInvoiceData.clientName,
+      to: newInvoiceData.freelancerName,
+      jobTitle: newInvoiceData.jobTitle,
+      amount: `₹${val.toLocaleString('en-IN')}`,
+      total: val,
+      status: newInvoiceData.status,
+      method: newInvoiceData.method,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+    setTransactions([newTx, ...transactions]);
+    toast.success('Manual invoice generated and transaction logged successfully.');
+    setShowCreateInvoiceModal(false);
+    setNewInvoiceData({ clientName: '', freelancerName: '', jobTitle: '', amount: '', status: 'completed', method: 'UPI' });
+  };
+
+  const downloadFinancialStatement = () => {
+    const totalV = transactions.reduce((sum, t) => sum + (t.total || 0), 0);
+    const statementText = `==================================================
+PLATFORM FINANCIAL STATEMENT & AUDIT LEDGER
+Generated At: ${new Date().toLocaleString()}
+==================================================
+
+SUMMARY METRICS:
+--------------------------------------------------
+Total Platform Volume: ₹${totalV.toLocaleString('en-IN')}
+Platform Commission Revenue (10%): ₹${(totalV * 0.1).toLocaleString('en-IN')}
+Total Escrow Active Hold: ₹${transactions.filter(t => t.status === 'refund_pending').reduce((sum, t) => sum + t.total, 0).toLocaleString('en-IN')}
+Successful Transactions Count: ${transactions.filter(t => t.status === 'completed').length}
+Refunded Transactions Count: ${transactions.filter(t => t.status === 'refunded').length}
+
+TOP SPENDING CLIENTS:
+--------------------------------------------------
+${sortedClients.map((c, i) => `${i+1}. ${c.name} - Total Paid: ₹${c.total.toLocaleString('en-IN')} (${c.count} txs)`).join('\n')}
+
+DETAILED TRANSACTION REGISTER:
+--------------------------------------------------
+${transactions.map(t => `[${t.date}] ID: #INV-2025-${t.txnIdShort} | Client: ${t.from} -> Freelancer: ${t.to} | Amt: ${t.amount} | Status: ${t.status === 'refund_pending' ? 'In Escrow' : t.status.toUpperCase()} | Method: ${t.method}`).join('\n')}
+
+==================================================
+END OF AUDIT STATEMENT
+==================================================`;
+
+    const element = document.createElement("a");
+    const file = new Blob([statementText], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `financial_statement_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    element.remove();
+    toast.success('Financial audit statement downloaded.');
   };
 
   const handleImportUsers = (e) => {
@@ -2605,19 +2670,19 @@ Thank you for choosing our platform!`;
                   <div>
                     <h4 style={{ fontSize: 13.5, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>Quick actions</h4>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button onClick={() => toast.success('Create Invoice dialog opened.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
+                      <button onClick={() => setShowCreateInvoiceModal(true)} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
                         <span>📝</span> Create Invoice
                       </button>
-                      <button onClick={() => toast.success('Add Manual Payment dialog opened.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
+                      <button onClick={() => setShowCreateInvoiceModal(true)} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
                         <span>💵</span> Add Manual Payment
                       </button>
-                      <button onClick={() => toast.success('Manage Escrow accounts opened.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
+                      <button onClick={() => setShowEscrowModal(true)} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
                         <span>🏦</span> Manage Escrow
                       </button>
-                      <button onClick={() => toast.success('Process Refund panel opened.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
+                      <button onClick={() => { setPaymentStatusFilter('refund_pending'); toast.success('Filtered transactions log by Pending Escrow payouts.'); }} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
                         <span>🔄</span> Process Refund
                       </button>
-                      <button onClick={() => toast.success('Downloading platform transactions financial statement...')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
+                      <button onClick={downloadFinancialStatement} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 8, padding: '8px 12px' }}>
                         <span>📥</span> Download Statement
                       </button>
                     </div>
@@ -2628,7 +2693,7 @@ Thank you for choosing our platform!`;
                       <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1e293b' }}>Need help?</div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Visit our Help Center for guides and support.</div>
                     </div>
-                    <button onClick={() => toast.success('Navigating to Admin Help Center.')} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 11.5 }}>
+                    <button onClick={() => setShowHelpCenterModal(true)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 11.5 }}>
                       Go to Help Center ↗
                     </button>
                   </div>
@@ -3994,6 +4059,174 @@ Thank you for choosing our platform!`;
             </div>
             <div className="ad-modal-actions" style={{ marginTop: 16 }}>
               <button className="ad-modal-btn" onClick={() => setDetailInvoice(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Invoice Modal */}
+      {showCreateInvoiceModal && (
+        <div className="ad-overlay" onClick={() => setShowCreateInvoiceModal(false)}>
+          <form className="ad-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleCreateInvoiceSubmit} style={{ maxWidth: 440 }}>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#f0fdf4', color: '#16a34a' }}><Icon name="plus" /></div>
+            <div className="ad-modal-title">Create Manual Invoice</div>
+            <div className="ad-modal-desc">
+              Log a manual transaction payment into the platform audits database.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Client Name</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  placeholder="e.g. Nishant Rajput"
+                  value={newInvoiceData.clientName}
+                  onChange={(e) => setNewInvoiceData({ ...newInvoiceData, clientName: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Freelancer Name</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  placeholder="e.g. Amit Sharma"
+                  value={newInvoiceData.freelancerName}
+                  onChange={(e) => setNewInvoiceData({ ...newInvoiceData, freelancerName: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Job / Project Title</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  placeholder="e.g. UI Layout Redevelopment"
+                  value={newInvoiceData.jobTitle}
+                  onChange={(e) => setNewInvoiceData({ ...newInvoiceData, jobTitle: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Amount (INR)</label>
+                  <input 
+                    type="number" 
+                    className="ad-search-input"
+                    placeholder="e.g. 15000"
+                    value={newInvoiceData.amount}
+                    onChange={(e) => setNewInvoiceData({ ...newInvoiceData, amount: e.target.value })}
+                    style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Payment Method</label>
+                  <select 
+                    className="ad-filter-select"
+                    value={newInvoiceData.method}
+                    onChange={(e) => setNewInvoiceData({ ...newInvoiceData, method: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', height: 38 }}
+                  >
+                    <option value="UPI">UPI</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Wallet">Wallet Apps</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Initial status</label>
+                <select 
+                  className="ad-filter-select"
+                  value={newInvoiceData.status}
+                  onChange={(e) => setNewInvoiceData({ ...newInvoiceData, status: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', height: 38 }}
+                >
+                  <option value="completed">Completed</option>
+                  <option value="refund_pending">In Escrow</option>
+                </select>
+              </div>
+            </div>
+            <div className="ad-modal-actions">
+              <button type="button" className="ad-modal-btn" onClick={() => setShowCreateInvoiceModal(false)}>Cancel</button>
+              <button type="submit" className="ad-modal-btn ad-modal-btn--success" style={{ background: '#16a34a' }}>Create Invoice</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Manage Escrow Modal */}
+      {showEscrowModal && (
+        <div className="ad-overlay" onClick={() => setShowEscrowModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <button className="ad-close-x" onClick={() => setShowEscrowModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#eff6ff', color: '#2563eb' }}><Icon name="info" /></div>
+            <div className="ad-modal-title">Escrow Management Accounts</div>
+            <div className="ad-modal-desc">
+              Audit log of all funds currently held securely in platform escrow accounts.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 220, overflowY: 'auto', marginBottom: 12, paddingRight: 6 }}>
+              {transactions.filter(t => t.status === 'refund_pending').map((t, idx) => (
+                <div key={idx} style={{ padding: 10, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 12.5 }}>#INV-2025-{t.txnIdShort}</div>
+                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Client: {t.from} · Project: {t.jobTitle}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 700, color: '#f59e0b', fontSize: 13 }}>{t.amount}</div>
+                    <button 
+                      onClick={() => { handleProcessRefund(t.id); setShowEscrowModal(false); }}
+                      style={{ fontSize: 10.5, border: 'none', background: 'none', color: '#2563eb', fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 2 }}
+                    >
+                      Release Escrow
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {transactions.filter(t => t.status === 'refund_pending').length === 0 && (
+                <div style={{ textAlign: 'center', padding: 16, color: '#64748b', fontSize: 13 }}>No funds currently held in escrow.</div>
+              )}
+            </div>
+            <div className="ad-modal-actions">
+              <button className="ad-modal-btn" onClick={() => setShowEscrowModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help Center Modal */}
+      {showHelpCenterModal && (
+        <div className="ad-overlay" onClick={() => setShowHelpCenterModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <button className="ad-close-x" onClick={() => setShowHelpCenterModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#f5f3ff', color: '#7c3aed' }}><Icon name="info" /></div>
+            <div className="ad-modal-title">Admin Help & Guides Center</div>
+            <div className="ad-modal-desc">
+              Quick reference guides for platform payments, moderation actions, and user support.
+            </div>
+            <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingRight: 6, fontSize: 12.5, lineHeight: 1.5, color: '#475569' }}>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>Escrow & Commission Auditing</div>
+                <div>All payments from clients are placed in escrow initially. The admin panel can release them manually, trigger refunds, or edit the default platform commission rate (10%) inside the Platform Settings tab.</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>Moderating Flagged Content</div>
+                <div>When users or jobs violate guidelines, they are flagged and placed in the Reports queue. Admins can dismiss flags or permanently remove content/suspend accounts from the actions dropdown.</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>SMTP & Two-Factor Authentication</div>
+                <div>Enable 2FA inside Platform Settings to force login checks with security OTP codes delivered through configured email SMTP accounts.</div>
+              </div>
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setShowHelpCenterModal(false)}>Close Guide</button>
             </div>
           </div>
         </div>
