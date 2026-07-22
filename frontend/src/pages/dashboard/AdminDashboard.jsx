@@ -124,6 +124,11 @@ const AdminDashboard = () => {
   const [detailReport, setDetailReport] = useState(null);
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [showGuidelinesModal, setShowGuidelinesModal] = useState(false);
+  const [showBroadcastHistoryModal, setShowBroadcastHistoryModal] = useState(false);
+  const [broadcastsHistory, setBroadcastsHistory] = useState([
+    { id: 'B-001', text: 'System maintenance scheduled for Sunday at 2 AM.', audience: 'All Users', date: '20 Jul, 2026', status: 'delivered' },
+    { id: 'B-002', text: 'New platform features have been released! Check them out.', audience: 'Clients Only', date: '15 Jul, 2026', status: 'delivered' }
+  ]);
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -3144,7 +3149,7 @@ END OF AUDIT STATEMENT
                     <h1 className="ad-page-title">Broadcast Messages</h1>
                     <p className="ad-page-sub">Send announcement notifications to all clients and freelancers</p>
                   </div>
-                  <button onClick={() => toast.success('Viewing archive of 14 sent broadcasts.')} className="ad-btn-secondary">
+                  <button onClick={() => setShowBroadcastHistoryModal(true)} className="ad-btn-secondary">
                     🕒 Broadcast History
                   </button>
                 </div>
@@ -3160,13 +3165,13 @@ END OF AUDIT STATEMENT
                       <div style={{ border: '1px solid #cbd5e1', borderRadius: 8, overflow: 'hidden' }}>
                         {/* Editor Toolbar */}
                         <div style={{ display: 'flex', gap: 8, padding: '8px 12px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', alignItems: 'center' }}>
-                          <button onClick={() => toast.success('Bold text formatting.')} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 13, cursor: 'pointer', color: '#475569' }}>B</button>
-                          <button onClick={() => toast.success('Italic text formatting.')} style={{ background: 'none', border: 'none', fontStyle: 'italic', fontSize: 13, cursor: 'pointer', color: '#475569' }}>I</button>
-                          <button onClick={() => toast.success('Insert URL link.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🔗</button>
+                          <button onClick={() => setBroadcastText(prev => prev + ' **bold text**')} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 13, cursor: 'pointer', color: '#475569' }}>B</button>
+                          <button onClick={() => setBroadcastText(prev => prev + ' *italic text*')} style={{ background: 'none', border: 'none', fontStyle: 'italic', fontSize: 13, cursor: 'pointer', color: '#475569' }}>I</button>
+                          <button onClick={() => setBroadcastText(prev => prev + ' [link text](https://example.com)')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🔗</button>
                           <span style={{ color: '#cbd5e1', fontSize: 12 }}>|</span>
-                          <button onClick={() => toast.success('Insert bullet list.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>📋</button>
-                          <button onClick={() => toast.success('Insert ordered list.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🔢</button>
-                          <button onClick={() => toast.success('Upload image asset.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🖼️</button>
+                          <button onClick={() => setBroadcastText(prev => prev + '\n- Item 1\n- Item 2')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>📋</button>
+                          <button onClick={() => setBroadcastText(prev => prev + '\n1. Item 1\n2. Item 2')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🔢</button>
+                          <button onClick={() => setBroadcastText(prev => prev + ' ![image description](image_url)')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🖼️</button>
                           <span style={{ flex: 1 }} />
                           <span style={{ fontSize: 10.5, color: '#94a3b8', fontWeight: 600 }}>{broadcastText.length} / 2000 characters</span>
                         </div>
@@ -3207,7 +3212,15 @@ END OF AUDIT STATEMENT
                       <button
                         onClick={() => {
                           if (!broadcastText.trim()) return toast.error('Announcement text cannot be empty.');
-                          toast.success('Broadcast notification published successfully!');
+                          const newB = {
+                            id: `B-${(broadcastsHistory.length + 1).toString().padStart(3, '0')}`,
+                            text: broadcastText,
+                            audience: broadcastAudience === 'all' ? 'All Users' : broadcastAudience === 'freelancers' ? 'Freelancers Only' : broadcastAudience === 'clients' ? 'Clients Only' : 'Custom Audience',
+                            date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+                            status: 'delivered'
+                          };
+                          setBroadcastsHistory([newB, ...broadcastsHistory]);
+                          toast.success('Broadcast announcement published successfully!');
                           setBroadcastText('');
                         }}
                         className="ad-btn-black"
@@ -3215,7 +3228,22 @@ END OF AUDIT STATEMENT
                       >
                         🚀 Publish Broadcast
                       </button>
-                      <button onClick={() => toast.success('Announcement saved as draft.')} className="ad-btn-secondary" style={{ padding: '8px 16px', fontSize: 12.5 }}>
+                      <button 
+                        onClick={() => {
+                          const textToSave = broadcastText.trim() || 'Untitled Draft Announcement';
+                          const newB = {
+                            id: `B-${(broadcastsHistory.length + 1).toString().padStart(3, '0')}`,
+                            text: textToSave,
+                            audience: broadcastAudience === 'all' ? 'All Users' : broadcastAudience === 'freelancers' ? 'Freelancers Only' : broadcastAudience === 'clients' ? 'Clients Only' : 'Custom Audience',
+                            date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+                            status: 'draft'
+                          };
+                          setBroadcastsHistory([newB, ...broadcastsHistory]);
+                          toast.success('Announcement saved as draft.');
+                        }} 
+                        className="ad-btn-secondary" 
+                        style={{ padding: '8px 16px', fontSize: 12.5 }}
+                      >
                         💾 Save as Draft
                       </button>
                     </div>
@@ -3266,6 +3294,17 @@ END OF AUDIT STATEMENT
                           </div>
                         );
                       })}
+                      {broadcastAudience === 'custom' && (
+                        <div style={{ marginTop: 10, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 8, padding: 10, maxHeight: 120, overflowY: 'auto' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6 }}>Select target users manually:</span>
+                          {users.map((u) => (
+                            <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#334155', cursor: 'pointer', marginBottom: 4 }}>
+                              <input type="checkbox" defaultChecked />
+                              <span>{u.name} ({u.role})</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -4514,6 +4553,45 @@ END OF AUDIT STATEMENT
             </div>
             <div className="ad-modal-actions" style={{ marginTop: 16 }}>
               <button className="ad-modal-btn" onClick={() => setShowGuidelinesModal(false)}>Close Guidelines</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast History Modal */}
+      {showBroadcastHistoryModal && (
+        <div className="ad-overlay" onClick={() => setShowBroadcastHistoryModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+            <button className="ad-close-x" onClick={() => setShowBroadcastHistoryModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#f5f3ff', color: '#7c3aed' }}><Icon name="chart" /></div>
+            <div className="ad-modal-title">Broadcast History Log</div>
+            <div className="ad-modal-desc">
+              Archive list of sent notification broadcasts and drafted announcements.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 240, overflowY: 'auto', marginBottom: 12, paddingRight: 6 }}>
+              {broadcastsHistory.map((b) => (
+                <div key={b.id} style={{ padding: 12, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, color: '#1e293b', fontSize: 12.5 }}>ID: {b.id}</span>
+                    <span className={`ad-pill ${b.status === 'delivered' ? 'ad-pill--success' : 'ad-pill--warning'}`} style={{ fontSize: 9.5 }}>
+                      {b.status === 'delivered' ? 'Delivered' : 'Draft'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: '#4b5563', lineHeight: 1.4 }}>{b.text}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: '#94a3b8', fontWeight: 600, borderTop: '1px solid #f1f5f9', paddingTop: 6, marginTop: 2 }}>
+                    <span>Audience: {b.audience}</span>
+                    <span>Date: {b.date}</span>
+                  </div>
+                </div>
+              ))}
+              {broadcastsHistory.length === 0 && (
+                <div style={{ textAlign: 'center', padding: 16, color: '#64748b', fontSize: 13 }}>No historical broadcasts sent.</div>
+              )}
+            </div>
+            <div className="ad-modal-actions">
+              <button className="ad-modal-btn" onClick={() => setShowBroadcastHistoryModal(false)}>Close History</button>
             </div>
           </div>
         </div>
