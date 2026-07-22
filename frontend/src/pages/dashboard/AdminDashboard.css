@@ -830,3 +830,239 @@
   font-size: 12.5px;
   color: #6b7280;
 }
+
+/* Jobs page summary grid (6 KPI cards) */
+.ad-jobs-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.ad-jobs-summary-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid #f0f0f0;
+}
+
+/* Jobs filters row layout */
+.ad-jobs-filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+/* Mapped table client/freelancer avatar alignment */
+.ad-table-avatar-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ad-table-avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.ad-table-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ad-table-avatar-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Skills tags list below job title */
+.ad-skills-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.ad-skills-tag-item {
+  font-size: 10px;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.ad-job-id-lbl {
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+/* Double layouts for lower analytics / logs split */
+.ad-jobs-bottom-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+  margin-bottom: 22px;
+}
+
+.ad-jobs-split-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid #f0f0f0;
+}
+
+.ad-jobs-split-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Recent Activity log item */
+.ad-activity-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.ad-activity-item:last-child {
+  border-bottom: none;
+}
+
+.ad-activity-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.ad-activity-content {
+  flex: 1;
+}
+
+.ad-activity-text {
+  font-size: 12.5px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.ad-activity-time {
+  font-size: 10.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Quick Actions layout */
+.ad-quick-actions-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 22px;
+  margin-bottom: 22px;
+}
+
+.ad-quick-action-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #475569;
+  font-weight: 600;
+  font-size: 11.5px;
+  font-family: inherit;
+}
+
+.ad-quick-action-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.ad-quick-action-btn-icon {
+  font-size: 16px;
+}
+
+/* Analytics panels updates */
+.ad-analytics-double-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+/* Horizontal mini bar chart styling for budget/category distribution */
+.ad-bar-chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ad-bar-chart-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ad-bar-chart-label {
+  font-size: 12px;
+  color: #475569;
+  width: 100px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ad-bar-chart-track {
+  flex: 1;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ad-bar-chart-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 4px;
+}
+
+.ad-bar-chart-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  width: 40px;
+  text-align: right;
+}

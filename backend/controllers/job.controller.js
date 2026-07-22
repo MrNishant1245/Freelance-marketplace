@@ -65,7 +65,8 @@ const getJobs = async (req, res) => {
     }
 
     const jobs = await Job.find(filter)
-      .populate('client', 'firstName lastName clientProfile.companyName')
+      .populate('client', 'firstName lastName clientProfile.companyName profilePhoto')
+      .populate('hiredFreelancer', 'firstName lastName freelancerProfile.title profilePhoto')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, count: jobs.length, data: jobs });

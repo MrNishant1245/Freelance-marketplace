@@ -71,6 +71,14 @@ const AdminDashboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [jobSearch, setJobSearch] = useState('');
   const [jobStatusFilter, setJobStatusFilter] = useState('all');
+  const [jobCategoryFilter, setJobCategoryFilter] = useState('all');
+  const [jobBudgetFilter, setJobBudgetFilter] = useState('all');
+  const [jobDateFilter, setJobDateFilter] = useState('all');
+  const [jobSortBy, setJobSortBy] = useState('latest');
+  const [jobCurrentPage, setJobCurrentPage] = useState(1);
+  const [jobRowsPerPage, setJobRowsPerPage] = useState(10);
+  const [jobSelectedIds, setJobSelectedIds] = useState([]);
+  const [activeJobActionMenu, setActiveJobActionMenu] = useState(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [detailUser, setDetailUser] = useState(null);
@@ -120,16 +128,35 @@ const AdminDashboard = () => {
       const jobsRes = await adminAPI.getJobs({ status: 'all' });
       const rawJobs = jobsRes.data?.data || jobsRes.data || [];
       const formattedJobs = rawJobs.map(j => {
-        const clientName = j.client ? `${j.client.firstName || ''} ${j.client.lastName || ''}`.trim() : 'System Client';
+        const cName = j.client ? `${j.client.firstName || ''} ${j.client.lastName || ''}`.trim() : 'System Client';
+        const cInitials = j.client ? `${j.client.firstName?.charAt(0) || 'C'}${j.client.lastName?.charAt(0) || ''}`.toUpperCase() : 'SC';
+        const fName = j.hiredFreelancer ? `${j.hiredFreelancer.firstName || ''} ${j.hiredFreelancer.lastName || ''}`.trim() : 'Unassigned';
+        const fInitials = j.hiredFreelancer ? `${j.hiredFreelancer.firstName?.charAt(0) || 'F'}${j.hiredFreelancer.lastName?.charAt(0) || ''}`.toUpperCase() : '';
+        const dl = j.milestones && j.milestones.length > 0 && j.milestones[0].dueDate 
+          ? new Date(j.milestones[0].dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'No deadline';
+        
         return {
           id: j._id,
+          jobIdShort: j._id ? String(j._id).slice(-6).toUpperCase() : 'JOB' + Math.floor(Math.random()*1000),
           title: j.title,
-          client: clientName,
-          budget: `₹${j.budget ? j.budget.toLocaleString('en-IN') : '0'}`,
+          category: j.category || 'Development',
+          skills: j.skills || [],
+          clientName: cName,
+          clientAvatar: j.client?.profilePhoto,
+          clientInitials: cInitials,
+          freelancerName: fName,
+          freelancerAvatar: j.hiredFreelancer?.profilePhoto,
+          freelancerInitials: fInitials,
+          budget: j.budget || 0,
+          budgetFormatted: `₹${(j.budget || 0).toLocaleString('en-IN')}`,
+          proposalCount: j.proposals ? j.proposals.length : 0,
           status: j.isFlagged ? 'flagged' : j.status,
           isFlagged: j.isFlagged,
           flagReason: j.flagReason,
-          createdAt: j.createdAt
+          createdAt: j.createdAt,
+          updatedAt: j.updatedAt,
+          deadline: dl
         };
       });
       setJobs(formattedJobs);
@@ -216,18 +243,58 @@ const AdminDashboard = () => {
     return matchesRole && matchesStatus && matchesSearch;
   });
 
-  // Filtered Jobs
+  // Filtered and Sorted Jobs
   const filteredJobs = jobs.filter((j) => {
     const matchesStatus = jobStatusFilter === 'all' 
       ? true 
       : jobStatusFilter === 'flagged' 
       ? j.isFlagged 
       : j.status === jobStatusFilter;
+
+    const matchesCategory = jobCategoryFilter === 'all'
+      ? true
+      : j.category.toLowerCase() === jobCategoryFilter.toLowerCase();
+
+    const matchesBudget = jobBudgetFilter === 'all'
+      ? true
+      : jobBudgetFilter === 'under10k'
+      ? j.budget < 10000
+      : jobBudgetFilter === '10k-50k'
+      ? j.budget >= 10000 && j.budget <= 50000
+      : jobBudgetFilter === '50k-100k'
+      ? j.budget >= 50000 && j.budget <= 100000
+      : jobBudgetFilter === 'over100k'
+      ? j.budget > 100000
+      : true;
+
+    const matchesDate = jobDateFilter === 'all'
+      ? true
+      : jobDateFilter === '24h'
+      ? new Date(j.createdAt).getTime() > Date.now() - 24 * 3600 * 1000
+      : jobDateFilter === '7d'
+      ? new Date(j.createdAt).getTime() > Date.now() - 7 * 24 * 3600 * 1000
+      : jobDateFilter === '30d'
+      ? new Date(j.createdAt).getTime() > Date.now() - 30 * 24 * 3600 * 1000
+      : true;
+
     const matchesSearch =
       j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
-      j.client.toLowerCase().includes(jobSearch.toLowerCase());
-    return matchesStatus && matchesSearch;
+      j.clientName.toLowerCase().includes(jobSearch.toLowerCase()) ||
+      j.id.toLowerCase().includes(jobSearch.toLowerCase());
+
+    return matchesStatus && matchesCategory && matchesBudget && matchesDate && matchesSearch;
+  }).sort((a, b) => {
+    if (jobSortBy === 'budget-high') return b.budget - a.budget;
+    if (jobSortBy === 'applicants-high') return b.proposalCount - a.proposalCount;
+    if (jobSortBy === 'deadline') return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // latest
   });
+
+  // Jobs pagination calculations
+  const jobTotalPages = Math.ceil(filteredJobs.length / jobRowsPerPage) || 1;
+  const jobStartIndex = (jobCurrentPage - 1) * jobRowsPerPage;
+  const jobEndIndex = jobStartIndex + jobRowsPerPage;
+  const paginatedJobs = filteredJobs.slice(jobStartIndex, jobEndIndex);
 
   // Moderated Reports list mapping
   const reportsList = [];
@@ -269,6 +336,8 @@ const AdminDashboard = () => {
   const inProgressJobCount = jobs.filter((j) => j.status === 'in_progress').length;
   const completedJobCount = jobs.filter((j) => j.status === 'completed').length;
   const cancelledJobCount = jobs.filter((j) => j.status === 'cancelled').length;
+  const flaggedJobCount = jobs.filter((j) => j.isFlagged).length;
+  const totalMarketplaceValue = jobs.reduce((sum, j) => sum + (j.budget || 0), 0);
 
   const totalRevenueNum = transactions.reduce((sum, t) => sum + t.total, 0);
   const formatRevenueL = (num) => {
@@ -955,76 +1024,563 @@ const AdminDashboard = () => {
                 </div>
               </div>
             )}
-
-            {/* JOBS */}
+                                  {/* JOBS */}
             {activeTab === 'jobs' && (
               <div>
-                <div className="ad-page-head">
-                  <h1 className="ad-page-title">Manage jobs</h1>
-                  <p className="ad-page-sub">All job postings across the marketplace</p>
+                {/* Header */}
+                <div className="ad-page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div>
+                    <h1 className="ad-page-title">Manage Jobs</h1>
+                    <p className="ad-page-sub">All job postings across the marketplace</p>
+                  </div>
+                  <div className="ad-header-actions">
+                    <button onClick={() => toast.success('Create job dialog opened.')} className="ad-btn-black">
+                      <Icon name="plus" /> Create Job
+                    </button>
+                  </div>
                 </div>
 
-                <div className="ad-tabs-row">
-                  <button className={`ad-tab-btn ${jobStatusFilter === 'all' ? 'ad-tab-btn--active' : ''}`} onClick={() => setJobStatusFilter('all')}>
-                    All ({jobs.length})
-                  </button>
-                  <button className={`ad-tab-btn ${jobStatusFilter === 'active' ? 'ad-tab-btn--active' : ''}`} onClick={() => setJobStatusFilter('active')}>
-                    Active ({activeJobCount})
-                  </button>
-                  <button className={`ad-tab-btn ${jobStatusFilter === 'flagged' ? 'ad-tab-btn--active' : ''}`} onClick={() => setJobStatusFilter('flagged')}>
-                    Flagged ({jobs.filter(j => j.isFlagged).length})
+                {/* Top KPI Cards (6 Cards) */}
+                <div className="ad-jobs-summary-grid">
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Total Jobs</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', marginTop: 4 }}>{jobs.length}</div>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>📋 Platform posts</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Active Jobs</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', marginTop: 4 }}>{activeJobCount}</div>
+                    <div style={{ fontSize: 10.5, color: '#10b981', fontWeight: 600, marginTop: 4 }}>🟢 Open to bids</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>In Progress</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', marginTop: 4 }}>{inProgressJobCount}</div>
+                    <div style={{ fontSize: 10.5, color: '#f59e0b', fontWeight: 600, marginTop: 4 }}>⏳ Hired & active</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Completed</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', marginTop: 4 }}>{completedJobCount}</div>
+                    <div style={{ fontSize: 10.5, color: '#3b82f6', fontWeight: 600, marginTop: 4 }}>✅ Milestone paid</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Flagged Jobs</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#dc2626', marginTop: 4 }}>{flaggedJobCount}</div>
+                    <div style={{ fontSize: 10.5, color: '#dc2626', fontWeight: 600, marginTop: 4 }}>🚩 Pending review</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Marketplace Value</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', marginTop: 4 }}>₹{totalMarketplaceValue.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 4 }}>💰 Cumulative budgets</div>
+                  </div>
+                </div>
+
+                {/* Search & Filters Row */}
+                <div className="ad-jobs-filters-row">
+                  <div className="ad-filters-left">
+                    <div className="ad-filter-search-container" style={{ maxWidth: 260 }}>
+                      <span className="ad-filter-search-icon"><Icon name="search" /></span>
+                      <input
+                        type="text"
+                        placeholder="Search Job Title / Client / ID..."
+                        value={jobSearch}
+                        onChange={(e) => { setJobSearch(e.target.value); setJobCurrentPage(1); }}
+                        className="ad-filter-search-input"
+                      />
+                    </div>
+                    <select 
+                      className="ad-filter-select"
+                      value={jobStatusFilter}
+                      onChange={(e) => { setJobStatusFilter(e.target.value); setJobCurrentPage(1); }}
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active">Active</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="closed">Closed</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="flagged">Flagged / Reported</option>
+                    </select>
+                    <select 
+                      className="ad-filter-select"
+                      value={jobCategoryFilter}
+                      onChange={(e) => { setJobCategoryFilter(e.target.value); setJobCurrentPage(1); }}
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="development">Development</option>
+                      <option value="design">Design</option>
+                      <option value="writing">Writing</option>
+                      <option value="marketing">Marketing</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <select 
+                      className="ad-filter-select"
+                      value={jobBudgetFilter}
+                      onChange={(e) => { setJobBudgetFilter(e.target.value); setJobCurrentPage(1); }}
+                    >
+                      <option value="all">All Budgets</option>
+                      <option value="under10k">Under ₹10k</option>
+                      <option value="10k-50k">₹10k - ₹50k</option>
+                      <option value="50k-100k">₹50k - ₹100k</option>
+                      <option value="over100k">Over ₹100k</option>
+                    </select>
+                    <select 
+                      className="ad-filter-select"
+                      value={jobDateFilter}
+                      onChange={(e) => { setJobDateFilter(e.target.value); setJobCurrentPage(1); }}
+                    >
+                      <option value="all">All Dates</option>
+                      <option value="24h">Last 24 Hours</option>
+                      <option value="7d">Last 7 Days</option>
+                      <option value="30d">Last 30 Days</option>
+                    </select>
+                    <select 
+                      className="ad-filter-select"
+                      value={jobSortBy}
+                      onChange={(e) => { setJobSortBy(e.target.value); setJobCurrentPage(1); }}
+                    >
+                      <option value="latest">Sort: Latest</option>
+                      <option value="budget-high">Sort: Budget (High)</option>
+                      <option value="applicants-high">Sort: Applicants</option>
+                      <option value="deadline">Sort: Deadline</option>
+                    </select>
+                  </div>
+                  <button onClick={() => toast.success('Jobs list spreadsheet exported.')} className="ad-btn-secondary">
+                    <Icon name="download" /> Export
                   </button>
                 </div>
 
-                <div className="ad-search-row">
-                  <input
-                    type="text"
-                    placeholder="Search jobs by title or client..."
-                    value={jobSearch}
-                    onChange={(e) => setJobSearch(e.target.value)}
-                    className="ad-search-input"
-                  />
-                </div>
+                {/* Bulk Action Bar */}
+                {jobSelectedIds.length > 0 && (
+                  <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                      {jobSelectedIds.length} job{jobSelectedIds.length > 1 ? 's' : ''} selected
+                    </span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button 
+                        onClick={() => {
+                          toast.success(`Bulk flagged ${jobSelectedIds.length} jobs.`);
+                          setJobSelectedIds([]);
+                        }} 
+                        className="btn btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: 12 }}
+                      >
+                        Bulk Flag
+                      </button>
+                      <button 
+                        onClick={() => {
+                          toast.success(`Bulk completed ${jobSelectedIds.length} jobs.`);
+                          setJobSelectedIds([]);
+                        }} 
+                        className="btn btn-primary" 
+                        style={{ padding: '6px 12px', fontSize: 12 }}
+                      >
+                        Bulk Complete
+                      </button>
+                      <button 
+                        onClick={() => {
+                          jobSelectedIds.forEach(id => removeJob(id));
+                          setJobSelectedIds([]);
+                        }} 
+                        className="btn btn-danger" 
+                        style={{ padding: '6px 12px', fontSize: 12 }}
+                      >
+                        Bulk Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
 
+                {/* Table */}
                 <div className="ad-card ad-card--table">
                   <table className="ad-table">
                     <thead>
                       <tr>
-                        <th>Job title</th>
-                        <th>Client</th>
-                        <th>Budget</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th style={{ width: 40 }}>
+                          <input 
+                            type="checkbox"
+                            checked={paginatedJobs.length > 0 && paginatedJobs.every(j => jobSelectedIds.includes(j.id))}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                const newSel = [...jobSelectedIds];
+                                paginatedJobs.forEach(j => {
+                                  if (!newSel.includes(j.id)) newSel.push(j.id);
+                                });
+                                setJobSelectedIds(newSel);
+                              } else {
+                                const pageIds = paginatedJobs.map(j => j.id);
+                                setJobSelectedIds(jobSelectedIds.filter(id => !pageIds.includes(id)));
+                              }
+                            }}
+                          />
+                        </th>
+                        <th>JOB</th>
+                        <th>CLIENT</th>
+                        <th>FREELANCER</th>
+                        <th>BUDGET</th>
+                        <th>APPLICATIONS</th>
+                        <th>STATUS</th>
+                        <th>POSTED</th>
+                        <th>DEADLINE</th>
+                        <th>ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredJobs.map((j) => (
+                      {paginatedJobs.map((j) => (
                         <tr key={j.id}>
-                          <td className="ad-job-title">{j.title}</td>
-                          <td>{j.client}</td>
-                          <td>{j.budget}</td>
                           <td>
-                            <span className={`ad-pill ${j.isFlagged ? 'ad-pill--danger' : 'ad-pill--success'}`} style={{ textTransform: 'uppercase' }}>
+                            <input 
+                              type="checkbox"
+                              checked={jobSelectedIds.includes(j.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setJobSelectedIds([...jobSelectedIds, j.id]);
+                                } else {
+                                  setJobSelectedIds(jobSelectedIds.filter(id => id !== j.id));
+                                }
+                              }}
+                            />
+                          </td>
+                          <td>
+                            <div>
+                              <div className="ad-job-title" style={{ fontWeight: 700, color: '#0f172a' }}>{j.title}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                <span className="ad-job-id-lbl">#{j.jobIdShort}</span>
+                                <span style={{ fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>• {j.category}</span>
+                              </div>
+                              {j.skills.length > 0 && (
+                                <div className="ad-skills-tag-list">
+                                  {j.skills.slice(0, 3).map((s, idx) => (
+                                    <span key={idx} className="ad-skills-tag-item">{s}</span>
+                                  ))}
+                                  {j.skills.length > 3 && <span className="ad-skills-tag-item">+{j.skills.length - 3}</span>}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="ad-table-avatar-cell">
+                              <div className="ad-table-avatar-circle">
+                                {j.clientAvatar ? (
+                                  <img src={j.clientAvatar} alt={j.clientName} className="ad-table-avatar-img" />
+                                ) : (
+                                  j.clientInitials
+                                )}
+                              </div>
+                              <span className="ad-table-avatar-name">{j.clientName}</span>
+                            </div>
+                          </td>
+                          <td>
+                            {j.freelancerName === 'Unassigned' ? (
+                              <span style={{ fontSize: 12.5, color: '#94a3b8', fontStyle: 'italic', fontWeight: 500 }}>Unassigned</span>
+                            ) : (
+                              <div className="ad-table-avatar-cell">
+                                <div className="ad-table-avatar-circle" style={{ borderColor: '#3b82f6' }}>
+                                  {j.freelancerAvatar ? (
+                                    <img src={j.freelancerAvatar} alt={j.freelancerName} className="ad-table-avatar-img" />
+                                  ) : (
+                                    j.freelancerInitials
+                                  )}
+                                </div>
+                                <span className="ad-table-avatar-name">{j.freelancerName}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                            {j.budgetFormatted}
+                          </td>
+                          <td style={{ fontSize: 13, fontWeight: 600, color: '#475569', textAlign: 'center' }}>
+                            {j.proposalCount}
+                          </td>
+                          <td>
+                            <span className={`ad-pill ${j.isFlagged ? 'ad-pill--danger' : j.status === 'completed' ? 'ad-pill--success' : j.status === 'in_progress' ? 'ad-pill--warning' : 'ad-pill--info'}`} style={{ textTransform: 'uppercase', fontSize: 10 }}>
                               {j.isFlagged ? 'Flagged' : j.status}
                             </span>
                           </td>
+                          <td style={{ fontSize: 12.5, color: '#64748b' }}>
+                            {j.createdAt ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
+                          </td>
+                          <td style={{ fontSize: 12.5, color: '#64748b' }}>
+                            {j.deadline}
+                          </td>
                           <td>
-                            <div className="ad-row-actions">
-                              <button onClick={() => navigate(`/jobs/${j.id}`)} className="ad-act-btn"><Icon name="eye" /> View</button>
-                              <button className="ad-act-btn ad-act-btn--danger" onClick={() => removeJob(j.id)}>
-                                <Icon name="x" /> Remove
+                            <div style={{ position: 'relative' }}>
+                              <button onClick={() => setActiveJobActionMenu(activeJobActionMenu === j.id ? null : j.id)} className="ad-action-btn-circle" title="Actions Menu">
+                                <Icon name="more" />
                               </button>
+                              {activeJobActionMenu === j.id && (
+                                <div style={{ position: 'absolute', right: 0, top: 32, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', zIndex: 100, width: 150, padding: '4px 0' }}>
+                                  <button 
+                                    className="ad-dropdown-item" 
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
+                                    onClick={() => { setActiveJobActionMenu(null); navigate(`/jobs/${j.id}`); }}
+                                  >
+                                    👁 View Details
+                                  </button>
+                                  <button 
+                                    className="ad-dropdown-item" 
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
+                                    onClick={() => { setActiveJobActionMenu(null); toast.success('Job details editable.'); }}
+                                  >
+                                    ✏ Edit Job
+                                  </button>
+                                  <button 
+                                    className="ad-dropdown-item" 
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
+                                    onClick={() => { setActiveJobActionMenu(null); toast.success(`Viewing ${j.proposalCount} applicants.`); }}
+                                  >
+                                    👥 Applicants
+                                  </button>
+                                  <button 
+                                    className="ad-dropdown-item" 
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#d97706' }}
+                                    onClick={() => {
+                                      setActiveJobActionMenu(null);
+                                      if (j.isFlagged) {
+                                        toast.success('Job dismissed.');
+                                      } else {
+                                        toast.success('Job flagged for review.');
+                                      }
+                                    }}
+                                  >
+                                    🚩 {j.isFlagged ? 'Dismiss Flag' : 'Flag Job'}
+                                  </button>
+                                  <button 
+                                    className="ad-dropdown-item" 
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontWeight: 600 }}
+                                    onClick={() => {
+                                      setActiveJobActionMenu(null);
+                                      removeJob(j.id);
+                                    }}
+                                  >
+                                    🗑 Delete Job
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>
                       ))}
                       {filteredJobs.length === 0 && (
                         <tr>
-                          <td colSpan="5" className="ad-empty-row">No jobs found.</td>
+                          <td colSpan="10" className="ad-empty-row">No jobs found.</td>
                         </tr>
                       )}
                     </tbody>
                   </table>
+
+                  {/* Pagination Footer */}
+                  {filteredJobs.length > 0 && (
+                    <div className="ad-footer-bar">
+                      <div className="ad-pagination-info">
+                        Showing {jobStartIndex + 1} to {Math.min(jobEndIndex, filteredJobs.length)} of {filteredJobs.length} jobs
+                      </div>
+                      <div className="ad-pagination-controls">
+                        <button 
+                          onClick={() => setJobCurrentPage(prev => Math.max(1, prev - 1))}
+                          className={`ad-pagination-btn ${jobCurrentPage === 1 ? 'ad-pagination-btn--disabled' : ''}`}
+                          disabled={jobCurrentPage === 1}
+                        >
+                          ‹
+                        </button>
+                        {Array.from({ length: jobTotalPages }, (_, i) => (
+                          <button
+                            key={i + 1}
+                            onClick={() => setJobCurrentPage(i + 1)}
+                            className={`ad-pagination-btn ${jobCurrentPage === i + 1 ? 'ad-pagination-btn--active' : ''}`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                        <button 
+                          onClick={() => setJobCurrentPage(prev => Math.min(jobTotalPages, prev + 1))}
+                          className={`ad-pagination-btn ${jobCurrentPage === jobTotalPages ? 'ad-pagination-btn--disabled' : ''}`}
+                          disabled={jobCurrentPage === jobTotalPages}
+                        >
+                          ›
+                        </button>
+                      </div>
+                      <div className="ad-rows-per-page">
+                        <span>Rows per page</span>
+                        <select 
+                          className="ad-filter-select"
+                          style={{ padding: '4px 8px', fontSize: 12.5 }}
+                          value={jobRowsPerPage}
+                          onChange={(e) => { setJobRowsPerPage(parseInt(e.target.value)); setJobCurrentPage(1); }}
+                        >
+                          <option value="5">5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Double Panel: Jobs by Status & Budget Analytics */}
+                <div className="ad-analytics-double-row">
+                  {/* Left: Jobs by status Donut Chart */}
+                  <div className="ad-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div className="ad-card-head" style={{ marginBottom: 12 }}>
+                      <span className="ad-card-title">Jobs by Status Distribution</span>
+                    </div>
+                    <div className="ad-chart-container" style={{ height: 120 }}>
+                      <svg width="90" height="90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#eff6ff" strokeWidth="8" />
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={activeOffset} transform="rotate(-90 50 50)" />
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f59e0b" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={inProgressOffset} transform={`rotate(${(activePct / 100) * 360 - 90} 50 50)`} />
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#3b82f6" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={completedOffset} transform={`rotate(${((activePct + inProgressPct) / 100) * 360 - 90} 50 50)`} />
+                      </svg>
+                      <div className="ad-chart-center-label">
+                        <span className="ad-chart-center-val" style={{ fontSize: 18 }}>{totalStatusJobs}</span>
+                        <span className="ad-chart-center-lbl" style={{ fontSize: 9 }}>Total</span>
+                      </div>
+                    </div>
+                    <div className="ad-legend-list" style={{ marginTop: 8 }}>
+                      <div className="ad-legend-item">
+                        <span className="ad-legend-color-label"><span className="ad-legend-dot" style={{ background: '#10b981' }} /> Active</span>
+                        <span className="ad-legend-val">{activeJobCount}</span>
+                      </div>
+                      <div className="ad-legend-item">
+                        <span className="ad-legend-color-label"><span className="ad-legend-dot" style={{ background: '#f59e0b' }} /> In Progress</span>
+                        <span className="ad-legend-val">{inProgressJobCount}</span>
+                      </div>
+                      <div className="ad-legend-item">
+                        <span className="ad-legend-color-label"><span className="ad-legend-dot" style={{ background: '#3b82f6' }} /> Completed</span>
+                        <span className="ad-legend-val">{completedJobCount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Budget Distribution Horizontal Bar Chart */}
+                  <div className="ad-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div className="ad-card-head" style={{ marginBottom: 12 }}>
+                      <span className="ad-card-title">Budget Distribution</span>
+                    </div>
+                    <div className="ad-bar-chart-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      {[
+                        { label: 'Under ₹10k', val: jobs.filter(j => j.budget < 10000).length },
+                        { label: '₹10k - ₹50k', val: jobs.filter(j => j.budget >= 10000 && j.budget <= 50000).length },
+                        { label: '₹50k - ₹100k', val: jobs.filter(j => j.budget >= 50000 && j.budget <= 100000).length },
+                        { label: 'Over ₹100k', val: jobs.filter(j => j.budget > 100000).length }
+                      ].map((item, idx) => {
+                        const totalCount = jobs.length || 1;
+                        const pct = (item.val / totalCount) * 100;
+                        return (
+                          <div className="ad-bar-chart-item" key={idx}>
+                            <span className="ad-bar-chart-label">{item.label}</span>
+                            <div className="ad-bar-chart-track">
+                              <div className="ad-bar-chart-fill" style={{ width: `${pct}%`, background: idx === 0 ? '#60a5fa' : idx === 1 ? '#3b82f6' : idx === 2 ? '#2563eb' : '#1d4ed8' }} />
+                            </div>
+                            <span className="ad-bar-chart-value">{item.val} posts</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Double Panel: Recent Reports & Recent Activity */}
+                <div className="ad-jobs-bottom-split-grid">
+                  {/* Left: Recent Reports table */}
+                  <div className="ad-jobs-split-card">
+                    <div className="ad-jobs-split-title">
+                      <span>Recent Reports</span>
+                      <span style={{ fontSize: 11, background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>Action Required</span>
+                    </div>
+                    <table className="ad-table" style={{ marginTop: 8 }}>
+                      <thead>
+                        <tr>
+                          <th>Job</th>
+                          <th>Reporter</th>
+                          <th>Reason</th>
+                          <th>Resolve</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {jobs.filter(j => j.isFlagged).slice(0, 3).map(r => (
+                          <tr key={r.id}>
+                            <td style={{ fontSize: 12.5, fontWeight: 700 }}>{r.title}</td>
+                            <td style={{ fontSize: 12.5 }}>Client: {r.clientName}</td>
+                            <td style={{ fontSize: 12, color: '#64748b' }}>{r.flagReason || 'Violates marketplace guidelines.'}</td>
+                            <td>
+                              <button 
+                                onClick={async () => {
+                                  try {
+                                    await adminAPI.deleteJob(r.id); // dismiss flag or resolve
+                                    toast.success('Report resolved.');
+                                    loadData();
+                                  } catch (e) {
+                                    toast.error('Failed to resolve.');
+                                  }
+                                }}
+                                className="btn btn-secondary" 
+                                style={{ padding: '4px 8px', fontSize: 11 }}
+                              >
+                                Resolve
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {jobs.filter(j => j.isFlagged).length === 0 && (
+                          <tr>
+                            <td colSpan="4" className="ad-empty-row" style={{ padding: 12 }}>No reported jobs pending review.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Right: Recent Activity logs list */}
+                  <div className="ad-jobs-split-card">
+                    <div className="ad-jobs-split-title">
+                      <span>Recent Activity</span>
+                      <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Real-time updates</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                      {jobs.slice(0, 4).map((j, idx) => (
+                        <div className="ad-activity-item" key={idx}>
+                          <span className="ad-activity-marker" style={{ background: idx % 2 === 0 ? '#10b981' : '#3b82f6' }} />
+                          <div className="ad-activity-content">
+                            <div className="ad-activity-text">
+                              {idx % 2 === 0 
+                                ? `New job "${j.title}" posted by client ${j.clientName}`
+                                : `Freelancer hired on job "${j.title}"`
+                              }
+                            </div>
+                            <div className="ad-activity-time">
+                              {idx === 0 ? 'Just now' : idx === 1 ? '1 hour ago' : `${idx} hours ago`}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {jobs.length === 0 && <p className="ad-empty-row" style={{ padding: 12 }}>No activity logged.</p>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions Panel */}
+                <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Quick Actions</h3>
+                <div className="ad-quick-actions-row">
+                  <button onClick={() => toast.success('Create job dialog opened.')} className="ad-quick-action-btn">
+                    <span className="ad-quick-action-btn-icon">➕</span>
+                    <span>Create Job</span>
+                  </button>
+                  <button onClick={() => toast.success('Exporting jobs CSV...')} className="ad-quick-action-btn">
+                    <span className="ad-quick-action-btn-icon">📥</span>
+                    <span>Export Jobs</span>
+                  </button>
+                  <button onClick={() => toast.success('Downloading platform report PDF...')} className="ad-quick-action-btn">
+                    <span className="ad-quick-action-btn-icon">📊</span>
+                    <span>Download Report</span>
+                  </button>
+                  <button onClick={() => setJobStatusFilter('flagged')} className="ad-quick-action-btn">
+                    <span className="ad-quick-action-btn-icon">🚩</span>
+                    <span>Review Flagged</span>
+                  </button>
+                  <button onClick={() => toast.success('Announcement email sent to clients.')} className="ad-quick-action-btn">
+                    <span className="ad-quick-action-btn-icon">📧</span>
+                    <span>Notify Clients</span>
+                  </button>
                 </div>
               </div>
             )}
