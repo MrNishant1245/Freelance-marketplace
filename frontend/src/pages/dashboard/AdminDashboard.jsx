@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { adminAPI } from '../../api';
+import { adminAPI, authAPI } from '../../api';
 import toast from 'react-hot-toast';
 import './AdminDashboard.css';
 
@@ -96,6 +96,8 @@ const AdminDashboard = () => {
   const [detailUser, setDetailUser] = useState(null);
   const [suspendReason, setSuspendReason] = useState('');
   const [showSuspendModal, setShowSuspendModal] = useState(null);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'freelancer', status: 'active', password: 'Password123' });
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -257,6 +259,91 @@ const AdminDashboard = () => {
         toast.error('Failed to delete user.');
       }
     }
+  };
+
+  const handleAddUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!newUser.name.trim() || !newUser.email.trim()) {
+      return toast.error('Name and Email are required.');
+    }
+    try {
+      const payload = {
+        firstName: newUser.name.split(' ')[0] || 'New',
+        lastName: newUser.name.split(' ').slice(1).join(' ') || 'User',
+        email: newUser.email,
+        password: newUser.password || 'Password123',
+        role: newUser.role
+      };
+      
+      await authAPI.register(payload);
+      toast.success(`User ${newUser.name} created successfully.`);
+      setShowAddUserModal(false);
+      setNewUser({ name: '', email: '', role: 'freelancer', status: 'active', password: 'Password123' });
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to create user.');
+    }
+  };
+
+  const handleImportUsers = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const text = evt.target.result;
+        let importedCount = 0;
+        if (file.name.endsWith('.json')) {
+          const parsed = JSON.parse(text);
+          const userList = Array.isArray(parsed) ? parsed : [parsed];
+          for (const u of userList) {
+            const payload = {
+              firstName: u.firstName || u.name?.split(' ')[0] || 'Imported',
+              lastName: u.lastName || u.name?.split(' ').slice(1).join(' ') || 'User',
+              email: u.email || `imported_${Math.random().toString(36).slice(2, 8)}@example.com`,
+              password: u.password || 'Password123',
+              role: u.role || 'freelancer'
+            };
+            try {
+              await authAPI.register(payload);
+              importedCount++;
+            } catch (err) {
+              console.error('Failed to import user:', payload.email, err);
+            }
+          }
+        } else if (file.name.endsWith('.csv')) {
+          const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+          if (lines.length > 1) {
+            const headers = lines[0].toLowerCase().split(',');
+            for (let i = 1; i < lines.length; i++) {
+              const cols = lines[i].split(',');
+              const u = {};
+              headers.forEach((h, idx) => {
+                u[h.trim()] = cols[idx]?.trim() || '';
+              });
+              const payload = {
+                firstName: u.name?.split(' ')[0] || 'Imported',
+                lastName: u.name?.split(' ').slice(1).join(' ') || 'User',
+                email: u.email || `imported_${Math.random().toString(36).slice(2, 8)}@example.com`,
+                password: u.password || 'Password123',
+                role: u.role || 'freelancer'
+              };
+              try {
+                await authAPI.register(payload);
+                importedCount++;
+              } catch (err) {
+                console.error('Failed to import user:', payload.email, err);
+              }
+            }
+          }
+        }
+        toast.success(`Successfully imported ${importedCount} users from ${file.name}.`);
+        loadData();
+      } catch (err) {
+        toast.error('Failed to parse file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
   };
 
   const removeJob = async (id) => {
@@ -1021,10 +1108,17 @@ const AdminDashboard = () => {
                     <p className="ad-page-sub">Freelancers and clients on the platform</p>
                   </div>
                   <div className="ad-header-actions">
-                    <button onClick={() => toast.success('Import interface loaded.')} className="ad-btn-secondary">
+                    <button onClick={() => document.getElementById('ad-import-users-input').click()} className="ad-btn-secondary">
                       <Icon name="download" /> Import Users
                     </button>
-                    <button onClick={() => toast.success('Add user modal opened.')} className="ad-btn-black">
+                    <input 
+                      type="file" 
+                      id="ad-import-users-input" 
+                      style={{ display: 'none' }} 
+                      accept=".json,.csv" 
+                      onChange={handleImportUsers} 
+                    />
+                    <button onClick={() => setShowAddUserModal(true)} className="ad-btn-black">
                       <Icon name="plus" /> Add User
                     </button>
                   </div>
@@ -3346,6 +3440,73 @@ const AdminDashboard = () => {
               <button className="ad-modal-btn" onClick={() => setDetailUser(null)}>Close</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="ad-overlay" onClick={() => setShowAddUserModal(false)}>
+          <form className="ad-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleAddUserSubmit} style={{ maxWidth: 440 }}>
+            <div className="ad-modal-icon ad-modal-icon--success" style={{ background: '#f0fdf4', color: '#16a34a' }}><Icon name="plus" /></div>
+            <div className="ad-modal-title">Create User Profile</div>
+            <div className="ad-modal-desc">
+              Enter user details to register a new freelancer or client account.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Full Name</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  placeholder="e.g. John Doe"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Email Address</label>
+                <input 
+                  type="email" 
+                  className="ad-search-input"
+                  placeholder="e.g. johndoe@gmail.com"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Account Password</label>
+                <input 
+                  type="password" 
+                  className="ad-search-input"
+                  placeholder="e.g. securepwd123"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Platform Role</label>
+                <select 
+                  className="ad-filter-select"
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', height: 38 }}
+                >
+                  <option value="freelancer">Freelancer</option>
+                  <option value="client">Client</option>
+                </select>
+              </div>
+            </div>
+            <div className="ad-modal-actions">
+              <button type="button" className="ad-modal-btn" onClick={() => setShowAddUserModal(false)}>Cancel</button>
+              <button type="submit" className="ad-modal-btn ad-modal-btn--success" style={{ background: '#16a34a' }}>Create User</button>
+            </div>
+          </form>
         </div>
       )}
     </div>
