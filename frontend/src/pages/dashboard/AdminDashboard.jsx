@@ -122,6 +122,8 @@ const AdminDashboard = () => {
   const [showTopSpendersModal, setShowTopSpendersModal] = useState(false);
   const [detailRefund, setDetailRefund] = useState(null);
   const [detailReport, setDetailReport] = useState(null);
+  const [selectedReportId, setSelectedReportId] = useState(null);
+  const [showGuidelinesModal, setShowGuidelinesModal] = useState(false);
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -429,6 +431,42 @@ Thank you for choosing our platform!`;
     toast.success('Manual invoice generated and transaction logged successfully.');
     setShowCreateInvoiceModal(false);
     setNewInvoiceData({ clientName: '', freelancerName: '', jobTitle: '', amount: '', status: 'completed', method: 'UPI' });
+  };
+
+  const handleReportsQuickAction = (actionName) => {
+    const targetId = selectedReportId || (filteredReportsList[0]?.id);
+    if (!targetId) {
+      return toast.error('No reports available in the queue.');
+    }
+    const reportObj = reportsList.find(r => r.id === targetId);
+    if (!reportObj) {
+      return toast.error('Selected report could not be found.');
+    }
+
+    if (actionName === 'approve') {
+      reportObj.status = 'Resolved';
+      toast.success(`Report ${targetId} successfully approved and resolved.`);
+    } else if (actionName === 'reject') {
+      reportObj.status = 'Rejected';
+      toast.success(`Report ${targetId} dismissed and marked rejected.`);
+    } else if (actionName === 'warn') {
+      toast.success(`Official warning sent to the author of ${targetId}.`);
+    } else if (actionName === 'suspend') {
+      if (reportObj.type.toLowerCase() === 'user') {
+        setSuspendReason('');
+        setShowSuspendModal(users.find(x => x.id === reportObj.itemId) || { id: reportObj.itemId, name: reportObj.itemName });
+      } else {
+        toast.error('Suspend option is only available for user reports. Job listings must be deleted.');
+      }
+    } else if (actionName === 'delete') {
+      if (reportObj.type.toLowerCase() === 'job') {
+        removeJob(reportObj.itemId);
+        toast.success(`Job content deleted and report resolved.`);
+      } else {
+        toast.success(`User restricted and content removed.`);
+      }
+    }
+    loadData();
   };
 
   const downloadFinancialStatement = () => {
@@ -2885,7 +2923,16 @@ END OF AUDIT STATEMENT
                     </thead>
                     <tbody>
                       {paginatedReports.map((r) => (
-                        <tr key={r.id}>
+                        <tr 
+                          key={r.id} 
+                          onClick={() => setSelectedReportId(r.id)} 
+                          style={{ 
+                            cursor: 'pointer', 
+                            background: selectedReportId === r.id ? '#f1f5f9' : '',
+                            transition: 'background 0.2s'
+                          }}
+                          title="Click to select for Quick Actions"
+                        >
                           <td style={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>{r.id}</td>
                           <td>
                             <span className={`ad-pill ${r.type.toLowerCase() === 'user' ? 'ad-pill--info' : 'ad-pill--success'}`} style={{ fontSize: 9.5, padding: '2px 8px' }}>
@@ -3048,19 +3095,19 @@ END OF AUDIT STATEMENT
                   <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column', height: 180, justifyContent: 'center' }}>
                     <h4 style={{ fontSize: 13.5, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Quick actions</h4>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button onClick={() => toast.success('Selected reports marked resolved.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
+                      <button onClick={() => handleReportsQuickAction('approve')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
                         <span style={{ color: '#10b981' }}>✔️</span> Approve (Mark resolved)
                       </button>
-                      <button onClick={() => toast.success('Selected reports dismissed.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
+                      <button onClick={() => handleReportsQuickAction('reject')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
                         <span style={{ color: '#ef4444' }}>❌</span> Reject (Dismiss report)
                       </button>
-                      <button onClick={() => toast.success('Warning dispatch modal opened.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
+                      <button onClick={() => handleReportsQuickAction('warn')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
                         <span style={{ color: '#f59e0b' }}>⚠️</span> Warn User (Send warning)
                       </button>
-                      <button onClick={() => toast.success('User restriction dialog opened.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
+                      <button onClick={() => handleReportsQuickAction('suspend')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
                         <span style={{ color: '#a855f7' }}>⏸️</span> Suspend (Restrict access)
                       </button>
-                      <button onClick={() => toast.success('Delete content dialog opened.')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
+                      <button onClick={() => handleReportsQuickAction('delete')} className="ad-quick-action-btn" style={{ flexDirection: 'row', gap: 6, padding: '10px 14px' }}>
                         <span style={{ color: '#dc2626' }}>🗑️</span> Delete Content (Remove)
                       </button>
                     </div>
@@ -3080,7 +3127,7 @@ END OF AUDIT STATEMENT
                         🛡️ Provide accurate information while reporting.
                       </div>
                     </div>
-                    <button onClick={() => toast.success('Full guidelines PDF documentation downloaded.')} style={{ border: 'none', background: 'none', padding: 0, color: '#6366f1', fontSize: 11.5, fontWeight: 700, textAlign: 'left', cursor: 'pointer', marginTop: 4 }}>
+                    <button onClick={() => setShowGuidelinesModal(true)} style={{ border: 'none', background: 'none', padding: 0, color: '#6366f1', fontSize: 11.5, fontWeight: 700, textAlign: 'left', cursor: 'pointer', marginTop: 4 }}>
                       View full guidelines →
                     </button>
                   </div>
@@ -4429,6 +4476,44 @@ END OF AUDIT STATEMENT
             </div>
             <div className="ad-modal-actions" style={{ marginTop: 16 }}>
               <button className="ad-modal-btn" onClick={() => setDetailReport(null)}>Close Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Guidelines Modal */}
+      {showGuidelinesModal && (
+        <div className="ad-overlay" onClick={() => setShowGuidelinesModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <button className="ad-close-x" onClick={() => setShowGuidelinesModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#eff6ff', color: '#2563eb' }}><Icon name="info" /></div>
+            <div className="ad-modal-title">Reporting & Safety Guidelines</div>
+            <div className="ad-modal-desc">
+              Standard operating procedures for managing flagged user content and job postings.
+            </div>
+            <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingRight: 6, fontSize: 12.5, lineHeight: 1.5, color: '#475569' }}>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>1. Review SLA & Queue</div>
+                <div>All flagged items are prioritized by creation dates and should be resolved or dismissed within 24 to 48 hours to ensure platform safety.</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>2. Taking Moderation Action</div>
+                <div>When content is proven to violate guidelines:
+                  <ul style={{ paddingLeft: 18, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <li><strong>Users:</strong> Issue an official warning, or restrict/suspend the account if violations persist.</li>
+                    <li><strong>Jobs:</strong> Delete content directly or edit listing parameters to remove misleading/spam titles.</li>
+                  </ul>
+                </div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>3. Abuse of Reporting Mechanism</div>
+                <div>Repetitive false reports or system spamming from reporters may result in access warnings or suspension of the reporter's account.</div>
+              </div>
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setShowGuidelinesModal(false)}>Close Guidelines</button>
             </div>
           </div>
         </div>
