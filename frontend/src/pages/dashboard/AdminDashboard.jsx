@@ -113,6 +113,9 @@ const AdminDashboard = () => {
   const [showEscrowModal, setShowEscrowModal] = useState(false);
   const [showHelpCenterModal, setShowHelpCenterModal] = useState(false);
   const [newInvoiceData, setNewInvoiceData] = useState({ clientName: '', freelancerName: '', jobTitle: '', amount: '', status: 'completed', method: 'UPI' });
+  const [showRefundsLedgerModal, setShowRefundsLedgerModal] = useState(false);
+  const [showTopSpendersModal, setShowTopSpendersModal] = useState(false);
+  const [detailRefund, setDetailRefund] = useState(null);
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -2585,18 +2588,18 @@ END OF AUDIT STATEMENT
                         </thead>
                         <tbody>
                           {transactions.filter(t => t.status === 'refund_pending' || t.status === 'refunded').slice(0, 2).map((r, idx) => (
-                            <tr key={idx}>
-                              <td style={{ fontSize: 12, fontWeight: 700 }}>#REF-2025-{(idx+1).toString().padStart(5, '0')}</td>
-                              <td style={{ fontSize: 12 }}>{r.from}</td>
-                              <td style={{ fontSize: 11.5, color: '#64748b' }}>{r.jobTitle}</td>
-                              <td style={{ fontSize: 12, fontWeight: 700 }}>{r.amount}</td>
-                              <td>
-                                <span className={`ad-pill ${r.status === 'refunded' ? 'ad-pill--danger' : 'ad-pill--warning'}`} style={{ fontSize: 9.5 }}>
-                                  {r.status === 'refunded' ? 'Refunded' : 'Pending'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
+                             <tr key={idx} onClick={() => setDetailRefund(r)} style={{ cursor: 'pointer' }} title="Click to view details">
+                               <td style={{ fontSize: 12, fontWeight: 700 }}>#REF-2025-{(idx+1).toString().padStart(5, '0')}</td>
+                               <td style={{ fontSize: 12 }}>{r.from}</td>
+                               <td style={{ fontSize: 11.5, color: '#64748b' }}>{r.jobTitle}</td>
+                               <td style={{ fontSize: 12, fontWeight: 700 }}>{r.amount}</td>
+                               <td>
+                                 <span className={`ad-pill ${r.status === 'refunded' ? 'ad-pill--danger' : 'ad-pill--warning'}`} style={{ fontSize: 9.5 }}>
+                                   {r.status === 'refunded' ? 'Refunded' : 'Pending'}
+                                 </span>
+                               </td>
+                             </tr>
+                           ))}
                           {transactions.filter(t => t.status === 'refund_pending' || t.status === 'refunded').length === 0 && (
                             <tr>
                               <td colSpan="5" className="ad-empty-row" style={{ padding: 12 }}>No refunds pending.</td>
@@ -2606,7 +2609,7 @@ END OF AUDIT STATEMENT
                       </table>
                     </div>
                     <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 8, marginTop: 4 }}>
-                      <button onClick={() => setPaymentStatusFilter('refund_pending')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <button onClick={() => setShowRefundsLedgerModal(true)} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                         View all refunds <span style={{ fontSize: 11 }}>→</span>
                       </button>
                     </div>
@@ -2616,7 +2619,7 @@ END OF AUDIT STATEMENT
                   <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column', height: 240 }}>
                     <div className="ad-jobs-split-title" style={{ marginBottom: 12 }}>
                       <span>Top clients by payments</span>
-                      <button onClick={() => toast.success('Viewing client spending report.')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View all</button>
+                      <button onClick={() => setShowTopSpendersModal(true)} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View all</button>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1 }}>
                       <div style={{ flex: 1.2 }}>
@@ -4228,6 +4231,111 @@ END OF AUDIT STATEMENT
             </div>
             <div className="ad-modal-actions" style={{ marginTop: 16 }}>
               <button className="ad-modal-btn" onClick={() => setShowHelpCenterModal(false)}>Close Guide</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refunds Ledger Modal */}
+      {showRefundsLedgerModal && (
+        <div className="ad-overlay" onClick={() => setShowRefundsLedgerModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+            <button className="ad-close-x" onClick={() => setShowRefundsLedgerModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#fef2f2', color: '#dc2626' }}><Icon name="refund" /></div>
+            <div className="ad-modal-title">Platform Refunds Register</div>
+            <div className="ad-modal-desc">
+              Complete history of transaction refunds pending approval or processed.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 220, overflowY: 'auto', marginBottom: 12, paddingRight: 6 }}>
+              {transactions.filter(t => t.status === 'refund_pending' || t.status === 'refunded').map((t, idx) => (
+                <div key={idx} style={{ padding: 10, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 13 }}>#REF-2025-{(idx+1).toString().padStart(5, '0')}</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>User: {t.from} · Project: {t.jobTitle}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 13 }}>{t.amount}</div>
+                    <span className={`ad-pill ${t.status === 'refunded' ? 'ad-pill--danger' : 'ad-pill--warning'}`} style={{ fontSize: 9.5, marginTop: 4, display: 'inline-block' }}>
+                      {t.status === 'refunded' ? 'Refunded' : 'Pending'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {transactions.filter(t => t.status === 'refund_pending' || t.status === 'refunded').length === 0 && (
+                <div style={{ textAlign: 'center', padding: 16, color: '#64748b', fontSize: 13 }}>No refund transactions log found.</div>
+              )}
+            </div>
+            <div className="ad-modal-actions">
+              <button className="ad-modal-btn" onClick={() => setShowRefundsLedgerModal(false)}>Close Ledger</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Spenders Modal */}
+      {showTopSpendersModal && (
+        <div className="ad-overlay" onClick={() => setShowTopSpendersModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+            <button className="ad-close-x" onClick={() => setShowTopSpendersModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#ecfdf5', color: '#10b981' }}><Icon name="chart" /></div>
+            <div className="ad-modal-title">Top Spenders Rank</div>
+            <div className="ad-modal-desc">
+              Clients ranked by cumulative payments volume and transaction frequency.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 220, overflowY: 'auto', marginBottom: 12, paddingRight: 6 }}>
+              {Object.values(clientSpentMap).sort((a,b) => b.total - a.total).map((c, idx) => (
+                <div key={idx} style={{ padding: 12, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 13 }}>Rank #{idx + 1}: {c.name}</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>{c.count} transactions completed</div>
+                  </div>
+                  <div style={{ fontWeight: 700, color: '#10b981', fontSize: 13.5 }}>₹{c.total.toLocaleString('en-IN')}</div>
+                </div>
+              ))}
+            </div>
+            <div className="ad-modal-actions">
+              <button className="ad-modal-btn" onClick={() => setShowTopSpendersModal(false)}>Close Rankings</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Detail Modal */}
+      {detailRefund && (
+        <div className="ad-overlay" onClick={() => setDetailRefund(null)}>
+          <div className="ad-modal ad-modal--detail" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <button className="ad-close-x" onClick={() => setDetailRefund(null)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-detail-head">
+              <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#fffbeb', color: '#d97706', width: 44, height: 44, borderRadius: 10 }}><Icon name="refund" /></div>
+              <div>
+                <div className="ad-detail-name" style={{ fontSize: 16 }}>Refund Details</div>
+                <div className="ad-detail-sub" style={{ fontSize: 12 }}>
+                  Refund Target ID: #REF-2025 · Status: <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{detailRefund.status === 'refund_pending' ? 'Pending' : 'Refunded'}</span>
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 16, fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: 10, marginBottom: 10 }}>
+                <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Client (Initiator)</span>
+                <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailRefund.from}</span>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: 10, marginBottom: 10 }}>
+                <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Project / Job Target</span>
+                <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailRefund.jobTitle}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', background: '#f8fafc', padding: 12, borderRadius: 8, fontWeight: 700 }}>
+                <span style={{ color: '#1e293b' }}>Refund Value:</span>
+                <span style={{ color: '#dc2626' }}>{detailRefund.amount}</span>
+              </div>
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setDetailRefund(null)}>Close Details</button>
             </div>
           </div>
         </div>
