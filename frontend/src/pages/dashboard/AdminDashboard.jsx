@@ -104,6 +104,7 @@ const AdminDashboard = () => {
   const [broadcastAudience, setBroadcastAudience] = useState('all');
   const [broadcastDelivery, setBroadcastDelivery] = useState('immediate');
   const [showWarningAlert, setShowWarningAlert] = useState(true);
+  const [revenueTimeframe, setRevenueTimeframe] = useState('month');
 
   // Load database records
   const loadData = async () => {
@@ -462,15 +463,38 @@ const AdminDashboard = () => {
   const getRevenueChart = () => {
     const width = 460;
     const height = 90;
-    const daysToShow = 7;
-    const dateLabels = [];
     const now = new Date();
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 3);
-      dateLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    
+    let daysToShow = 7;
+    let intervalDays = 3;
+    let filterMs = 30 * 24 * 60 * 60 * 1000;
+    
+    if (revenueTimeframe === 'week') {
+      daysToShow = 7;
+      intervalDays = 1;
+      filterMs = 7 * 24 * 60 * 60 * 1000;
+    } else if (revenueTimeframe === 'year') {
+      daysToShow = 6;
+      intervalDays = 60;
+      filterMs = 365 * 24 * 60 * 60 * 1000;
     }
 
-    if (transactions.length === 0) {
+    const dateLabels = [];
+    for (let i = daysToShow - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * intervalDays);
+      if (revenueTimeframe === 'year') {
+        dateLabels.push(d.toLocaleDateString('en-US', { month: 'short' }));
+      } else {
+        dateLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      }
+    }
+
+    const filteredTx = transactions.filter(t => {
+      const txDate = new Date(t.createdAt || 0);
+      return (now - txDate) <= filterMs;
+    });
+
+    if (filteredTx.length === 0) {
       const pts = dateLabels.map((date, idx) => {
         const x = (idx / (daysToShow - 1)) * width;
         const y = height - 10;
@@ -479,7 +503,7 @@ const AdminDashboard = () => {
       return { linePath: `M 0 ${height - 10} L ${width} ${height - 10}`, areaPath: `M 0 ${height - 10} L ${width} ${height - 10} L ${width} ${height} L 0 ${height} Z`, points: pts };
     }
 
-    const sortedTx = [...transactions].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    const sortedTx = [...filteredTx].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
     
     const intervalCommissions = Array(daysToShow).fill(0);
     sortedTx.forEach((t, idx) => {
@@ -906,7 +930,15 @@ const AdminDashboard = () => {
                   <div className="ad-card" style={{ display: 'flex', flexDirection: 'column' }}>
                     <div className="ad-card-head" style={{ marginBottom: 12 }}>
                       <span className="ad-card-title">Revenue overview</span>
-                      <span style={{ fontSize: 11.5, padding: '2px 8px', background: '#f3f4f6', borderRadius: 6, fontWeight: 600 }}>This Month ▾</span>
+                      <select
+                        value={revenueTimeframe}
+                        onChange={(e) => setRevenueTimeframe(e.target.value)}
+                        style={{ fontSize: 11.5, padding: '2px 8px', background: '#f3f4f6', borderRadius: 6, fontWeight: 600, border: 'none', outline: 'none', cursor: 'pointer' }}
+                      >
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="year">This Year</option>
+                      </select>
                     </div>
                     <div style={{ flex: 1, position: 'relative', marginTop: 10 }}>
                       <svg className="ad-revenue-chart-svg">
