@@ -44,7 +44,9 @@ const getJobs = async (req, res) => {
     const filter = {};
 
     if (status) {
-      filter.status = status;
+      if (status !== 'all') {
+        filter.status = status;
+      }
     } else {
       filter.status = 'active';
     }

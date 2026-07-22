@@ -253,9 +253,18 @@ const getPaymentHistory = async (req, res) => {
     const limit    = parseInt(req.query.limit) || 20;
     const skip     = (page - 1) * limit;
 
-    const filter = role === 'freelancer'
-      ? { freelancer: req.user.id }
-      : { client: req.user.id };
+    let filter = {};
+    if (req.user.role !== 'admin') {
+      filter = role === 'freelancer'
+        ? { freelancer: req.user.id }
+        : { client: req.user.id };
+    } else {
+      if (role === 'freelancer') {
+        filter = { freelancer: { $exists: true } };
+      } else if (role === 'client') {
+        filter = { client: { $exists: true } };
+      }
+    }
 
     const [transactions, total] = await Promise.all([
       Transaction.find(filter)

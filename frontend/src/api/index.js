@@ -156,4 +156,15 @@ export const reviewAPI = {
   getReviewStatusForJob: (jobId)  => api.get(`/reviews/job/${jobId}/status`),
 };
 
+// ─── Admin API ────────────────────────────────────────────────────────────────
+export const adminAPI = {
+  getUsers:            (params) => api.get('/users', { params }),
+  getUserById:         (userId) => api.get(`/users/${userId}`),
+  toggleSuspendUser:   (userId, reason) => api.patch(`/users/${userId}/suspend`, { reason }),
+  deleteUser:          (userId) => api.delete(`/users/${userId}`),
+  getJobs:             (params) => api.get('/jobs', { params }),
+  deleteJob:           (id)     => api.delete(`/jobs/${id}`),
+  getTransactions:     (params) => api.get('/payment/history', { params }),
+};
+
 export default api;
