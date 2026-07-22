@@ -516,6 +516,100 @@ const AdminDashboard = () => {
     return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}, ${end.getFullYear()}`;
   };
 
+  const exportOverviewReport = () => {
+    const reportData = {
+      generatedAt: new Date().toISOString(),
+      timeframe: 'Last 30 Days',
+      metrics: {
+        totalUsers: users.length,
+        freelancers: freelancerCount,
+        clients: clientCount,
+        activeJobs: activeJobCount,
+        inProgressJobs: inProgressJobCount,
+        completedJobs: completedJobCount,
+        cancelledJobs: cancelledJobCount,
+        totalPlatformCommissionEarned: commissionEarnedSum,
+        totalMarketplaceVolume: totalVolumeSum,
+        pendingReports: reportsList.length
+      }
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `platform_overview_report_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    toast.success('Platform overview report JSON downloaded successfully.');
+  };
+
+  const exportUsersCSV = () => {
+    if (users.length === 0) return toast.error('No users to export.');
+    const headers = ['User ID', 'Name', 'Email', 'Role', 'Status', 'Joined Date'];
+    const rows = users.map(u => [
+      u.id || '',
+      u.name || '',
+      u.email || '',
+      u.role || '',
+      u.status || '',
+      u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "platform_users_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast.success('Users list CSV spreadsheet exported.');
+  };
+
+  const exportJobsCSV = () => {
+    if (jobs.length === 0) return toast.error('No jobs to export.');
+    const headers = ['Job ID', 'Title', 'Client', 'Freelancer', 'Budget', 'Status', 'Posted Date'];
+    const rows = jobs.map(j => [
+      j.id || '',
+      j.title || '',
+      j.clientName || '',
+      j.freelancerName || '',
+      j.budget || 0,
+      j.status || '',
+      j.createdAt ? new Date(j.createdAt).toLocaleDateString() : 'N/A'
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "platform_jobs_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast.success('Jobs list CSV spreadsheet exported.');
+  };
+
+  const downloadDatabaseBackup = () => {
+    const backupData = {
+      backupTimestamp: new Date().toISOString(),
+      platformVersion: 'v1.2.0-stable',
+      databaseDump: {
+        users,
+        jobs,
+        transactions
+      }
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `database_backup_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    toast.success('Database backup JSON file generated and downloaded successfully.');
+  };
+
   // Pagination Calculations
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage) || 1;
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -724,7 +818,7 @@ const AdminDashboard = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: '#374151', cursor: 'pointer' }}>
                       <span>📅 {getOverviewDateRange()}</span>
                     </div>
-                    <button onClick={() => toast.success('Platform PDF report downloaded.')} className="ad-btn-black" style={{ padding: '7px 14px', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button onClick={exportOverviewReport} className="ad-btn-black" style={{ padding: '7px 14px', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
                       📥 Export Report
                     </button>
                   </div>
@@ -955,7 +1049,7 @@ const AdminDashboard = () => {
                       <Icon name="filter" /> More Filters
                     </button>
                   </div>
-                  <button onClick={() => toast.success('CSV spreadsheet exported.')} className="ad-btn-secondary">
+                  <button onClick={exportUsersCSV} className="ad-btn-secondary">
                     <Icon name="download" /> Export
                   </button>
                 </div>
@@ -1273,7 +1367,7 @@ const AdminDashboard = () => {
                       <option value="deadline">Sort: Deadline</option>
                     </select>
                   </div>
-                  <button onClick={() => toast.success('Jobs list spreadsheet exported.')} className="ad-btn-secondary">
+                  <button onClick={exportJobsCSV} className="ad-btn-secondary">
                     <Icon name="download" /> Export
                   </button>
                 </div>
@@ -3025,7 +3119,7 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                          <button onClick={() => toast.success('Database backup JSON generated and downloaded.')} className="btn btn-secondary" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12 }}>
+                          <button onClick={downloadDatabaseBackup} className="btn btn-secondary" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12 }}>
                             Backup Database
                           </button>
                           <select className="ad-filter-select" style={{ padding: '6px 10px', fontSize: 12 }}>
