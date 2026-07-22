@@ -105,6 +105,9 @@ const AdminDashboard = () => {
   const [editJob, setEditJob] = useState(null);
   const [viewApplicantsJob, setViewApplicantsJob] = useState(null);
   const [detailInvoice, setDetailInvoice] = useState(null);
+  const [showAdvancedTxFilters, setShowAdvancedTxFilters] = useState(false);
+  const [minTxAmount, setMinTxAmount] = useState('');
+  const [maxTxAmount, setMaxTxAmount] = useState('');
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -885,7 +888,10 @@ Thank you for choosing our platform!`;
       t.to.toLowerCase().includes(paymentSearch.toLowerCase()) ||
       t.jobTitle.toLowerCase().includes(paymentSearch.toLowerCase());
 
-    return matchesStatus && matchesMethod && matchesSearch;
+    const matchesMinAmount = minTxAmount === '' ? true : (t.total >= parseFloat(minTxAmount));
+    const matchesMaxAmount = maxTxAmount === '' ? true : (t.total <= parseFloat(maxTxAmount));
+
+    return matchesStatus && matchesMethod && matchesSearch && matchesMinAmount && matchesMaxAmount;
   });
 
   const paymentTotalPages = Math.ceil(filteredTransactions.length / paymentRowsPerPage) || 1;
@@ -2306,11 +2312,45 @@ Thank you for choosing our platform!`;
                       <option value="upi">UPI Gateway</option>
                       <option value="wallet">Wallet Apps</option>
                     </select>
-                    <button onClick={() => toast.success('Additional filter drawers opened.')} className="ad-btn-secondary" style={{ padding: '6px 12px' }}>
+                    <button onClick={() => setShowAdvancedTxFilters(!showAdvancedTxFilters)} className="ad-btn-secondary" style={{ padding: '6px 12px', background: showAdvancedTxFilters ? '#e2e8f0' : '' }}>
                       ⚙ Filter
                     </button>
                   </div>
                 </div>
+
+                {showAdvancedTxFilters && (
+                  <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 8, padding: 12, marginBottom: 14, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Minimum Amount (₹)</label>
+                      <input 
+                        type="number" 
+                        className="ad-search-input" 
+                        placeholder="e.g. 5000" 
+                        value={minTxAmount}
+                        onChange={(e) => { setMinTxAmount(e.target.value); setPaymentCurrentPage(1); }}
+                        style={{ width: 140, padding: '6px 10px', height: 32 }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Maximum Amount (₹)</label>
+                      <input 
+                        type="number" 
+                        className="ad-search-input" 
+                        placeholder="e.g. 50000" 
+                        value={maxTxAmount}
+                        onChange={(e) => { setMaxTxAmount(e.target.value); setPaymentCurrentPage(1); }}
+                        style={{ width: 140, padding: '6px 10px', height: 32 }}
+                      />
+                    </div>
+                    <button 
+                      onClick={() => { setMinTxAmount(''); setMaxTxAmount(''); }}
+                      className="ad-btn-secondary" 
+                      style={{ padding: '6px 12px', fontSize: 11.5, height: 32 }}
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                )}
 
                 {/* Recent Transactions Table */}
                 <div className="ad-card ad-card--table">
