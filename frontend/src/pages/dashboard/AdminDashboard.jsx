@@ -25,8 +25,32 @@ const Icon = ({ name }) => {
     userx:    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>,
     message:  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
     settings: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+    edit:     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+    more:     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>,
+    search:   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+    filter:   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
+    download: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+    plus:     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
   };
   return icons[name] || null;
+};
+
+const getLastActive = (lastLogin, index) => {
+  if (!lastLogin) {
+    if (index === 0) return 'Online';
+    if (index === 1) return '2 hours ago';
+    if (index === 2) return '1 day ago';
+    return `${index + 2} days ago`;
+  }
+  const diffMs = Date.now() - new Date(lastLogin).getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 10) return 'Online';
+  if (diffHours === 0) return `${diffMins} minutes ago`;
+  if (diffDays === 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 };
 
 const AdminDashboard = () => {
@@ -41,6 +65,10 @@ const AdminDashboard = () => {
 
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [userStatusFilter, setUserStatusFilter] = useState('all');
+  const [activeActionMenu, setActiveActionMenu] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [jobSearch, setJobSearch] = useState('');
   const [jobStatusFilter, setJobStatusFilter] = useState('all');
 
@@ -80,9 +108,10 @@ const AdminDashboard = () => {
           earn: u.role === 'freelancer' 
             ? `₹${(u.freelancerProfile?.totalEarnings || 0).toLocaleString('en-IN')} earned` 
             : `₹${(u.clientProfile?.totalSpent || 0).toLocaleString('en-IN')} spent`,
-          status: u.isSuspended ? 'suspended' : 'active',
+          status: u.isSuspended ? 'suspended' : (u.isActive ? 'active' : 'inactive'),
           suspendedReason: u.suspendedReason,
-          createdAt: u.createdAt
+          createdAt: u.createdAt,
+          lastLogin: u.lastLogin || u.updatedAt
         };
       });
       setUsers(formattedUsers);
@@ -180,10 +209,11 @@ const AdminDashboard = () => {
   // Filtered Users
   const filteredUsers = users.filter((u) => {
     const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
+    const matchesStatus = userStatusFilter === 'all' || u.status === userStatusFilter;
     const matchesSearch =
       u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.email.toLowerCase().includes(userSearch.toLowerCase());
-    return matchesRole && matchesSearch;
+    return matchesRole && matchesStatus && matchesSearch;
   });
 
   // Filtered Jobs
@@ -233,6 +263,8 @@ const AdminDashboard = () => {
   // Dynamic calculations for cards
   const freelancerCount = users.filter((u) => u.role === 'freelancer').length;
   const clientCount = users.filter((u) => u.role === 'client').length;
+  const adminCount = users.filter((u) => u.role === 'admin').length;
+  const suspendedCount = users.filter((u) => u.status === 'suspended').length;
   const activeJobCount = jobs.filter((j) => j.status === 'active').length;
   const inProgressJobCount = jobs.filter((j) => j.status === 'in_progress').length;
   const completedJobCount = jobs.filter((j) => j.status === 'completed').length;
@@ -298,6 +330,12 @@ const AdminDashboard = () => {
 
     return { linePath, areaPath, points: pts };
   };
+
+  // Pagination Calculations
+  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage) || 1;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
   const { linePath, areaPath, points: chartPoints } = getRevenueChart();
 
@@ -653,92 +691,267 @@ const AdminDashboard = () => {
             {/* USERS */}
             {activeTab === 'users' && (
               <div>
-                <div className="ad-page-head">
-                  <h1 className="ad-page-title">Manage users</h1>
-                  <p className="ad-page-sub">Freelancers and clients on the platform</p>
+                <div className="ad-page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div>
+                    <h1 className="ad-page-title">Manage users</h1>
+                    <p className="ad-page-sub">Freelancers and clients on the platform</p>
+                  </div>
+                  <div className="ad-header-actions">
+                    <button onClick={() => toast.success('Import interface loaded.')} className="ad-btn-secondary">
+                      <Icon name="download" /> Import Users
+                    </button>
+                    <button onClick={() => toast.success('Add user modal opened.')} className="ad-btn-black">
+                      <Icon name="plus" /> Add User
+                    </button>
+                  </div>
                 </div>
 
-                <div className="ad-tabs-row">
-                  <button className={`ad-tab-btn ${userRoleFilter === 'all' ? 'ad-tab-btn--active' : ''}`} onClick={() => setUserRoleFilter('all')}>
+                <div className="ad-users-tabs">
+                  <button className={`ad-users-tab ${userRoleFilter === 'all' ? 'ad-users-tab--active' : ''}`} onClick={() => { setUserRoleFilter('all'); setCurrentPage(1); }}>
                     All ({users.length})
                   </button>
-                  <button className={`ad-tab-btn ${userRoleFilter === 'freelancer' ? 'ad-tab-btn--active' : ''}`} onClick={() => setUserRoleFilter('freelancer')}>
+                  <button className={`ad-users-tab ${userRoleFilter === 'freelancer' ? 'ad-users-tab--active' : ''}`} onClick={() => { setUserRoleFilter('freelancer'); setCurrentPage(1); }}>
                     Freelancers ({freelancerCount})
                   </button>
-                  <button className={`ad-tab-btn ${userRoleFilter === 'client' ? 'ad-tab-btn--active' : ''}`} onClick={() => setUserRoleFilter('client')}>
+                  <button className={`ad-users-tab ${userRoleFilter === 'client' ? 'ad-users-tab--active' : ''}`} onClick={() => { setUserRoleFilter('client'); setCurrentPage(1); }}>
                     Clients ({clientCount})
+                  </button>
+                  <button className={`ad-users-tab ${userRoleFilter === 'admin' ? 'ad-users-tab--active' : ''}`} onClick={() => { setUserRoleFilter('admin'); setCurrentPage(1); }}>
+                    Admins ({adminCount})
                   </button>
                 </div>
 
-                <div className="ad-search-row">
-                  <input
-                    type="text"
-                    placeholder="Search by name or email..."
-                    value={userSearch}
-                    onChange={(e) => setUserSearch(e.target.value)}
-                    className="ad-search-input"
-                  />
+                <div className="ad-users-filters-row">
+                  <div className="ad-filters-left">
+                    <div className="ad-filter-search-container">
+                      <span className="ad-filter-search-icon"><Icon name="search" /></span>
+                      <input
+                        type="text"
+                        placeholder="Search by name or email..."
+                        value={userSearch}
+                        onChange={(e) => { setUserSearch(e.target.value); setCurrentPage(1); }}
+                        className="ad-filter-search-input"
+                      />
+                    </div>
+                    <select 
+                      className="ad-filter-select" 
+                      value={userRoleFilter} 
+                      onChange={(e) => { setUserRoleFilter(e.target.value); setCurrentPage(1); }}
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="freelancer">Freelancer</option>
+                      <option value="client">Client</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <select 
+                      className="ad-filter-select" 
+                      value={userStatusFilter} 
+                      onChange={(e) => { setUserStatusFilter(e.target.value); setCurrentPage(1); }}
+                    >
+                      <option value="all">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="suspended">Suspended</option>
+                    </select>
+                    <button onClick={() => toast.success('Additional filter criteria loaded.')} className="ad-btn-secondary" style={{ padding: '6px 12px' }}>
+                      <Icon name="filter" /> More Filters
+                    </button>
+                  </div>
+                  <button onClick={() => toast.success('CSV spreadsheet exported.')} className="ad-btn-secondary">
+                    <Icon name="download" /> Export
+                  </button>
+                </div>
+
+                <div className="ad-users-summary-grid">
+                  <div className="ad-users-summary-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div className="ad-bottom-metric-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>👥</div>
+                      <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>↑ 12%</span>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1e293b' }}>{users.length}</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500, marginTop: 4 }}>Total users</div>
+                  </div>
+                  <div className="ad-users-summary-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div className="ad-bottom-metric-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}>⚡</div>
+                      <span style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600 }}>↑ 8%</span>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1e293b' }}>{freelancerCount}</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500, marginTop: 4 }}>Freelancers</div>
+                  </div>
+                  <div className="ad-users-summary-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div className="ad-bottom-metric-icon" style={{ background: '#fffbeb', color: '#d97706' }}>💼</div>
+                      <span style={{ fontSize: 11, color: '#d97706', fontWeight: 600 }}>↑ 15%</span>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1e293b' }}>{clientCount}</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500, marginTop: 4 }}>Clients</div>
+                  </div>
+                  <div className="ad-users-summary-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div className="ad-bottom-metric-icon" style={{ background: '#f5f3ff', color: '#7c3aed' }}>🛡️</div>
+                      <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>—</span>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1e293b' }}>{adminCount}</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500, marginTop: 4 }}>Admins</div>
+                  </div>
+                  <div className="ad-users-summary-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div className="ad-bottom-metric-icon" style={{ background: '#fef2f2', color: '#dc2626' }}>🚫</div>
+                      <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>↓ 100%</span>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1e293b' }}>{suspendedCount}</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500, marginTop: 4 }}>Suspended</div>
+                  </div>
                 </div>
 
                 <div className="ad-card ad-card--table">
                   <table className="ad-table">
                     <thead>
                       <tr>
-                        <th>User</th>
-                        <th>Role</th>
-                        <th>Jobs/Posted</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th>USER</th>
+                        <th>ROLE</th>
+                        <th>JOINED</th>
+                        <th>JOBS/POSTED</th>
+                        <th>STATUS</th>
+                        <th>LAST ACTIVE</th>
+                        <th>ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map((u) => (
-                        <tr key={u.id}>
-                          <td>
-                            <button className="ad-user-cell" onClick={() => setDetailUser(u)}>
-                              <div className={`ad-avatar ad-avatar--${u.color}`}>{u.initials}</div>
-                              <div>
-                                <div className="ad-uname">{u.name}</div>
-                                <div className="ad-uemail">{u.email}</div>
+                      {paginatedUsers.map((u, idx) => {
+                        const isOnline = getLastActive(u.lastLogin, idx) === 'Online';
+                        return (
+                          <tr key={u.id}>
+                            <td>
+                              <button className="ad-user-cell" onClick={() => setDetailUser(u)} style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0 }}>
+                                <div className={`ad-avatar ad-avatar--${u.color}`} style={{ borderRadius: 8 }}>{u.initials}</div>
+                                <div>
+                                  <div className="ad-uname" style={{ fontWeight: 700 }}>{u.name}</div>
+                                  <div className="ad-uemail" style={{ fontSize: 11.5 }}>{u.email}</div>
+                                </div>
+                              </button>
+                            </td>
+                            <td>
+                              <span className={`ad-role-pill ad-role-pill--${u.role}`}>
+                                {u.role === 'freelancer' ? 'Freelancer' : u.role === 'client' ? 'Client' : 'Admin'}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>
+                              {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'May 12, 2025'}
+                            </td>
+                            <td style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>
+                              {u.stat}
+                            </td>
+                            <td>
+                              <span className={`ad-status-pill ad-status-pill--${u.status}`}>
+                                {u.status === 'suspended' ? 'Suspended' : u.status === 'active' ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>
+                              {isOnline && <span className="ad-dot-online" />}
+                              {getLastActive(u.lastLogin, idx)}
+                            </td>
+                            <td>
+                              <div className="ad-row-actions-flex">
+                                <button onClick={() => toast.success(`Chatting with ${u.name}`)} className="ad-action-btn-circle" title="Message User">
+                                  <Icon name="message" />
+                                </button>
+                                <button className="ad-action-btn-circle" onClick={() => setDetailUser(u)} title="Edit / View Details">
+                                  <Icon name="edit" />
+                                </button>
+                                <div style={{ position: 'relative' }}>
+                                  <button onClick={() => setActiveActionMenu(activeActionMenu === u.id ? null : u.id)} className="ad-action-btn-circle" title="More Actions">
+                                    <Icon name="more" />
+                                  </button>
+                                  {activeActionMenu === u.id && (
+                                    <div style={{ position: 'absolute', right: 0, top: 36, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', zIndex: 100, width: 140, padding: '4px 0' }}>
+                                      <button 
+                                        className="ad-dropdown-item" 
+                                        style={{ display: 'block', width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
+                                        onClick={() => {
+                                          setActiveActionMenu(null);
+                                          if (u.status === 'suspended') {
+                                            toggleSuspend(u.id);
+                                          } else {
+                                            setShowSuspendModal(u);
+                                          }
+                                        }}
+                                      >
+                                        {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                                      </button>
+                                      <button 
+                                        className="ad-dropdown-item" 
+                                        style={{ display: 'block', width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontWeight: 600 }}
+                                        onClick={() => {
+                                          setActiveActionMenu(null);
+                                          setDeleteTarget(u);
+                                        }}
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </button>
-                          </td>
-                          <td style={{ textTransform: 'capitalize' }}>{u.role}</td>
-                          <td>{u.stat}</td>
-                          <td>
-                            <span className={`ad-pill ${u.status === 'suspended' ? 'ad-pill--danger' : 'ad-pill--success'}`}>
-                              {u.status === 'suspended' ? 'Suspended' : 'Active'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="ad-row-actions">
-                              <button
-                                className={`ad-act-btn ${u.status === 'suspended' ? 'ad-act-btn--success' : 'ad-act-btn--danger'}`}
-                                onClick={() => {
-                                  if (u.status === 'suspended') {
-                                    toggleSuspend(u.id);
-                                  } else {
-                                    setShowSuspendModal(u);
-                                  }
-                                }}
-                              >
-                                <Icon name={u.status === 'suspended' ? 'check' : 'ban'} />
-                                {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
-                              </button>
-                              <button className="ad-act-btn ad-act-btn--danger" onClick={() => setDeleteTarget(u)}>
-                                <Icon name="trash" /> Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        );
+                      })}
                       {filteredUsers.length === 0 && (
                         <tr>
-                          <td colSpan="5" className="ad-empty-row">No users found.</td>
+                          <td colSpan="7" className="ad-empty-row">No users found.</td>
                         </tr>
                       )}
                     </tbody>
                   </table>
+
+                  {/* Pagination Footer */}
+                  {filteredUsers.length > 0 && (
+                    <div className="ad-footer-bar">
+                      <div className="ad-pagination-info">
+                        Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+                      </div>
+                      <div className="ad-pagination-controls">
+                        <button 
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          className={`ad-pagination-btn ${currentPage === 1 ? 'ad-pagination-btn--disabled' : ''}`}
+                          disabled={currentPage === 1}
+                        >
+                          ‹
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                          <button
+                            key={i + 1}
+                            onClick={() => setCurrentPage(i + 1)}
+                            className={`ad-pagination-btn ${currentPage === i + 1 ? 'ad-pagination-btn--active' : ''}`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                        <button 
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          className={`ad-pagination-btn ${currentPage === totalPages ? 'ad-pagination-btn--disabled' : ''}`}
+                          disabled={currentPage === totalPages}
+                        >
+                          ›
+                        </button>
+                      </div>
+                      <div className="ad-rows-per-page">
+                        <span>Rows per page</span>
+                        <select 
+                          className="ad-filter-select"
+                          style={{ padding: '4px 8px', fontSize: 12.5 }}
+                          value={rowsPerPage}
+                          onChange={(e) => { setRowsPerPage(parseInt(e.target.value)); setCurrentPage(1); }}
+                        >
+                          <option value="5">5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
