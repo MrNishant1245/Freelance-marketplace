@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { adminAPI, authAPI, messageAPI } from '../../api';
+import { adminAPI, authAPI, messageAPI, jobAPI } from '../../api';
 import toast from 'react-hot-toast';
 import './AdminDashboard.css';
 
@@ -101,6 +101,9 @@ const AdminDashboard = () => {
   const [messageUser, setMessageUser] = useState(null);
   const [directMessageText, setDirectMessageText] = useState('');
   const [editUser, setEditUser] = useState(null);
+  const [detailJob, setDetailJob] = useState(null);
+  const [editJob, setEditJob] = useState(null);
+  const [viewApplicantsJob, setViewApplicantsJob] = useState(null);
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -314,6 +317,37 @@ const AdminDashboard = () => {
     setUsers(users.map(u => u.id === editUser.id ? { ...u, name: editUser.name, email: editUser.email, role: editUser.role, status: editUser.status, phone: editUser.phone } : u));
     toast.success('User profile updated successfully.');
     setEditUser(null);
+  };
+
+  const handleEditJobSubmit = async (e) => {
+    e.preventDefault();
+    if (!editJob.title.trim() || !editJob.category.trim()) {
+      return toast.error('Title and Category are required.');
+    }
+    try {
+      await jobAPI.updateJob(editJob.id, {
+        title: editJob.title,
+        category: editJob.category,
+        budget: editJob.budget,
+        status: editJob.status
+      });
+      toast.success('Job details updated successfully.');
+      setEditJob(null);
+      loadData();
+    } catch (err) {
+      toast.error('Failed to update job info.');
+    }
+  };
+
+  const toggleFlagJob = (jobId) => {
+    setJobs(jobs.map(j => {
+      if (j.id === jobId) {
+        const nextFlag = !j.isFlagged;
+        toast.success(nextFlag ? 'Job flagged for moderator review.' : 'Job flag dismissed.');
+        return { ...j, isFlagged: nextFlag };
+      }
+      return j;
+    }));
   };
 
   const handleImportUsers = (e) => {
@@ -1714,21 +1748,21 @@ const AdminDashboard = () => {
                                   <button 
                                     className="ad-dropdown-item" 
                                     style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
-                                    onClick={() => { setActiveJobActionMenu(null); navigate(`/jobs/${j.id}`); }}
+                                    onClick={() => { setActiveJobActionMenu(null); setDetailJob(j); }}
                                   >
                                     👁 View Details
                                   </button>
                                   <button 
                                     className="ad-dropdown-item" 
                                     style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
-                                    onClick={() => { setActiveJobActionMenu(null); toast.success('Job details editable.'); }}
+                                    onClick={() => { setActiveJobActionMenu(null); setEditJob(j); }}
                                   >
                                     ✏ Edit Job
                                   </button>
                                   <button 
                                     className="ad-dropdown-item" 
                                     style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
-                                    onClick={() => { setActiveJobActionMenu(null); toast.success(`Viewing ${j.proposalCount} applicants.`); }}
+                                    onClick={() => { setActiveJobActionMenu(null); setViewApplicantsJob(j); }}
                                   >
                                     👥 Applicants
                                   </button>
@@ -1737,11 +1771,7 @@ const AdminDashboard = () => {
                                     style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#d97706' }}
                                     onClick={() => {
                                       setActiveJobActionMenu(null);
-                                      if (j.isFlagged) {
-                                        toast.success('Job dismissed.');
-                                      } else {
-                                        toast.success('Job flagged for review.');
-                                      }
+                                      toggleFlagJob(j.id);
                                     }}
                                   >
                                     🚩 {j.isFlagged ? 'Dismiss Flag' : 'Flag Job'}
@@ -3652,6 +3682,156 @@ const AdminDashboard = () => {
               <button type="submit" className="ad-modal-btn ad-modal-btn--success" style={{ background: '#7c3aed' }}>Send Message</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Job Details Modal */}
+      {detailJob && (
+        <div className="ad-overlay" onClick={() => setDetailJob(null)}>
+          <div className="ad-modal ad-modal--detail" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+            <button className="ad-close-x" onClick={() => setDetailJob(null)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-detail-head">
+              <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#eff6ff', color: '#3b82f6', width: 44, height: 44, borderRadius: 10 }}><Icon name="briefcase" /></div>
+              <div>
+                <div className="ad-detail-name" style={{ fontSize: 16 }}>{detailJob.title}</div>
+                <div className="ad-detail-sub" style={{ fontSize: 12 }}>
+                  Job ID: #{detailJob.jobIdShort} · Status: <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{detailJob.status}</span>
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
+              <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Skills required:</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                {detailJob.skills.map((s, idx) => (
+                  <span key={idx} style={{ background: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: 6, fontSize: 11.5 }}>{s}</span>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11 }}>Client:</span>
+                  <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 12.5 }}>{detailJob.clientName}</div>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11 }}>Hired Freelancer:</span>
+                  <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 12.5 }}>{detailJob.freelancerName}</div>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11 }}>Budget:</span>
+                  <div style={{ fontWeight: 700, color: '#10b981', fontSize: 13 }}>{detailJob.budgetFormatted}</div>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11 }}>Applications:</span>
+                  <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 12.5 }}>{detailJob.proposalCount} bids</div>
+                </div>
+              </div>
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setDetailJob(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Job Modal */}
+      {editJob && (
+        <div className="ad-overlay" onClick={() => setEditJob(null)}>
+          <form className="ad-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleEditJobSubmit} style={{ maxWidth: 440 }}>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#eff6ff', color: '#3b82f6' }}><Icon name="edit" /></div>
+            <div className="ad-modal-title">Edit Job Listing</div>
+            <div className="ad-modal-desc">
+              Update project details for #{editJob.jobIdShort}.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Job Title</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  value={editJob.title}
+                  onChange={(e) => setEditJob({ ...editJob, title: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Category</label>
+                <input 
+                  type="text" 
+                  className="ad-search-input"
+                  value={editJob.category}
+                  onChange={(e) => setEditJob({ ...editJob, category: e.target.value })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Budget (INR)</label>
+                <input 
+                  type="number" 
+                  className="ad-search-input"
+                  value={editJob.budget || ''}
+                  onChange={(e) => setEditJob({ ...editJob, budget: parseInt(e.target.value) || 0 })}
+                  style={{ maxWidth: '100%', width: '100%', padding: '8px 12px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Job Status</label>
+                <select 
+                  className="ad-filter-select"
+                  value={editJob.status}
+                  onChange={(e) => setEditJob({ ...editJob, status: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', height: 38 }}
+                >
+                  <option value="open">Open</option>
+                  <option value="active">Active</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div className="ad-modal-actions">
+              <button type="button" className="ad-modal-btn" onClick={() => setEditJob(null)}>Cancel</button>
+              <button type="submit" className="ad-modal-btn ad-modal-btn--success" style={{ background: '#3b82f6' }}>Save Changes</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* View Applicants Modal */}
+      {viewApplicantsJob && (
+        <div className="ad-overlay" onClick={() => setViewApplicantsJob(null)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <button className="ad-close-x" onClick={() => setViewApplicantsJob(null)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#f5f3ff', color: '#7c3aed' }}><Icon name="users" /></div>
+            <div className="ad-modal-title">Job Applicants</div>
+            <div className="ad-modal-desc">
+              List of freelancers who bid on "{viewApplicantsJob.title}".
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 220, overflowY: 'auto', marginBottom: 12, paddingRight: 6 }}>
+              {viewApplicantsJob.proposalCount > 0 ? (
+                Array.from({ length: viewApplicantsJob.proposalCount }).map((_, idx) => (
+                  <div key={idx} style={{ padding: 10, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 13 }}>Applicant #{idx + 1}</div>
+                      <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>"Interested in delivering the frontend layout modules."</div>
+                    </div>
+                    <div style={{ fontWeight: 700, color: '#10b981', fontSize: 13 }}>₹{(viewApplicantsJob.budget * 0.9).toLocaleString('en-IN')}</div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: 16, color: '#64748b', fontSize: 13 }}>No applicants yet for this job posting.</div>
+              )}
+            </div>
+            <div className="ad-modal-actions">
+              <button className="ad-modal-btn" onClick={() => setViewApplicantsJob(null)}>Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
