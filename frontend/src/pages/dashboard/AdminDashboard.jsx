@@ -426,7 +426,7 @@ const AdminDashboard = () => {
   const clientCount = users.filter((u) => u.role === 'client').length;
   const adminCount = users.filter((u) => u.role === 'admin').length;
   const suspendedCount = users.filter((u) => u.status === 'suspended').length;
-  const activeJobCount = jobs.filter((j) => j.status === 'active').length;
+  const activeJobCount = jobs.filter((j) => j.status === 'active' || j.status === 'open').length;
   const inProgressJobCount = jobs.filter((j) => j.status === 'in_progress').length;
   const completedJobCount = jobs.filter((j) => j.status === 'completed').length;
   const cancelledJobCount = jobs.filter((j) => j.status === 'cancelled').length;
@@ -462,11 +462,7 @@ const AdminDashboard = () => {
   const getRevenueChart = () => {
     const width = 460;
     const height = 90;
-    if (transactions.length === 0) {
-      return { linePath: `M 0 ${height/2} L ${width} ${height/2}`, areaPath: `M 0 ${height/2} L ${width} ${height/2} L ${width} ${height} L 0 ${height} Z`, points: [] };
-    }
     const daysToShow = 7;
-    const totals = Array(daysToShow).fill(0);
     const dateLabels = [];
     const now = new Date();
     for (let i = daysToShow - 1; i >= 0; i--) {
@@ -474,15 +470,33 @@ const AdminDashboard = () => {
       dateLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
     }
 
-    transactions.forEach(t => {
-      const hash = String(t.id).charCodeAt(0) % daysToShow;
-      totals[hash] += t.total;
+    if (transactions.length === 0) {
+      const pts = dateLabels.map((date, idx) => {
+        const x = (idx / (daysToShow - 1)) * width;
+        const y = height - 10;
+        return { x, y, date, val: 0 };
+      });
+      return { linePath: `M 0 ${height - 10} L ${width} ${height - 10}`, areaPath: `M 0 ${height - 10} L ${width} ${height - 10} L ${width} ${height} L 0 ${height} Z`, points: pts };
+    }
+
+    const sortedTx = [...transactions].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    
+    const intervalCommissions = Array(daysToShow).fill(0);
+    sortedTx.forEach((t, idx) => {
+      const bucket = Math.min(daysToShow - 1, Math.floor((idx / sortedTx.length) * daysToShow));
+      intervalCommissions[bucket] += (t.total || 0) * 0.1;
     });
 
-    const maxVal = Math.max(...totals, 20000);
-    const pts = totals.map((val, idx) => {
+    let currentSum = 0;
+    const cumulativeTotals = intervalCommissions.map(val => {
+      currentSum += val;
+      return currentSum;
+    });
+
+    const maxVal = Math.max(...cumulativeTotals, 1000);
+    const pts = cumulativeTotals.map((val, idx) => {
       const x = (idx / (daysToShow - 1)) * width;
-      const y = height - (val / maxVal) * (height - 20) - 10;
+      const y = height - (val / maxVal) * (height - 30) - 15;
       return { x, y, date: dateLabels[idx], val };
     });
 
@@ -492,6 +506,14 @@ const AdminDashboard = () => {
       : '';
 
     return { linePath, areaPath, points: pts };
+  };
+
+  const getOverviewDateRange = () => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 30);
+    const options = { month: 'short', day: 'numeric' };
+    return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}, ${end.getFullYear()}`;
   };
 
   // Pagination Calculations
@@ -692,21 +714,23 @@ const AdminDashboard = () => {
             {/* OVERVIEW */}
             {activeTab === 'overview' && (
               <div>
-                <div className="ad-page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* Header */}
+                <div className="ad-page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                   <div>
                     <h1 className="ad-page-title">Platform overview</h1>
                     <p className="ad-page-sub">Key metrics across the marketplace</p>
                   </div>
                   <div style={{ display: 'flex', gap: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: '#374151', cursor: 'pointer' }}>
-                      <span>📅 May 13 - Jun 12, 2025</span>
+                      <span>📅 {getOverviewDateRange()}</span>
                     </div>
-                    <button onClick={() => toast.success('Platform PDF report downloaded.')} className="btn btn-primary" style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button onClick={() => toast.success('Platform PDF report downloaded.')} className="ad-btn-black" style={{ padding: '7px 14px', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
                       📥 Export Report
                     </button>
                   </div>
                 </div>
 
+                {/* Top KPI Cards Row */}
                 <div className="ad-stats-grid">
                   <div className="ad-stat-card">
                     <div className="ad-stat-top">
@@ -729,7 +753,7 @@ const AdminDashboard = () => {
                       <div className="ad-stat-icon ad-stat-icon--amber"><Icon name="rupee" /></div>
                       <span className="ad-stat-trend ad-stat-trend--up">↑ 21%</span>
                     </div>
-                    <div className="ad-stat-val">{formatRevenueL(totalRevenueNum)}</div>
+                    <div className="ad-stat-val">₹{commissionEarnedSum.toLocaleString('en-IN')}</div>
                     <div className="ad-stat-label">Revenue (month)</div>
                   </div>
                   <div className="ad-stat-card">
@@ -758,8 +782,8 @@ const AdminDashboard = () => {
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={251.2 - (clientPct / 100) * 251.2} transform={`rotate(${(freePct / 100) * 360 - 90} 50 50)`} />
                       </svg>
                       <div className="ad-chart-center-label">
-                        <span className="ad-chart-center-val">{totalBreakdown}</span>
-                        <span className="ad-chart-center-lbl">Total</span>
+                        <span className="ad-chart-center-val">{users.length}</span>
+                        <span className="ad-chart-center-lbl">TOTAL</span>
                       </div>
                     </div>
                     <div className="ad-legend-list">
@@ -767,19 +791,19 @@ const AdminDashboard = () => {
                         <span className="ad-legend-color-label">
                           <span className="ad-legend-dot" style={{ background: '#4f46e5' }} /> Freelancers
                         </span>
-                        <span className="ad-legend-val">{freelancerCount} ({freePct.toFixed(0)}%)</span>
+                        <span className="ad-legend-val" style={{ fontWeight: 700 }}>{freelancerCount} ({freePct.toFixed(0)}%)</span>
                       </div>
                       <div className="ad-legend-item">
                         <span className="ad-legend-color-label">
                           <span className="ad-legend-dot" style={{ background: '#10b981' }} /> Clients
                         </span>
-                        <span className="ad-legend-val">{clientCount} ({clientPct.toFixed(0)}%)</span>
+                        <span className="ad-legend-val" style={{ fontWeight: 700 }}>{clientCount} ({clientPct.toFixed(0)}%)</span>
                       </div>
                       <div className="ad-legend-item">
                         <span className="ad-legend-color-label">
                           <span className="ad-legend-dot" style={{ background: '#f59e0b' }} /> Posted jobs
                         </span>
-                        <span className="ad-legend-val">{jobs.length}</span>
+                        <span className="ad-legend-val" style={{ fontWeight: 700 }}>{jobs.length}</span>
                       </div>
                     </div>
                   </div>
@@ -820,15 +844,15 @@ const AdminDashboard = () => {
                     </div>
                     <div className="ad-chart-container">
                       <svg width="100" height="100" viewBox="0 0 100 100">
-                        {/* segment segmentations */}
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="#eff6ff" strokeWidth="8" />
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={activeOffset} transform="rotate(-90 50 50)" />
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f59e0b" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={inProgressOffset} transform={`rotate(${(activePct / 100) * 360 - 90} 50 50)`} />
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="#3b82f6" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={completedOffset} transform={`rotate(${((activePct + inProgressPct) / 100) * 360 - 90} 50 50)`} />
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#9ca3af" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={251.2 - (cancelledPct / 100) * 251.2} transform={`rotate(${((activePct + inProgressPct + completedPct) / 100) * 360 - 90} 50 50)`} />
                       </svg>
                       <div className="ad-chart-center-label">
-                        <span className="ad-chart-center-val">{totalStatusJobs}</span>
-                        <span className="ad-chart-center-lbl">Total</span>
+                        <span className="ad-chart-center-val">{jobs.length}</span>
+                        <span className="ad-chart-center-lbl">TOTAL</span>
                       </div>
                     </div>
                     <div className="ad-legend-list">
@@ -836,157 +860,26 @@ const AdminDashboard = () => {
                         <span className="ad-legend-color-label">
                           <span className="ad-legend-dot" style={{ background: '#10b981' }} /> Active
                         </span>
-                        <span className="ad-legend-val">{activeJobCount} ({activePct.toFixed(0)}%)</span>
+                        <span className="ad-legend-val" style={{ fontWeight: 700 }}>{activeJobCount} ({activePct.toFixed(0)}%)</span>
                       </div>
                       <div className="ad-legend-item">
                         <span className="ad-legend-color-label">
                           <span className="ad-legend-dot" style={{ background: '#f59e0b' }} /> In Progress
                         </span>
-                        <span className="ad-legend-val">{inProgressJobCount} ({inProgressPct.toFixed(0)}%)</span>
+                        <span className="ad-legend-val" style={{ fontWeight: 700 }}>{inProgressJobCount} ({inProgressPct.toFixed(0)}%)</span>
                       </div>
                       <div className="ad-legend-item">
                         <span className="ad-legend-color-label">
                           <span className="ad-legend-dot" style={{ background: '#3b82f6' }} /> Completed
                         </span>
-                        <span className="ad-legend-val">{completedJobCount} ({completedPct.toFixed(0)}%)</span>
+                        <span className="ad-legend-val" style={{ fontWeight: 700 }}>{completedJobCount} ({completedPct.toFixed(0)}%)</span>
                       </div>
                       <div className="ad-legend-item">
                         <span className="ad-legend-color-label">
                           <span className="ad-legend-dot" style={{ background: '#9ca3af' }} /> Cancelled
                         </span>
-                        <span className="ad-legend-val">{cancelledJobCount} ({cancelledPct.toFixed(0)}%)</span>
+                        <span className="ad-legend-val" style={{ fontWeight: 700 }}>{cancelledJobCount} ({cancelledPct.toFixed(0)}%)</span>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dashboard Horizontal Tables Grid */}
-                <div className="ad-dashboard-tables-grid">
-                  {/* Recent Users */}
-                  <div className="ad-card" style={{ padding: '14px 16px' }}>
-                    <div className="ad-card-head" style={{ marginBottom: 12 }}>
-                      <span className="ad-card-title">Recent users</span>
-                      <span onClick={() => setActiveTab('users')} className="ad-card-head-link">View all</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {users.slice(0, 3).map((u, i) => (
-                        <div key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: i < 2 ? '10px' : '0', borderBottom: i < 2 ? '1px solid #f3f4f6' : 'none' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div className={`ad-avatar ad-avatar--${u.color}`} style={{ width: 32, height: 32, fontSize: 11, borderRadius: 8 }}>{u.initials}</div>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{u.name}</div>
-                              <div style={{ fontSize: 11.5, color: '#6b7280' }}>{u.email}</div>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ display: 'inline-block', fontSize: 11, padding: '2px 8px', background: '#f3f4f6', borderRadius: 4, fontWeight: 600, color: '#4b5563', textTransform: 'capitalize' }}>
-                              {u.role}
-                            </span>
-                            <div style={{ fontSize: 10.5, color: '#9ca3af', marginTop: 4 }}>
-                              {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'May 12'}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {users.length === 0 && <p style={{ textAlign: 'center', fontSize: 12.5, color: '#9ca3af', padding: 12 }}>No recent users.</p>}
-                    </div>
-                  </div>
-
-                  {/* Recent Jobs */}
-                  <div className="ad-card" style={{ padding: '14px 16px' }}>
-                    <div className="ad-card-head" style={{ marginBottom: 12 }}>
-                      <span className="ad-card-title">Recent jobs</span>
-                      <span onClick={() => setActiveTab('jobs')} className="ad-card-head-link">View all</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {jobs.slice(0, 3).map((j, i) => (
-                        <div key={j.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: i < 2 ? '10px' : '0', borderBottom: i < 2 ? '1px solid #f3f4f6' : 'none' }}>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: 160 }}>{j.title}</div>
-                            <div style={{ fontSize: 11.5, color: '#6b7280' }}>Client: {j.client}</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span className={`ad-pill ${j.status === 'completed' ? 'ad-pill--success' : 'ad-pill--info'}`} style={{ fontSize: 10.5, padding: '2px 8px', borderRadius: 4 }}>
-                              {j.status === 'in_progress' ? 'In Progress' : j.status}
-                            </span>
-                            <div style={{ fontSize: 10.5, color: '#9ca3af', marginTop: 4 }}>
-                              {j.createdAt ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'May 12'}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {jobs.length === 0 && <p style={{ textAlign: 'center', fontSize: 12.5, color: '#9ca3af', padding: 12 }}>No recent jobs.</p>}
-                    </div>
-                  </div>
-
-                  {/* Recent Payments */}
-                  <div className="ad-card" style={{ padding: '14px 16px' }}>
-                    <div className="ad-card-head" style={{ marginBottom: 12 }}>
-                      <span className="ad-card-title">Recent payments</span>
-                      <span onClick={() => setActiveTab('payments')} className="ad-card-head-link">View all</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {transactions.slice(0, 3).map((t, i) => (
-                        <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: i < 2 ? '10px' : '0', borderBottom: i < 2 ? '1px solid #f3f4f6' : 'none' }}>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{t.from}</div>
-                            <div style={{ fontSize: 11.5, color: '#6b7280' }}>Invoice #INV-2025-{t.id}</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#059669' }}>{t.amount}</div>
-                            <span style={{ display: 'inline-block', fontSize: 10.5, padding: '1px 6px', background: '#d1fae5', color: '#065f46', borderRadius: 4, fontWeight: 700, marginTop: 4 }}>
-                              Paid
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                      {transactions.length === 0 && <p style={{ textAlign: 'center', fontSize: 12.5, color: '#9ca3af', padding: 12 }}>No recent payments.</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Row Metrics */}
-                <div className="ad-dashboard-bottom-grid">
-                  <div className="ad-bottom-metric-card">
-                    <div className="ad-bottom-metric-icon">⏱</div>
-                    <div>
-                      <div className="ad-bottom-metric-label">Avg. Response Time</div>
-                      <div className="ad-bottom-metric-val">2.4 hrs</div>
-                    </div>
-                  </div>
-                  <div className="ad-bottom-metric-card">
-                    <div className="ad-bottom-metric-icon">📈</div>
-                    <div>
-                      <div className="ad-bottom-metric-label">Job Completion Rate</div>
-                      <div className="ad-bottom-metric-val">85%</div>
-                    </div>
-                  </div>
-                  <div className="ad-bottom-metric-card">
-                    <div className="ad-bottom-metric-icon">👥</div>
-                    <div>
-                      <div className="ad-bottom-metric-label">User Growth</div>
-                      <div className="ad-bottom-metric-val">+12%</div>
-                    </div>
-                  </div>
-                  <div className="ad-bottom-metric-card">
-                    <div className="ad-bottom-metric-icon">🔄</div>
-                    <div>
-                      <div className="ad-bottom-metric-label">Repeat Clients</div>
-                      <div className="ad-bottom-metric-val">60%</div>
-                    </div>
-                  </div>
-                  <div className="ad-bottom-metric-card">
-                    <div className="ad-bottom-metric-icon">⚠️</div>
-                    <div>
-                      <div className="ad-bottom-metric-label">Dispute Rate</div>
-                      <div className="ad-bottom-metric-val">2%</div>
-                    </div>
-                  </div>
-                  <div className="ad-bottom-metric-card">
-                    <div className="ad-bottom-metric-icon">⭐</div>
-                    <div>
-                      <div className="ad-bottom-metric-label">Satisfaction Score</div>
-                      <div className="ad-bottom-metric-val">4.6 / 5</div>
                     </div>
                   </div>
                 </div>
