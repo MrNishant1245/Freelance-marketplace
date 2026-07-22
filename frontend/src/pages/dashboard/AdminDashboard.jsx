@@ -129,7 +129,7 @@ const AdminDashboard = () => {
     { id: 'B-001', text: 'System maintenance scheduled for Sunday at 2 AM.', audience: 'All Users', date: '20 Jul, 2026', status: 'delivered' },
     { id: 'B-002', text: 'New platform features have been released! Check them out.', audience: 'Clients Only', date: '15 Jul, 2026', status: 'delivered' }
   ]);
-
+  const [showMessageGuidelinesModal, setShowMessageGuidelinesModal] = useState(false);
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
   const [commissionRate, setCommissionRate] = useState(10);
@@ -3389,7 +3389,7 @@ END OF AUDIT STATEMENT
                         ✔️ Ensure your message follows our communication policy.
                       </div>
                     </div>
-                    <button onClick={() => toast.success('Communications policy rules PDF loaded.')} style={{ border: 'none', background: 'none', padding: 0, color: '#6366f1', fontSize: 11.5, fontWeight: 700, textAlign: 'left', cursor: 'pointer', marginTop: 8 }}>
+                    <button onClick={() => setShowMessageGuidelinesModal(true)} style={{ border: 'none', background: 'none', padding: 0, color: '#6366f1', fontSize: 11.5, fontWeight: 700, textAlign: 'left', cursor: 'pointer', marginTop: 8 }}>
                       View full guidelines →
                     </button>
                   </div>
@@ -4592,6 +4592,39 @@ END OF AUDIT STATEMENT
             </div>
             <div className="ad-modal-actions">
               <button className="ad-modal-btn" onClick={() => setShowBroadcastHistoryModal(false)}>Close History</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Message Guidelines Modal */}
+      {showMessageGuidelinesModal && (
+        <div className="ad-overlay" onClick={() => setShowMessageGuidelinesModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <button className="ad-close-x" onClick={() => setShowMessageGuidelinesModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#eff6ff', color: '#2563eb' }}><Icon name="info" /></div>
+            <div className="ad-modal-title">Broadcast Compositions Guidelines</div>
+            <div className="ad-modal-desc">
+              Best practices for publishing announcements and broadcast messages to platform users.
+            </div>
+            <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingRight: 6, fontSize: 12.5, lineHeight: 1.5, color: '#475569' }}>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>Keep messages clear and brief</div>
+                <div>Avoid long-winded paragraphs. Keep notifications under 150 words for optimal mobile and desktop readability.</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>Tone and ALL CAPS policies</div>
+                <div>Write in a professional, welcoming tone. Avoid excessive uppercase lettering which may look spammy to users.</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>No external advertising links</div>
+                <div>Only platform-related announcements, updates, support alerts, and scheduled maintenance messages should be dispatched.</div>
+              </div>
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setShowMessageGuidelinesModal(false)}>Close Guidelines</button>
             </div>
           </div>
         </div>
