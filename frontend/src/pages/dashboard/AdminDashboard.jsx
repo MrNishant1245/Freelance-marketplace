@@ -121,6 +121,7 @@ const AdminDashboard = () => {
   const [showRefundsLedgerModal, setShowRefundsLedgerModal] = useState(false);
   const [showTopSpendersModal, setShowTopSpendersModal] = useState(false);
   const [detailRefund, setDetailRefund] = useState(null);
+  const [detailReport, setDetailReport] = useState(null);
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -2865,53 +2866,7 @@ END OF AUDIT STATEMENT
                       )}
                     </div>
                   </div>
-                  <button onClick={() => setShowAdvancedReportFilters(!showAdvancedReportFilters)} className="ad-btn-secondary" style={{ padding: '6px 12px', background: showAdvancedReportFilters ? '#e2e8f0' : '' }}>
-                    ⚙ Filter
-                  </button>
                 </div>
-
-                {/* Advanced Report Filters Drawer */}
-                {showAdvancedReportFilters && (
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 16, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                    <div>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>Filter by Type</span>
-                      <div style={{ display: 'flex', gap: 10 }}>
-                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <input type="radio" name="reportType" checked={reportTypeFilter === 'all'} onChange={() => { setReportTypeFilter('all'); setReportCurrentPage(1); }} /> All
-                        </label>
-                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <input type="radio" name="reportType" checked={reportTypeFilter === 'user'} onChange={() => { setReportTypeFilter('user'); setReportCurrentPage(1); }} /> Users
-                        </label>
-                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <input type="radio" name="reportType" checked={reportTypeFilter === 'job'} onChange={() => { setReportTypeFilter('job'); setReportCurrentPage(1); }} /> Jobs
-                        </label>
-                      </div>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>Filter by Status</span>
-                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <input type="radio" name="reportStatus" checked={reportStatusFilter === 'all'} onChange={() => { setReportStatusFilter('all'); setReportCurrentPage(1); }} /> All
-                        </label>
-                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <input type="radio" name="reportStatus" checked={reportStatusFilter === 'pending'} onChange={() => { setReportStatusFilter('pending'); setReportCurrentPage(1); }} /> Pending
-                        </label>
-                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <input type="radio" name="reportStatus" checked={reportStatusFilter === 'resolved'} onChange={() => { setReportStatusFilter('resolved'); setReportCurrentPage(1); }} /> Resolved
-                        </label>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                      <button 
-                        onClick={() => { setReportSearch(''); setReportTypeFilter('all'); setReportStatusFilter('all'); setReportCategoryFilter('all'); setReportDateStart(''); setReportDateEnd(''); setReportCurrentPage(1); toast.success('All reports filters cleared.'); }} 
-                        className="btn btn-secondary" 
-                        style={{ padding: '6px 12px', fontSize: 11.5 }}
-                      >
-                        Reset All Filters
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Reports Table List */}
                 <div className="ad-card ad-card--table">
@@ -2985,13 +2940,7 @@ END OF AUDIT STATEMENT
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
                               <button 
-                                onClick={() => {
-                                  if (r.type.toLowerCase() === 'user') {
-                                    navigate(`/users`);
-                                  } else {
-                                    navigate(`/jobs/${r.itemId}`);
-                                  }
-                                }} 
+                                onClick={() => setDetailReport(r)} 
                                 className="ad-action-btn-circle" 
                                 title="View Details"
                               >
@@ -4425,6 +4374,61 @@ END OF AUDIT STATEMENT
             </div>
             <div className="ad-modal-actions" style={{ marginTop: 16 }}>
               <button className="ad-modal-btn" onClick={() => setDetailRefund(null)}>Close Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Detail Modal */}
+      {detailReport && (
+        <div className="ad-overlay" onClick={() => setDetailReport(null)}>
+          <div className="ad-modal ad-modal--detail" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <button className="ad-close-x" onClick={() => setDetailReport(null)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-detail-head">
+              <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#fef2f2', color: '#dc2626', width: 44, height: 44, borderRadius: 10 }}><Icon name="alert" /></div>
+              <div>
+                <div className="ad-detail-name" style={{ fontSize: 16 }}>Report Moderation Details</div>
+                <div className="ad-detail-sub" style={{ fontSize: 12 }}>
+                  Report Reference: {detailReport.id} · Type: {detailReport.type}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 16, fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 12 }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Reported Target Item</span>
+                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailReport.itemName}</span>
+                  <span style={{ display: 'block', fontSize: 11.5, color: '#64748b' }}>{detailReport.itemEmail}</span>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Reported By (Reporter)</span>
+                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailReport.reporterName}</span>
+                  <span style={{ display: 'block', fontSize: 11.5, color: '#64748b' }}>{detailReport.reporterEmail}</span>
+                </div>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 12 }}>
+                <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Reason for Flagging</span>
+                <span style={{ fontWeight: 600, color: '#e11d48', background: '#fff1f2', padding: '6px 10px', borderRadius: 6, display: 'block', marginTop: 4 }}>
+                  {detailReport.reason}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Reported Date</span>
+                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailReport.date} @ {detailReport.time}</span>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase', textAlign: 'right' }}>Current Status</span>
+                  <span className={`ad-pill ${detailReport.status === 'Pending' ? 'ad-pill--warning' : detailReport.status === 'In Review' ? 'ad-pill--info' : detailReport.status === 'Resolved' ? 'ad-pill--success' : 'ad-pill--danger'}`} style={{ fontSize: 9.5, marginTop: 2, display: 'inline-block' }}>
+                    {detailReport.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setDetailReport(null)}>Close Details</button>
             </div>
           </div>
         </div>
