@@ -2914,54 +2914,329 @@ const AdminDashboard = () => {
             {/* SETTINGS */}
             {activeTab === 'settings' && (
               <div>
-                <div className="ad-page-head">
-                  <h1 className="ad-page-title">Platform Settings</h1>
-                  <p className="ad-page-sub">Global parameters and marketplace configuration</p>
+                {/* Header */}
+                <div className="ad-page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div>
+                    <h1 className="ad-page-title">Platform Settings</h1>
+                    <p className="ad-page-sub">Global parameters and marketplace configuration</p>
+                  </div>
+                  <button onClick={() => toast.success('All settings changes have been saved and applied.')} className="ad-btn-black">
+                    Save Changes
+                  </button>
                 </div>
-                <div className="ad-card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16, borderBottom: '1px solid #f3f4f6' }}>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#111827' }}>Platform Commission Fee</div>
-                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Percentage deducted from payments released to freelancers</div>
+
+                {/* Top KPI Cards (6 cards) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginBottom: 22 }}>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Total Users</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', marginTop: 4 }}>{users.length}</div>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>Registered profiles</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Active Freelancers</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#3b82f6', marginTop: 4 }}>{freelancerCount}</div>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>Bidding active</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Active Clients</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981', marginTop: 4 }}>{clientCount}</div>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>Posting active</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Platform Revenue</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#818cf8', marginTop: 4 }}>₹{commissionEarnedSum.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>Deducted fees</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Commission Rate</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#f59e0b', marginTop: 4 }}>{commissionRate}%</div>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>Standard cut</div>
+                  </div>
+                  <div className="ad-jobs-summary-card">
+                    <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600 }}>Storage Usage</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#dc2626', marginTop: 4 }}>2.4 GB</div>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>of 10 GB limit</div>
+                  </div>
+                </div>
+
+                {/* Main Settings Sections Block */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* General Settings */}
+                  <div className="ad-jobs-split-card">
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, marginBottom: 12 }}>
+                      General Settings
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <input 
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={commissionRate}
-                        onChange={(e) => setCommissionRate(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                        style={{ width: 60, padding: 6, border: '1px solid #d1d5db', borderRadius: 6, textAlign: 'center', fontSize: 13 }}
-                      />
-                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>%</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Platform Name</span>
+                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="Freelancer Marketplace" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Support Email</span>
+                        <input type="email" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="support@freelancemarket.com" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Contact Number</span>
+                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="+91 98765 43210" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Time Zone</span>
+                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                          <option value="kolkata">(GMT+5:30) Asia/Kolkata</option>
+                          <option value="london">(GMT+0:00) Europe/London</option>
+                          <option value="newyork">(GMT-5:00) America/New_York</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Currency</span>
+                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                          <option value="inr">INR (₹)</option>
+                          <option value="usd">USD ($)</option>
+                          <option value="eur">EUR (€)</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Language</span>
+                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                          <option value="en">English (US)</option>
+                          <option value="hi">Hindi (हिन्दी)</option>
+                          <option value="es">Spanish (Español)</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16, borderBottom: '1px solid #f3f4f6' }}>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#111827' }}>System Maintenance Mode</div>
-                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Redirects all standard user portals to a maintenance page</div>
+                  {/* Commission & Payments */}
+                  <div className="ad-jobs-split-card">
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, marginBottom: 12 }}>
+                      Commission & Payment Settings
                     </div>
-                    <button 
-                      onClick={() => {
-                        setIsMaintenanceMode(!isMaintenanceMode);
-                        toast.success(`Maintenance mode ${!isMaintenanceMode ? 'enabled' : 'disabled'}.`);
-                      }}
-                      className={`btn ${isMaintenanceMode ? 'btn-danger' : 'btn-secondary'}`}
-                      style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5 }}
-                    >
-                      {isMaintenanceMode ? 'Active' : 'Inactive'}
-                    </button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Platform Commission Fee (%)</span>
+                        <input 
+                          type="number" 
+                          className="ad-search-input" 
+                          style={{ width: '100%', padding: 8 }} 
+                          min="0"
+                          max="100"
+                          value={commissionRate}
+                          onChange={(e) => setCommissionRate(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Minimum Withdrawal Amount</span>
+                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="₹1,000" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Escrow Hold Duration</span>
+                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                          <option value="7">7 Days</option>
+                          <option value="14">14 Days</option>
+                          <option value="30">30 Days</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>Auto-Release Escrow</div>
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Automatically releases funds 14 days after milestone delivery if no dispute is opened.</div>
+                      </div>
+                      <input type="checkbox" style={{ transform: 'scale(1.2)', cursor: 'pointer' }} defaultChecked />
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#111827' }}>Database Backup</div>
-                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Export a full dump JSON of users, contracts, and payment records</div>
+                  {/* Security Settings */}
+                  <div className="ad-jobs-split-card">
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, marginBottom: 12 }}>
+                      Security Settings
                     </div>
-                    <button onClick={() => toast.success('Database backup JSON generated and downloaded.')} className="btn btn-secondary" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5 }}>
-                      Backup Database
-                    </button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 14 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Password Strength Policy</span>
+                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                          <option value="strong">Strong (Caps + Numeric + Special, 8 chars)</option>
+                          <option value="medium">Medium (Numeric + Alpha, 8 chars)</option>
+                          <option value="low">Basic (Min 6 chars)</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Login Session Timeout</span>
+                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                          <option value="24">24 Hours</option>
+                          <option value="12">12 Hours</option>
+                          <option value="1">1 Hour</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Allowed IP Addresses (IP Whitelisting)</span>
+                      <textarea className="ad-search-input" style={{ width: '100%', height: 50, padding: 8, resize: 'none' }} placeholder="e.g. 192.168.1.1, 203.0.113.50 (Leave blank to allow all IPs)" />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>Enforce Two-Factor Authentication (2FA)</div>
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Requires standard user base and administrative credentials to verify logins via email OTP.</div>
+                      </div>
+                      <input type="checkbox" style={{ transform: 'scale(1.2)', cursor: 'pointer' }} defaultChecked />
+                    </div>
+                  </div>
+
+                  {/* Notification Settings */}
+                  <div className="ad-jobs-split-card">
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, marginBottom: 12 }}>
+                      Notification Settings
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: 14, marginBottom: 12 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>SMTP Host</span>
+                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="smtp.mailgun.org" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>SMTP Port</span>
+                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="587" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>SMTP Username</span>
+                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="postmaster@mg.freelance.com" />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 16 }}>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
+                        <input type="checkbox" defaultChecked /> Enable Push Notifications
+                      </label>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
+                        <input type="checkbox" defaultChecked /> Enable Email Alerts
+                      </label>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
+                        <input type="checkbox" defaultChecked /> Maintenance Down Alerts
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Storage & Backup & System Status */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 16 }}>
+                    {/* Left Column: Storage & Backup */}
+                    <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, marginBottom: 12 }}>
+                        Storage & Backup
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, justifyContent: 'center' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#475569', marginBottom: 4, fontWeight: 600 }}>
+                            <span>Disk Storage (24% Used)</span>
+                            <span>2.4 GB / 10 GB</span>
+                          </div>
+                          <div style={{ height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                            <div style={{ width: '24%', height: '100%', background: '#dc2626', borderRadius: 4 }} />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                          <button onClick={() => toast.success('Database backup JSON generated and downloaded.')} className="btn btn-secondary" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12 }}>
+                            Backup Database
+                          </button>
+                          <select className="ad-filter-select" style={{ padding: '6px 10px', fontSize: 12 }}>
+                            <option value="daily">Schedule: Daily Backup</option>
+                            <option value="weekly">Schedule: Weekly Backup</option>
+                            <option value="monthly">Schedule: Monthly Backup</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: System Status */}
+                    <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, marginBottom: 12 }}>
+                        System Status
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12.5, color: '#475569' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                          <span>Server Status:</span>
+                          <span style={{ color: '#10b981', fontWeight: 700 }}>🟢 Online (99.98% Uptime)</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                          <span>Database Status:</span>
+                          <span style={{ color: '#10b981', fontWeight: 700 }}>🟢 Connected</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                          <span>API Latency:</span>
+                          <span style={{ color: '#10b981', fontWeight: 700 }}>🟢 45ms</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                          <span>Current Version:</span>
+                          <span style={{ fontWeight: 600 }}>v1.2.0-stable</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Platform Controls */}
+                  <div className="ad-jobs-split-card">
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, marginBottom: 12 }}>
+                      Platform Controls
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>System Maintenance Mode</div>
+                          <div style={{ fontSize: 10.5, color: '#64748b' }}>Redirects standard users to a maintenance screen</div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setIsMaintenanceMode(!isMaintenanceMode);
+                            toast.success(`Maintenance mode ${!isMaintenanceMode ? 'enabled' : 'disabled'}.`);
+                          }}
+                          className={`btn ${isMaintenanceMode ? 'btn-danger' : 'btn-secondary'}`}
+                          style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5 }}
+                        >
+                          {isMaintenanceMode ? 'Active' : 'Inactive'}
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>New User Registration</div>
+                          <div style={{ fontSize: 10.5, color: '#64748b' }}>Allow signup operations for new freelancers/clients</div>
+                        </div>
+                        <button onClick={() => toast.success('Registration settings modified.')} className="btn btn-secondary" style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5 }}>
+                          Active
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 16 }}>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
+                        <input type="checkbox" defaultChecked /> Freelancer Manual Review Required
+                      </label>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
+                        <input type="checkbox" defaultChecked /> Client Verification Required
+                      </label>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
+                        <input type="checkbox" defaultChecked /> AI Bid Moderation Active
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Danger Zone */}
+                  <div className="ad-jobs-split-card" style={{ border: '1px solid #fee2e2', background: '#fffafb' }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#991b1b', borderBottom: '1px solid #fee2e2', paddingBottom: 8, marginBottom: 12 }}>
+                      Danger Zone
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={() => toast.success('System cache cleared.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                        🗑️ Clear Cache
+                      </button>
+                      <button onClick={() => toast.error('Platform reset aborted. Confirmation required.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                        🔄 Reset Platform
+                      </button>
+                      <button onClick={() => toast.success('All non-active mock user profiles removed.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                        🧹 Delete Test Data
+                      </button>
+                      <button onClick={() => toast.success('Database export initiated.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                        📥 Export Database
+                      </button>
+                      <button onClick={() => toast.error('Action prohibited.')} className="btn btn-danger" style={{ fontSize: 12, padding: '6px 14px' }}>
+                        ⛔ Delete Platform
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
