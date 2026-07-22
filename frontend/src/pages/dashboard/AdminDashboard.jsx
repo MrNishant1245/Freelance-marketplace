@@ -786,6 +786,31 @@ const AdminDashboard = () => {
     toast.success('Database backup JSON file generated and downloaded successfully.');
   };
 
+  const exportTransactionsCSV = () => {
+    if (transactions.length === 0) return toast.error('No transactions to export.');
+    const headers = ['Transaction ID', 'From Client', 'To Freelancer', 'Project', 'Amount', 'Status', 'Payment Method', 'Date'];
+    const rows = transactions.map(t => [
+      t.id || '',
+      t.from || '',
+      t.to || '',
+      t.jobTitle || '',
+      t.total || 0,
+      t.status || '',
+      t.method || '',
+      t.date || ''
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "platform_transactions_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast.success('Transactions ledger CSV spreadsheet exported.');
+  };
+
   // Pagination Calculations
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage) || 1;
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -2028,9 +2053,9 @@ const AdminDashboard = () => {
                   </div>
                   <div style={{ display: 'flex', gap: 10 }}>
                     <div className="ad-filter-select" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}>
-                      📅 May 13 - Jun 12, 2025 <span style={{ fontSize: 9 }}>▼</span>
+                      📅 {getOverviewDateRange()} <span style={{ fontSize: 9 }}>▼</span>
                     </div>
-                    <button onClick={() => toast.success('Transactions CSV spreadsheet downloaded.')} className="ad-btn-secondary">
+                    <button onClick={exportTransactionsCSV} className="ad-btn-secondary">
                       <Icon name="download" /> Export
                     </button>
                   </div>
@@ -2089,7 +2114,15 @@ const AdminDashboard = () => {
                   <div className="ad-card" style={{ display: 'flex', flexDirection: 'column', height: 210 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Payment overview</span>
-                      <span style={{ fontSize: 11.5, background: '#f8fafc', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: 6, color: '#475569', fontWeight: 600 }}>This Month</span>
+                      <select
+                        value={revenueTimeframe}
+                        onChange={(e) => setRevenueTimeframe(e.target.value)}
+                        style={{ fontSize: 11.5, padding: '2px 8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, color: '#475569', fontWeight: 600, outline: 'none', cursor: 'pointer' }}
+                      >
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="year">This Year</option>
+                      </select>
                     </div>
                     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                       <svg width="100%" height="110" viewBox="0 0 460 90" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
@@ -2104,22 +2137,20 @@ const AdminDashboard = () => {
                         {chartPoints.map((p, idx) => (
                           <g key={idx}>
                             <circle cx={p.x} cy={p.y} r="4.5" fill="#fff" stroke="#6366f1" strokeWidth="2" />
-                            {idx === 4 && (
+                            {idx === chartPoints.length - 1 && (
                               <g transform={`translate(${p.x - 50}, ${p.y - 42})`} style={{ zIndex: 10 }}>
                                 <rect width="100" height="32" rx="6" fill="#0f172a" />
-                                <text x="50" y="14" fill="#94a3b8" fontSize="8" fontWeight="600" textAnchor="middle">May 28, 2025</text>
-                                <text x="50" y="25" fill="#fff" fontSize="9.5" fontWeight="700" textAnchor="middle">₹18,450</text>
+                                <text x="50" y="14" fill="#94a3b8" fontSize="8" fontWeight="600" textAnchor="middle">{p.date}</text>
+                                <text x="50" y="25" fill="#fff" fontSize="9.5" fontWeight="700" textAnchor="middle">₹{(p.val * 10).toLocaleString('en-IN')}</text>
                               </g>
                             )}
                           </g>
                         ))}
                       </svg>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, borderTop: '1px solid #f1f5f9', paddingTop: 6 }}>
-                        <span style={{ fontSize: 10.5, color: '#94a3b8' }}>May 13</span>
-                        <span style={{ fontSize: 10.5, color: '#94a3b8' }}>May 20</span>
-                        <span style={{ fontSize: 10.5, color: '#94a3b8' }}>May 27</span>
-                        <span style={{ fontSize: 10.5, color: '#94a3b8' }}>Jun 03</span>
-                        <span style={{ fontSize: 10.5, color: '#94a3b8' }}>Jun 10</span>
+                        {chartPoints.map((p, idx) => (
+                          <span key={idx} style={{ fontSize: 10.5, color: '#94a3b8' }}>{p.date}</span>
+                        ))}
                       </div>
                     </div>
                   </div>
