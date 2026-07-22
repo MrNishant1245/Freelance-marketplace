@@ -138,6 +138,14 @@ const AdminDashboard = () => {
   const [broadcastDelivery, setBroadcastDelivery] = useState('immediate');
   const [showWarningAlert, setShowWarningAlert] = useState(true);
   const [revenueTimeframe, setRevenueTimeframe] = useState('month');
+  const [platformName, setPlatformName] = useState('Freelancer Marketplace');
+  const [supportEmail, setSupportEmail] = useState('support@freelancemarket.com');
+  const [contactNumber, setContactNumber] = useState('+91 98765 43210');
+  const [timeZone, setTimeZone] = useState('kolkata');
+  const [currency, setCurrency] = useState('inr');
+  const [language, setLanguage] = useState('en');
+  const [minWithdrawal, setMinWithdrawal] = useState('₹1,000');
+  const [escrowHoldDays, setEscrowHoldDays] = useState('7');
 
   // Load database records
   const loadData = async () => {
@@ -3420,7 +3428,24 @@ END OF AUDIT STATEMENT
                     <h1 className="ad-page-title">Platform Settings</h1>
                     <p className="ad-page-sub">Global parameters and marketplace configuration</p>
                   </div>
-                  <button onClick={() => toast.success('All settings changes have been saved and applied.')} className="ad-btn-black">
+                  <button 
+                    onClick={() => {
+                      if (!platformName.trim()) {
+                        return toast.error('Platform Name cannot be empty.');
+                      }
+                      if (!supportEmail.trim() || !supportEmail.includes('@')) {
+                        return toast.error('Please enter a valid Support Email.');
+                      }
+                      if (!contactNumber.trim()) {
+                        return toast.error('Contact Number cannot be empty.');
+                      }
+                      if (commissionRate < 0 || commissionRate > 100) {
+                        return toast.error('Platform commission fee must be between 0% and 100%.');
+                      }
+                      toast.success('All platform settings changes have been saved and applied!');
+                    }} 
+                    className="ad-btn-black"
+                  >
                     Save Changes
                   </button>
                 </div>
@@ -3469,19 +3494,42 @@ END OF AUDIT STATEMENT
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Platform Name</span>
-                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="Freelancer Marketplace" />
+                        <input 
+                          type="text" 
+                          className="ad-search-input" 
+                          style={{ width: '100%', padding: 8 }} 
+                          value={platformName} 
+                          onChange={(e) => setPlatformName(e.target.value)}
+                        />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Support Email</span>
-                        <input type="email" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="support@freelancemarket.com" />
+                        <input 
+                          type="email" 
+                          className="ad-search-input" 
+                          style={{ width: '100%', padding: 8 }} 
+                          value={supportEmail} 
+                          onChange={(e) => setSupportEmail(e.target.value)}
+                        />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Contact Number</span>
-                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="+91 98765 43210" />
+                        <input 
+                          type="text" 
+                          className="ad-search-input" 
+                          style={{ width: '100%', padding: 8 }} 
+                          value={contactNumber} 
+                          onChange={(e) => setContactNumber(e.target.value)}
+                        />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Time Zone</span>
-                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                        <select 
+                          className="ad-filter-select" 
+                          style={{ width: '100%', padding: 8 }}
+                          value={timeZone}
+                          onChange={(e) => setTimeZone(e.target.value)}
+                        >
                           <option value="kolkata">(GMT+5:30) Asia/Kolkata</option>
                           <option value="london">(GMT+0:00) Europe/London</option>
                           <option value="newyork">(GMT-5:00) America/New_York</option>
@@ -3489,7 +3537,12 @@ END OF AUDIT STATEMENT
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Currency</span>
-                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                        <select 
+                          className="ad-filter-select" 
+                          style={{ width: '100%', padding: 8 }}
+                          value={currency}
+                          onChange={(e) => setCurrency(e.target.value)}
+                        >
                           <option value="inr">INR (₹)</option>
                           <option value="usd">USD ($)</option>
                           <option value="eur">EUR (€)</option>
@@ -3497,7 +3550,12 @@ END OF AUDIT STATEMENT
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Language</span>
-                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                        <select 
+                          className="ad-filter-select" 
+                          style={{ width: '100%', padding: 8 }}
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                        >
                           <option value="en">English (US)</option>
                           <option value="hi">Hindi (हिन्दी)</option>
                           <option value="es">Spanish (Español)</option>
@@ -3526,11 +3584,22 @@ END OF AUDIT STATEMENT
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Minimum Withdrawal Amount</span>
-                        <input type="text" className="ad-search-input" style={{ width: '100%', padding: 8 }} defaultValue="₹1,000" />
+                        <input 
+                          type="text" 
+                          className="ad-search-input" 
+                          style={{ width: '100%', padding: 8 }} 
+                          value={minWithdrawal}
+                          onChange={(e) => setMinWithdrawal(e.target.value)}
+                        />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Escrow Hold Duration</span>
-                        <select className="ad-filter-select" style={{ width: '100%', padding: 8 }}>
+                        <select 
+                          className="ad-filter-select" 
+                          style={{ width: '100%', padding: 8 }}
+                          value={escrowHoldDays}
+                          onChange={(e) => setEscrowHoldDays(e.target.value)}
+                        >
                           <option value="7">7 Days</option>
                           <option value="14">14 Days</option>
                           <option value="30">30 Days</option>
