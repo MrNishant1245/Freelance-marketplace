@@ -89,6 +89,11 @@ const AdminDashboard = () => {
   const [reportSearch, setReportSearch] = useState('');
   const [reportTypeFilter, setReportTypeFilter] = useState('all');
   const [reportStatusFilter, setReportStatusFilter] = useState('all');
+  const [reportCategoryFilter, setReportCategoryFilter] = useState('all');
+  const [showAdvancedReportFilters, setShowAdvancedReportFilters] = useState(false);
+  const [reportDateStart, setReportDateStart] = useState('');
+  const [reportDateEnd, setReportDateEnd] = useState('');
+  const [showReportDatePicker, setShowReportDatePicker] = useState(false);
   const [reportTab, setReportTab] = useState('all');
   const [reportCurrentPage, setReportCurrentPage] = useState(1);
   const [activeReportActionMenu, setActiveReportActionMenu] = useState(null);
@@ -1023,13 +1028,7 @@ END OF AUDIT STATEMENT
 
   // Reports page tab and search filters
   const filteredReportsList = reportsList.filter((r) => {
-    const matchesTab = reportTab === 'all'
-      ? true
-      : reportTab === 'user'
-      ? r.type.toLowerCase() === 'user'
-      : reportTab === 'job'
-      ? r.type.toLowerCase() === 'job'
-      : true;
+    const matchesTab = true;
 
     const matchesType = reportTypeFilter === 'all'
       ? true
@@ -1051,6 +1050,28 @@ END OF AUDIT STATEMENT
       ? r.status === 'Rejected'
       : true;
 
+    let matchesCategory = true;
+    if (reportCategoryFilter !== 'all') {
+      const reasonLower = r.reason.toLowerCase();
+      if (reportCategoryFilter === 'spam') {
+        matchesCategory = reasonLower.includes('spam') || reasonLower.includes('misleading') || reasonLower.includes('fake') || reasonLower.includes('duplicate');
+      } else if (reportCategoryFilter === 'harassment') {
+        matchesCategory = reasonLower.includes('harassment') || reasonLower.includes('behavior');
+      } else if (reportCategoryFilter === 'other') {
+        const isSpam = reasonLower.includes('spam') || reasonLower.includes('misleading') || reasonLower.includes('fake') || reasonLower.includes('duplicate');
+        const isHarassment = reasonLower.includes('harassment') || reasonLower.includes('behavior');
+        matchesCategory = !isSpam && !isHarassment;
+      }
+    }
+
+    let matchesDate = true;
+    if (reportDateStart) {
+      matchesDate = matchesDate && (new Date(r.date) >= new Date(reportDateStart));
+    }
+    if (reportDateEnd) {
+      matchesDate = matchesDate && (new Date(r.date) <= new Date(reportDateEnd));
+    }
+
     const matchesSearch =
       r.id.toLowerCase().includes(reportSearch.toLowerCase()) ||
       r.itemName.toLowerCase().includes(reportSearch.toLowerCase()) ||
@@ -1058,7 +1079,7 @@ END OF AUDIT STATEMENT
       r.reporterName.toLowerCase().includes(reportSearch.toLowerCase()) ||
       r.reason.toLowerCase().includes(reportSearch.toLowerCase());
 
-    return matchesTab && matchesType && matchesStatus && matchesSearch;
+    return matchesTab && matchesType && matchesStatus && matchesCategory && matchesDate && matchesSearch;
   });
 
   // KPI count metrics
@@ -2796,33 +2817,101 @@ END OF AUDIT STATEMENT
                       <option value="resolved">Resolved</option>
                       <option value="rejected">Rejected</option>
                     </select>
-                    <select className="ad-filter-select">
+                    <select 
+                      className="ad-filter-select"
+                      value={reportCategoryFilter}
+                      onChange={(e) => { setReportCategoryFilter(e.target.value); setReportCurrentPage(1); }}
+                    >
                       <option value="all">All Categories</option>
                       <option value="spam">Spam / Duplicate</option>
                       <option value="harassment">Harassment / Behavior</option>
                       <option value="other">Other Violation</option>
                     </select>
-                    <div className="ad-filter-select" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}>
-                      📅 Date Range <span style={{ fontSize: 9 }}>▼</span>
+                    <div style={{ position: 'relative' }}>
+                      <div 
+                        onClick={() => setShowReportDatePicker(!showReportDatePicker)} 
+                        className="ad-filter-select" 
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer', userSelect: 'none' }}
+                      >
+                        📅 Date Range <span style={{ fontSize: 9 }}>{showReportDatePicker ? '▲' : '▼'}</span>
+                      </div>
+                      {showReportDatePicker && (
+                        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: 12, zIndex: 10, display: 'flex', flexDirection: 'column', gap: 8, width: 220 }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>From</label>
+                            <input 
+                              type="date" 
+                              value={reportDateStart} 
+                              onChange={(e) => { setReportDateStart(e.target.value); setReportCurrentPage(1); }}
+                              style={{ width: '100%', padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: 12 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>To</label>
+                            <input 
+                              type="date" 
+                              value={reportDateEnd} 
+                              onChange={(e) => { setReportDateEnd(e.target.value); setReportCurrentPage(1); }}
+                              style={{ width: '100%', padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: 12 }}
+                            />
+                          </div>
+                          <button 
+                            onClick={() => { setReportDateStart(''); setReportDateEnd(''); setShowReportDatePicker(false); setReportCurrentPage(1); }} 
+                            style={{ width: '100%', padding: '6px', background: '#f1f5f9', border: 'none', borderRadius: 4, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            Clear Date Filters
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <button onClick={() => toast.success('Filter queries applied.')} className="ad-btn-secondary" style={{ padding: '6px 12px' }}>
+                  <button onClick={() => setShowAdvancedReportFilters(!showAdvancedReportFilters)} className="ad-btn-secondary" style={{ padding: '6px 12px', background: showAdvancedReportFilters ? '#e2e8f0' : '' }}>
                     ⚙ Filter
                   </button>
                 </div>
 
-                {/* Sub Tab Switcher */}
-                <div className="ad-tabs-row" style={{ marginBottom: 16 }}>
-                  <button className={`ad-tab-btn ${reportTab === 'all' ? 'ad-tab-btn--active' : ''}`} onClick={() => { setReportTab('all'); setReportCurrentPage(1); }}>
-                    All Reports ({totalReportsCount})
-                  </button>
-                  <button className={`ad-tab-btn ${reportTab === 'user' ? 'ad-tab-btn--active' : ''}`} onClick={() => { setReportTab('user'); setReportCurrentPage(1); }}>
-                    User Reports ({userReportsCount})
-                  </button>
-                  <button className={`ad-tab-btn ${reportTab === 'job' ? 'ad-tab-btn--active' : ''}`} onClick={() => { setReportTab('job'); setReportCurrentPage(1); }}>
-                    Job Reports ({jobReportsCount})
-                  </button>
-                </div>
+                {/* Advanced Report Filters Drawer */}
+                {showAdvancedReportFilters && (
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 16, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    <div>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>Filter by Type</span>
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                          <input type="radio" name="reportType" checked={reportTypeFilter === 'all'} onChange={() => { setReportTypeFilter('all'); setReportCurrentPage(1); }} /> All
+                        </label>
+                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                          <input type="radio" name="reportType" checked={reportTypeFilter === 'user'} onChange={() => { setReportTypeFilter('user'); setReportCurrentPage(1); }} /> Users
+                        </label>
+                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                          <input type="radio" name="reportType" checked={reportTypeFilter === 'job'} onChange={() => { setReportTypeFilter('job'); setReportCurrentPage(1); }} /> Jobs
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>Filter by Status</span>
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                          <input type="radio" name="reportStatus" checked={reportStatusFilter === 'all'} onChange={() => { setReportStatusFilter('all'); setReportCurrentPage(1); }} /> All
+                        </label>
+                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                          <input type="radio" name="reportStatus" checked={reportStatusFilter === 'pending'} onChange={() => { setReportStatusFilter('pending'); setReportCurrentPage(1); }} /> Pending
+                        </label>
+                        <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                          <input type="radio" name="reportStatus" checked={reportStatusFilter === 'resolved'} onChange={() => { setReportStatusFilter('resolved'); setReportCurrentPage(1); }} /> Resolved
+                        </label>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                      <button 
+                        onClick={() => { setReportSearch(''); setReportTypeFilter('all'); setReportStatusFilter('all'); setReportCategoryFilter('all'); setReportDateStart(''); setReportDateEnd(''); setReportCurrentPage(1); toast.success('All reports filters cleared.'); }} 
+                        className="btn btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: 11.5 }}
+                      >
+                        Reset All Filters
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Reports Table List */}
                 <div className="ad-card ad-card--table">
