@@ -101,6 +101,9 @@ const AdminDashboard = () => {
   const [broadcastText, setBroadcastText] = useState('');
   const [commissionRate, setCommissionRate] = useState(10);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+  const [broadcastAudience, setBroadcastAudience] = useState('all');
+  const [broadcastDelivery, setBroadcastDelivery] = useState('immediate');
+  const [showWarningAlert, setShowWarningAlert] = useState(true);
 
   // Load database records
   const loadData = async () => {
@@ -2674,33 +2677,237 @@ const AdminDashboard = () => {
             {/* MESSAGES */}
             {activeTab === 'messages' && (
               <div>
-                <div className="ad-page-head">
-                  <h1 className="ad-page-title">Broadcast Messages</h1>
-                  <p className="ad-page-sub">Send announcement notifications to all clients and freelancers</p>
-                </div>
-                <div className="ad-card" style={{ padding: 24 }}>
-                  <div className="form-group" style={{ marginBottom: 16 }}>
-                    <label className="form-label" style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Notification Text</label>
-                    <textarea 
-                      value={broadcastText}
-                      onChange={(e) => setBroadcastText(e.target.value)}
-                      placeholder="Enter announcement text to display on user dashboards..." 
-                      className="form-input"
-                      style={{ width: '100%', height: 100, border: '1px solid #d1d5db', borderRadius: 8, padding: 12, outline: 'none', resize: 'none', fontSize: 13.5, fontFamily: 'inherit', marginTop: 6 }}
-                    />
+                {/* Header */}
+                <div className="ad-page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div>
+                    <h1 className="ad-page-title">Broadcast Messages</h1>
+                    <p className="ad-page-sub">Send announcement notifications to all clients and freelancers</p>
                   </div>
-                  <button 
-                    onClick={() => {
-                      if (!broadcastText.trim()) return toast.error('Announcement content cannot be empty.');
-                      toast.success('Broadcast notification published successfully!');
-                      setBroadcastText('');
-                    }}
-                    className="btn btn-primary"
-                    style={{ padding: '8px 18px', borderRadius: 8, fontSize: 13 }}
-                  >
-                    🚀 Publish Broadcast
+                  <button onClick={() => toast.success('Viewing archive of 14 sent broadcasts.')} className="ad-btn-secondary">
+                    🕒 Broadcast History
                   </button>
                 </div>
+
+                {/* Double Panel Layout */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 22 }}>
+                  {/* Left compose panel */}
+                  <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>1. Compose Message</div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Notification Text</span>
+                      <div style={{ border: '1px solid #cbd5e1', borderRadius: 8, overflow: 'hidden' }}>
+                        {/* Editor Toolbar */}
+                        <div style={{ display: 'flex', gap: 8, padding: '8px 12px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', alignItems: 'center' }}>
+                          <button onClick={() => toast.success('Bold text formatting.')} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 13, cursor: 'pointer', color: '#475569' }}>B</button>
+                          <button onClick={() => toast.success('Italic text formatting.')} style={{ background: 'none', border: 'none', fontStyle: 'italic', fontSize: 13, cursor: 'pointer', color: '#475569' }}>I</button>
+                          <button onClick={() => toast.success('Insert URL link.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🔗</button>
+                          <span style={{ color: '#cbd5e1', fontSize: 12 }}>|</span>
+                          <button onClick={() => toast.success('Insert bullet list.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>📋</button>
+                          <button onClick={() => toast.success('Insert ordered list.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🔢</button>
+                          <button onClick={() => toast.success('Upload image asset.')} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: '#475569' }}>🖼️</button>
+                          <span style={{ flex: 1 }} />
+                          <span style={{ fontSize: 10.5, color: '#94a3b8', fontWeight: 600 }}>{broadcastText.length} / 2000 characters</span>
+                        </div>
+                        <textarea
+                          value={broadcastText}
+                          onChange={(e) => setBroadcastText(e.target.value.slice(0, 2000))}
+                          placeholder="Enter announcement text to display on user dashboards..."
+                          style={{ width: '100%', height: 110, border: 'none', padding: 12, outline: 'none', resize: 'none', fontSize: 13, fontFamily: 'inherit', color: '#334155' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Variables Row */}
+                    <div style={{ marginTop: 14 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+                        Add variables <span style={{ cursor: 'help', fontSize: 10, background: '#e2e8f0', borderRadius: '50%', width: 12, height: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>i</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {[
+                          { label: '{{first_name}}', val: '{{first_name}}' },
+                          { label: '{{user_type}}', val: '{{user_type}}' },
+                          { label: '{{site_name}}', val: '{{site_name}}' },
+                          { label: '{{support_email}}', val: '{{support_email}}' }
+                        ].map((v, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setBroadcastText(prev => prev + ' ' + v.val)}
+                            style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: '#475569', cursor: 'pointer', fontWeight: 600, fontFamily: 'monospace' }}
+                          >
+                            {v.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Actions Row */}
+                    <div style={{ display: 'flex', gap: 10, marginTop: 16, borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
+                      <button
+                        onClick={() => {
+                          if (!broadcastText.trim()) return toast.error('Announcement text cannot be empty.');
+                          toast.success('Broadcast notification published successfully!');
+                          setBroadcastText('');
+                        }}
+                        className="ad-btn-black"
+                        style={{ padding: '8px 16px', fontSize: 12.5 }}
+                      >
+                        🚀 Publish Broadcast
+                      </button>
+                      <button onClick={() => toast.success('Announcement saved as draft.')} className="ad-btn-secondary" style={{ padding: '8px 16px', fontSize: 12.5 }}>
+                        💾 Save as Draft
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right select audience panel */}
+                  <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>2. Select Audience</div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {[
+                        { id: 'all', title: 'All Users', desc: 'Send to all clients and freelancers', count: `${users.length} users` },
+                        { id: 'freelancers', title: 'Freelancers Only', desc: 'Send to all freelancers', count: `${users.filter(u => u.role === 'freelancer').length} users` },
+                        { id: 'clients', title: 'Clients Only', desc: 'Send to all clients', count: `${users.filter(u => u.role === 'client').length} users` },
+                        { id: 'custom', title: 'Custom Audience', desc: 'Select specific users or user roles', count: 'Select manually' }
+                      ].map((aud) => {
+                        const isSelected = broadcastAudience === aud.id;
+                        return (
+                          <div
+                            key={aud.id}
+                            onClick={() => setBroadcastAudience(aud.id)}
+                            style={{
+                              border: isSelected ? '1.5px solid #3b82f6' : '1px solid #e2e8f0',
+                              borderRadius: 8,
+                              padding: 10,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              background: isSelected ? '#f0f9ff' : '#fff',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                              <input
+                                type="radio"
+                                name="broadcastAudience"
+                                checked={isSelected}
+                                onChange={() => setBroadcastAudience(aud.id)}
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <div>
+                                <div style={{ fontSize: 12.5, fontWeight: 700, color: isSelected ? '#1e3a8a' : '#1e293b' }}>{aud.title}</div>
+                                <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 2 }}>{aud.desc}</div>
+                              </div>
+                            </div>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#475569' }}>{aud.count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Settings Section */}
+                <div className="ad-card" style={{ padding: 16, marginBottom: 22 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>3. Delivery Settings</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+                    <div style={{ display: 'flex', gap: 18 }}>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="broadcastDelivery"
+                          checked={broadcastDelivery === 'immediate'}
+                          onChange={() => setBroadcastDelivery('immediate')}
+                        />
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>Send Immediately</div>
+                          <div style={{ fontSize: 10.5, color: '#94a3b8' }}>Broadcast will be sent right away</div>
+                        </div>
+                      </label>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="broadcastDelivery"
+                          checked={broadcastDelivery === 'later'}
+                          onChange={() => setBroadcastDelivery('later')}
+                        />
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>Schedule for Later</div>
+                          <div style={{ fontSize: 10.5, color: '#94a3b8' }}>Choose a date and time to send</div>
+                        </div>
+                      </label>
+                    </div>
+
+                    {broadcastDelivery === 'later' && (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <input type="date" className="ad-filter-select" style={{ padding: '6px 12px' }} />
+                        <input type="time" className="ad-filter-select" style={{ padding: '6px 12px' }} />
+                        <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>(GMT+5:30) Asia/Kolkata ⓘ</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Preview and Guidelines Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 22 }}>
+                  {/* Left: Preview Panel */}
+                  <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Preview</div>
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 14, flex: 1, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justify: 'center', color: '#3b82f6', flexShrink: 0 }}>🔔</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1e293b' }}>Announcement</span>
+                          <span style={{ fontSize: 10, color: '#94a3b8' }}>Just now</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: '#475569', marginTop: 6, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                          {broadcastText || 'This is a preview of how your broadcast message will appear to users.'}
+                        </p>
+                        <div style={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic', marginTop: 10 }}>
+                          It will be shown as a notification on their dashboard.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Message Guidelines */}
+                  <div className="ad-jobs-split-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Message Guidelines</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, justifyContent: 'center' }}>
+                      <div style={{ fontSize: 11, color: '#4b5563', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        ✔️ Keep messages short, clear and relevant.
+                      </div>
+                      <div style={{ fontSize: 11, color: '#4b5563', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        ✔️ Avoid excessive use of ALL CAPS.
+                      </div>
+                      <div style={{ fontSize: 11, color: '#4b5563', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        ✔️ Do not include contact information or links to external sites.
+                      </div>
+                      <div style={{ fontSize: 11, color: '#4b5563', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        ✔️ Ensure your message follows our communication policy.
+                      </div>
+                    </div>
+                    <button onClick={() => toast.success('Communications policy rules PDF loaded.')} style={{ border: 'none', background: 'none', padding: 0, color: '#6366f1', fontSize: 11.5, fontWeight: 700, textAlign: 'left', cursor: 'pointer', marginTop: 8 }}>
+                      View full guidelines →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Important Warning Banner */}
+                {showWarningAlert && (
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 16 }}>ℹ️</span>
+                      <div>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1e3a8a' }}>Important</span>
+                        <span style={{ fontSize: 12, color: '#1e40af', marginLeft: 8 }}>Broadcast messages will be sent as in-app notifications and email alerts (if enabled) to all selected users.</span>
+                      </div>
+                    </div>
+                    <button onClick={() => setShowWarningAlert(false)} style={{ background: 'none', border: 'none', fontSize: 14, color: '#6b7280', cursor: 'pointer' }}>×</button>
+                  </div>
+                )}
               </div>
             )}
 
