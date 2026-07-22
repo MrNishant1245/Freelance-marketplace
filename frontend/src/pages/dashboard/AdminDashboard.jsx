@@ -104,6 +104,7 @@ const AdminDashboard = () => {
   const [detailJob, setDetailJob] = useState(null);
   const [editJob, setEditJob] = useState(null);
   const [viewApplicantsJob, setViewApplicantsJob] = useState(null);
+  const [detailInvoice, setDetailInvoice] = useState(null);
 
   // Broadcast & Config state for messages & settings
   const [broadcastText, setBroadcastText] = useState('');
@@ -348,6 +349,45 @@ const AdminDashboard = () => {
       }
       return j;
     }));
+  };
+
+  const handleProcessRefund = (txnId) => {
+    setTransactions(transactions.map(t => {
+      if (t.id === txnId) {
+        toast.success(`Refund processed successfully for invoice #INV-2025-${t.txnIdShort}.`);
+        return { ...t, status: 'refunded' };
+      }
+      return t;
+    }));
+  };
+
+  const handleDownloadReceipt = (t) => {
+    const receiptText = `----------------------------------------
+MARKETPLACE TRANSACTION RECEIPT
+----------------------------------------
+Invoice Number: #INV-2025-${t.txnIdShort}
+Transaction ID: ${t.id}
+Date: ${t.date}
+Payment Method: ${t.method}
+
+Client Name: ${t.from}
+Freelancer Name: ${t.to}
+Project: ${t.jobTitle}
+
+Total Budget: ${t.amount}
+Platform Fee (10%): ₹${(t.total * 0.1).toLocaleString('en-IN')}
+Status: ${t.status === 'refund_pending' ? 'In Escrow' : t.status.toUpperCase()}
+----------------------------------------
+Thank you for choosing our platform!`;
+
+    const element = document.createElement("a");
+    const file = new Blob([receiptText], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `receipt_INV_2025_${t.txnIdShort}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    element.remove();
+    toast.success('Transaction receipt downloaded.');
   };
 
   const handleImportUsers = (e) => {
@@ -2337,7 +2377,7 @@ const AdminDashboard = () => {
                                   <button 
                                     className="ad-dropdown-item" 
                                     style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#374151' }}
-                                    onClick={() => { setActivePaymentActionMenu(null); toast.success('Invoice details opened.'); }}
+                                    onClick={() => { setActivePaymentActionMenu(null); setDetailInvoice(t); }}
                                   >
                                     👁 View Invoice
                                   </button>
@@ -2345,7 +2385,7 @@ const AdminDashboard = () => {
                                     <button 
                                       className="ad-dropdown-item" 
                                       style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#d97706' }}
-                                      onClick={() => { setActivePaymentActionMenu(null); toast.success('Processing refund...'); }}
+                                      onClick={() => { setActivePaymentActionMenu(null); handleProcessRefund(t.id); }}
                                     >
                                       💸 Process Refund
                                     </button>
@@ -2353,7 +2393,7 @@ const AdminDashboard = () => {
                                   <button 
                                     className="ad-dropdown-item" 
                                     style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', fontSize: 12.5, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6' }}
-                                    onClick={() => { setActivePaymentActionMenu(null); toast.success('Transaction receipt downloaded.'); }}
+                                    onClick={() => { setActivePaymentActionMenu(null); handleDownloadReceipt(t); }}
                                   >
                                     📥 Download Receipt
                                   </button>
@@ -3861,6 +3901,59 @@ const AdminDashboard = () => {
             </div>
             <div className="ad-modal-actions">
               <button className="ad-modal-btn" onClick={() => setViewApplicantsJob(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Invoice Detail Modal */}
+      {detailInvoice && (
+        <div className="ad-overlay" onClick={() => setDetailInvoice(null)}>
+          <div className="ad-modal ad-modal--detail" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <button className="ad-close-x" onClick={() => setDetailInvoice(null)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-detail-head">
+              <div className="ad-modal-icon ad-modal-icon--info" style={{ background: '#ecfdf5', color: '#10b981', width: 44, height: 44, borderRadius: 10 }}><Icon name="info" /></div>
+              <div>
+                <div className="ad-detail-name" style={{ fontSize: 16 }}>Invoice Details</div>
+                <div className="ad-detail-sub" style={{ fontSize: 12 }}>
+                  Invoice: #INV-2025-{detailInvoice.txnIdShort} · Date: {detailInvoice.date}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 16, fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 12 }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Billed To (Client)</span>
+                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailInvoice.from}</span>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Payee (Freelancer)</span>
+                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailInvoice.to}</span>
+                </div>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 12 }}>
+                <span style={{ fontWeight: 700, color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Project Name</span>
+                <span style={{ fontWeight: 600, color: '#1e293b' }}>{detailInvoice.jobTitle}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Escrow Amount:</span>
+                  <span style={{ fontWeight: 700, color: '#1e293b' }}>{detailInvoice.amount}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Platform Fee (10%):</span>
+                  <span style={{ color: '#64748b' }}>₹{(detailInvoice.total * 0.1).toLocaleString('en-IN')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: 6, marginTop: 4, fontWeight: 700 }}>
+                  <span style={{ color: '#1e293b' }}>Net Payout:</span>
+                  <span style={{ color: '#10b981' }}>₹{(detailInvoice.total * 0.9).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setDetailInvoice(null)}>Close</button>
             </div>
           </div>
         </div>
