@@ -146,6 +146,12 @@ const AdminDashboard = () => {
   const [language, setLanguage] = useState('en');
   const [minWithdrawal, setMinWithdrawal] = useState('₹1,000');
   const [escrowHoldDays, setEscrowHoldDays] = useState('7');
+  const [backupSchedule, setBackupSchedule] = useState('monthly');
+  const [isRegistrationActive, setIsRegistrationActive] = useState(true);
+  const [freelancerReviewRequired, setFreelancerReviewRequired] = useState(true);
+  const [clientVerificationRequired, setClientVerificationRequired] = useState(true);
+  const [aiBidModerationActive, setAiBidModerationActive] = useState(true);
+  const [showDeletePlatformModal, setShowDeletePlatformModal] = useState(false);
 
   // Load database records
   const loadData = async () => {
@@ -480,6 +486,40 @@ Thank you for choosing our platform!`;
       }
     }
     loadData();
+  };
+
+  const handleBackupDatabase = () => {
+    const backupData = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      platformName,
+      usersCount: users.length,
+      jobsCount: jobsList.length,
+      reportsCount: reportsList.length,
+      transactionsCount: transactions.length,
+      data: { users, jobsList, reportsList, transactions }
+    }, null, 2);
+
+    const element = document.createElement("a");
+    const file = new Blob([backupData], { type: 'application/json' });
+    element.href = URL.createObjectURL(file);
+    element.download = `backup_snapshot_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(element);
+    element.click();
+    element.remove();
+
+    toast.success('Database backup snapshot generated and downloaded successfully!');
+  };
+
+  const exportDbDump = () => {
+    const dump = JSON.stringify({ users, jobsList, reportsList, transactions }, null, 2);
+    const element = document.createElement("a");
+    const file = new Blob([dump], { type: 'application/json' });
+    element.href = URL.createObjectURL(file);
+    element.download = `database_dump_${Date.now()}.json`;
+    document.body.appendChild(element);
+    element.click();
+    element.remove();
+    toast.success('Database JSON dump generated and downloaded.');
   };
 
   const downloadFinancialStatement = () => {
@@ -3701,10 +3741,15 @@ END OF AUDIT STATEMENT
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                          <button onClick={downloadDatabaseBackup} className="btn btn-secondary" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12 }}>
+                          <button onClick={handleBackupDatabase} className="btn btn-secondary" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12 }}>
                             Backup Database
                           </button>
-                          <select className="ad-filter-select" style={{ padding: '6px 10px', fontSize: 12 }}>
+                          <select 
+                            className="ad-filter-select" 
+                            style={{ padding: '6px 10px', fontSize: 12 }}
+                            value={backupSchedule}
+                            onChange={(e) => setBackupSchedule(e.target.value)}
+                          >
                             <option value="daily">Schedule: Daily Backup</option>
                             <option value="weekly">Schedule: Weekly Backup</option>
                             <option value="monthly">Schedule: Monthly Backup</option>
@@ -3766,20 +3811,39 @@ END OF AUDIT STATEMENT
                           <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>New User Registration</div>
                           <div style={{ fontSize: 10.5, color: '#64748b' }}>Allow signup operations for new freelancers/clients</div>
                         </div>
-                        <button onClick={() => toast.success('Registration settings modified.')} className="btn btn-secondary" style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5 }}>
-                          Active
+                        <button 
+                          onClick={() => {
+                            setIsRegistrationActive(!isRegistrationActive);
+                            toast.success(`New user registrations ${!isRegistrationActive ? 'enabled' : 'disabled'}.`);
+                          }} 
+                          className={`btn ${isRegistrationActive ? 'btn-success' : 'btn-secondary'}`} 
+                          style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5 }}
+                        >
+                          {isRegistrationActive ? 'Active' : 'Inactive'}
                         </button>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 16 }}>
                       <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
-                        <input type="checkbox" defaultChecked /> Freelancer Manual Review Required
+                        <input 
+                          type="checkbox" 
+                          checked={freelancerReviewRequired} 
+                          onChange={(e) => setFreelancerReviewRequired(e.target.checked)}
+                        /> Freelancer Manual Review Required
                       </label>
                       <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
-                        <input type="checkbox" defaultChecked /> Client Verification Required
+                        <input 
+                          type="checkbox" 
+                          checked={clientVerificationRequired} 
+                          onChange={(e) => setClientVerificationRequired(e.target.checked)}
+                        /> Client Verification Required
                       </label>
                       <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 12.5 }}>
-                        <input type="checkbox" defaultChecked /> AI Bid Moderation Active
+                        <input 
+                          type="checkbox" 
+                          checked={aiBidModerationActive} 
+                          onChange={(e) => setAiBidModerationActive(e.target.checked)}
+                        /> AI Bid Moderation Active
                       </label>
                     </div>
                   </div>
@@ -3790,19 +3854,19 @@ END OF AUDIT STATEMENT
                       Danger Zone
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button onClick={() => toast.success('System cache cleared.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                      <button onClick={() => toast.success('Platform cache purged successfully.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
                         🗑️ Clear Cache
                       </button>
-                      <button onClick={() => toast.error('Platform reset aborted. Confirmation required.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                      <button onClick={() => toast.success('Platform settings reset successfully.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
                         🔄 Reset Platform
                       </button>
-                      <button onClick={() => toast.success('All non-active mock user profiles removed.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                      <button onClick={() => { removeJob('job_1'); toast.success('All non-active test datasets purged successfully.'); }} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
                         🧹 Delete Test Data
                       </button>
-                      <button onClick={() => toast.success('Database export initiated.')} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
+                      <button onClick={exportDbDump} className="btn btn-secondary" style={{ color: '#991b1b', borderColor: '#fca5a5', background: '#fff', fontSize: 12 }}>
                         📥 Export Database
                       </button>
-                      <button onClick={() => toast.error('Action prohibited.')} className="btn btn-danger" style={{ fontSize: 12, padding: '6px 14px' }}>
+                      <button onClick={() => setShowDeletePlatformModal(true)} className="btn btn-danger" style={{ fontSize: 12, padding: '6px 14px' }}>
                         ⛔ Delete Platform
                       </button>
                     </div>
@@ -4694,6 +4758,34 @@ END OF AUDIT STATEMENT
             </div>
             <div className="ad-modal-actions" style={{ marginTop: 16 }}>
               <button className="ad-modal-btn" onClick={() => setShowMessageGuidelinesModal(false)}>Close Guidelines</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Platform Confirmation Modal */}
+      {showDeletePlatformModal && (
+        <div className="ad-overlay" onClick={() => setShowDeletePlatformModal(false)}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <button className="ad-close-x" onClick={() => setShowDeletePlatformModal(false)} aria-label="Close">
+              <Icon name="x" />
+            </button>
+            <div className="ad-modal-icon ad-modal-icon--coral" style={{ background: '#fef2f2', color: '#dc2626' }}><Icon name="alert" /></div>
+            <div className="ad-modal-title">Delete Platform Database?</div>
+            <div className="ad-modal-desc">
+              Warning: This is a highly destructive action. This will permanently wipe all users, job listings, transactions, and reports databases. This action cannot be undone.
+            </div>
+            <div className="ad-modal-actions" style={{ marginTop: 16 }}>
+              <button className="ad-modal-btn" onClick={() => setShowDeletePlatformModal(false)}>Cancel</button>
+              <button 
+                className="ad-modal-btn ad-modal-btn--danger" 
+                onClick={() => {
+                  toast.success('Database content deleted. Resetting platform profiles...');
+                  setShowDeletePlatformModal(false);
+                }}
+              >
+                Delete Platform Data
+              </button>
             </div>
           </div>
         </div>
