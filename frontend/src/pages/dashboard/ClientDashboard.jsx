@@ -2396,7 +2396,9 @@ const ClientDashboard = () => {
           bg: j.status === 'completed' ? '#1e293b' : j.status === 'in_progress' ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
           start: new Date(j.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
           end: j.completedAt ? new Date(j.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Ongoing',
-          initial: firstInitial
+          initial: firstInitial,
+          freelancerId: j.hiredFreelancer?._id || j.hiredFreelancer,
+          jobDbId: j._id
         };
       });
       setContracts(list);
@@ -2511,6 +2513,17 @@ const ClientDashboard = () => {
       );
       // Refresh the jobs list too, since accepting a proposal changes job.status to in_progress
       fetchJobs();
+
+      if (status === 'accepted') {
+        const prop = proposals.find(p => p._id === proposalId);
+        const freelancerId = prop?.freelancer?._id || prop?.freelancer;
+        if (freelancerId) {
+          toast.success('Proposal accepted! Initiating collaboration thread...', { icon: '💬' });
+          setTimeout(() => {
+            handleMessageFreelancer(freelancerId, jobId);
+          }, 1200);
+        }
+      }
     } catch (err) {
       alert('Action failed. Try again.');
     } finally {
@@ -5072,7 +5085,22 @@ const ClientDashboard = () => {
                                   •••
                                 </span>
                                 {activeDropdown === `contract-${ctr.id}` && (
-                                  <div style={{ position: 'absolute', right: 0, top: '80%', background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 0', zIndex: 100, width: 150, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                                  <div style={{ position: 'absolute', right: 0, top: '80%', background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 0', zIndex: 100, width: 155, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                                    <div 
+                                      onClick={() => { 
+                                        setActiveDropdown(null); 
+                                        if (ctr.freelancerId) {
+                                          handleMessageFreelancer(ctr.freelancerId, ctr.jobDbId);
+                                        } else {
+                                          toast.error('Freelancer ID not found on this contract record.');
+                                        }
+                                      }}
+                                      style={{ padding: '8px 12px', fontSize: 11.5, color: '#10b981', fontWeight: 700, cursor: 'pointer' }}
+                                      onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
+                                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                    >
+                                      💬 Message Freelancer
+                                    </div>
                                     <div 
                                       onClick={() => { setActiveDropdown(null); toast.success(`Contract Agreement PDF for ${ctr.id} downloaded!`); }}
                                       style={{ padding: '8px 12px', fontSize: 11.5, color: '#cbd5e1', cursor: 'pointer' }}
