@@ -5462,7 +5462,7 @@ const ClientDashboard = () => {
                           {/* Actions */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
                             <button 
-                              onClick={() => { setActiveTab('messages'); toast('Chat session loaded.'); }}
+                              onClick={() => handleMessageFreelancer(cand.key)}
                               style={{ padding: '6px 12px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
                             >
                               Message
@@ -8619,7 +8619,7 @@ const ClientDashboard = () => {
                       <td style={{ padding: '12px 8px', color: cand.color, fontWeight: 600 }}>{cand.status}</td>
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <button 
-                          onClick={() => { setShowCompareModal(false); setActiveTab('messages'); toast.success('Initiated chat with ' + cand.name); }}
+                          onClick={() => { setShowCompareModal(false); handleMessageFreelancer(cand.key || cand._id); }}
                           style={{ padding: '4px 10px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 6, color: '#fff', fontSize: 11, cursor: 'pointer' }}
                         >
                           Message
@@ -8727,7 +8727,10 @@ const ClientDashboard = () => {
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 6 }}>
               <button 
-                onClick={() => { setActiveFreelancerProfile(null); setActiveTab('messages'); toast.success('Initiated direct message thread.'); }} 
+                onClick={() => { 
+                  setActiveFreelancerProfile(null); 
+                  handleMessageFreelancer(activeFreelancerProfile.key || activeFreelancerProfile._id); 
+                }} 
                 style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}
               >
                 💬 Message
