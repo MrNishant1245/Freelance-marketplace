@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import api, { profileAPI, reviewAPI } from '../api';
@@ -141,6 +141,7 @@ const AttachmentList = ({ attachments, isMe }) => {
 const MessagesPage = ({ userType = 'client' }) => {
   const { user, isDarkMode } = useAuth();
   const navigate  = useNavigate();
+  const location  = useLocation();
   const token     = tokenStorage.getAccess(); // ✅ tab-specific token
 
   const [conversations, setConversations] = useState([]);
@@ -535,6 +536,16 @@ const MessagesPage = ({ userType = 'client' }) => {
         const res  = await msgAPI.getConversations();
         const convs = res.data?.data || [];
         setConversations(convs);
+
+        const queryParams = new URLSearchParams(window.location.search);
+        const targetConvId = queryParams.get('conversation');
+        if (targetConvId) {
+          const match = convs.find(c => c._id === targetConvId);
+          if (match) {
+            selectConversation(match);
+            return;
+          }
+        }
         if (convs.length > 0) selectConversation(convs[0]);
       } catch (err) {
         console.error('Load conversations error:', err);
@@ -546,6 +557,19 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   // ── Scroll to bottom ──────────────────────────────────────────────────────────
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  // ── Auto-select conversation from query parameter ────────────────────────────
+  useEffect(() => {
+    if (conversations.length === 0) return;
+    const queryParams = new URLSearchParams(location.search);
+    const targetConvId = queryParams.get('conversation');
+    if (targetConvId) {
+      const match = conversations.find(c => c._id === targetConvId);
+      if (match && (!activeConv || activeConv._id !== match._id)) {
+        selectConversation(match);
+      }
+    }
+  }, [location.search, conversations, activeConv, selectConversation]);
 
   // ── Select conversation ───────────────────────────────────────────────────────
   const selectConversation = useCallback(async (conv) => {
