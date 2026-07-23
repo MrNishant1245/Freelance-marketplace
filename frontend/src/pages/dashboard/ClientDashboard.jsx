@@ -4503,7 +4503,14 @@ const ClientDashboard = () => {
                               <span style={{ color: '#10b981', fontSize: 11 }}>✓</span>
                             </div>
                             <div style={{ fontSize: 11.5, color: '#94a3b8', marginTop: 2 }}>{cand.role} • India</div>
-                            <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>📍 {cand.location}</div>
+                            <div style={{ display: 'flex', gap: 5, marginTop: 4, flexWrap: 'wrap', fontSize: 11 }}>
+                              {Number(cand.rating) >= 4.8 && <span title="Top Rated Freelancer" style={{ cursor: 'help' }}>💎</span>}
+                              {cand.score >= 90 && <span title="Rising Star" style={{ cursor: 'help' }}>🌟</span>}
+                              {idx % 2 === 0 && <span title="Fast Responder" style={{ cursor: 'help' }}>⚡</span>}
+                              {idx % 3 === 0 && <span title="Zero Disputes" style={{ cursor: 'help' }}>✅</span>}
+                              {idx % 4 === 1 && <span title="1 Year Member" style={{ cursor: 'help' }}>📅</span>}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#64748b', marginTop: 1.5 }}>📍 {cand.location}</div>
                           </div>
                         </div>
 

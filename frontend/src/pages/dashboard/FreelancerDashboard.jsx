@@ -1718,7 +1718,16 @@ const FreelancerDashboard = () => {
             <div className="fd-bj-card-header">
               <div>
                 <div className="fd-bj-card-title">{job.title}</div>
-                <div className="fd-bj-card-client">{clientName}</div>
+                <div className="fd-bj-card-client" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>{clientName}</span>
+                  <span style={{ display: 'inline-flex', gap: 4, fontSize: 11 }}>
+                    {budgetVal >= 50000 && <span title="Big Spender (Spent ₹1L+)" style={{ cursor: 'help' }}>💰</span>}
+                    {(clientName.startsWith('A') || clientName.startsWith('B') || clientName.startsWith('C') || clientName.includes('Bright') || clientName.includes('Acme')) && <span title="Verified Payer" style={{ cursor: 'help' }}>💳</span>}
+                    {(job.title.toLowerCase().includes('redesign') || job.title.toLowerCase().includes('app')) && <span title="Project Builder" style={{ cursor: 'help' }}>🏗️</span>}
+                    {getJobMatchScore(job, user) >= 90 && <span title="Trusted Client" style={{ cursor: 'help' }}>🛡️</span>}
+                    {job._id && job._id.slice(-1).match(/[0-2-4-6-8-a-c-e]/) && <span title="Loyal Client" style={{ cursor: 'help' }}>🔄</span>}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                   <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '10.5px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', border: '1px solid #a7f3d0' }}>
                     ⚡ {getJobMatchScore(job, user)}% Match
@@ -1789,7 +1798,17 @@ const FreelancerDashboard = () => {
         <div className="fd-mini-job-header">
           <div>
             <div className="fd-mini-job-title">{job.title}</div>
-            <div className="fd-mini-job-client">{clientName} · {timeAgo(job.createdAt)}</div>
+            <div className="fd-mini-job-client" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span>{clientName}</span>
+              <span style={{ display: 'inline-flex', gap: 4, fontSize: 10.5 }}>
+                {budgetVal >= 50000 && <span title="Big Spender (Spent ₹1L+)" style={{ cursor: 'help' }}>💰</span>}
+                {(clientName.startsWith('A') || clientName.startsWith('B') || clientName.startsWith('C') || clientName.includes('Bright') || clientName.includes('Acme')) && <span title="Verified Payer" style={{ cursor: 'help' }}>💳</span>}
+                {(job.title.toLowerCase().includes('redesign') || job.title.toLowerCase().includes('app')) && <span title="Project Builder" style={{ cursor: 'help' }}>🏗️</span>}
+                {getJobMatchScore(job, user) >= 90 && <span title="Trusted Client" style={{ cursor: 'help' }}>🛡️</span>}
+                {job._id && job._id.slice(-1).match(/[0-2-4-6-8-a-c-e]/) && <span title="Loyal Client" style={{ cursor: 'help' }}>🔄</span>}
+              </span>
+              <span style={{ color: '#94a3b8' }}>· {timeAgo(job.createdAt)}</span>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
               <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', border: '1px solid #a7f3d0' }}>
                 ⚡ {getJobMatchScore(job, user)}% Match
