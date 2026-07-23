@@ -1315,10 +1315,6 @@ const ClientDashboard = () => {
   const [hubMilestones, setHubMilestones] = useState([]);
   const [hubInvoices, setHubInvoices] = useState([]);
 
-  const [activeReceipt, setActiveReceipt] = useState(null);
-  const [shortlistStatus, setShortlistStatus] = useState({ rajesh: false, priya: false });
-  const [rankingResult, setRankingResult] = useState(null);
-  const [rankingLoading, setRankingLoading] = useState(false);
 
   // Dynamic summary stats from real collections
   const totalSpentVal = expensesListState.reduce((sum, item) => {
