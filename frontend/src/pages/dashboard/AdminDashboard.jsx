@@ -493,10 +493,10 @@ Thank you for choosing our platform!`;
       timestamp: new Date().toISOString(),
       platformName,
       usersCount: users.length,
-      jobsCount: jobsList.length,
+      jobsCount: jobs.length,
       reportsCount: reportsList.length,
       transactionsCount: transactions.length,
-      data: { users, jobsList, reportsList, transactions }
+      data: { users, jobs, reportsList, transactions }
     }, null, 2);
 
     const element = document.createElement("a");
@@ -511,7 +511,7 @@ Thank you for choosing our platform!`;
   };
 
   const exportDbDump = () => {
-    const dump = JSON.stringify({ users, jobsList, reportsList, transactions }, null, 2);
+    const dump = JSON.stringify({ users, jobs, reportsList, transactions }, null, 2);
     const element = document.createElement("a");
     const file = new Blob([dump], { type: 'application/json' });
     element.href = URL.createObjectURL(file);
