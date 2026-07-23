@@ -819,6 +819,13 @@ const FreelancerDashboard = () => {
   const [filters, setFilters] = useState({ category: '', experienceLevel: '', minBudget: '', maxBudget: '', skills: [] });
   const [activeFilterCount, setActiveFilterCount] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [kanbanMode, setKanbanMode] = useState(false);
+  const [kanbanTasks, setKanbanTasks] = useState([
+    { id: 'TSK-101', title: 'Mobile App API Integration', partner: 'Acme Corp', val: '₹45,000', status: 'ACTIVE', start: '2026-07-01', end: '2026-08-01', column: 'in_progress' },
+    { id: 'TSK-102', title: 'Landing Page Redesign', partner: 'Acme Corp', val: '₹18,000', status: 'COMPLETED', start: '2026-07-05', end: '2026-07-15', column: 'done' },
+    { id: 'TSK-103', title: 'Database Optimization', partner: 'Acme Corp', val: '₹35,000', status: 'ACTIVE', start: '2026-07-10', end: '2026-08-10', column: 'todo' },
+    { id: 'TSK-104', title: 'Security Audit & Compliance', partner: 'Acme Corp', val: '₹60,000', status: 'PENDING', start: '2026-07-20', end: '2026-08-20', column: 'review' }
+  ]);
   const [sortBy, setSortBy] = useState('newest');
 
   const [myProposals, setMyProposals] = useState([]);
@@ -1075,6 +1082,18 @@ const FreelancerDashboard = () => {
       const res = await jobAPI.getMyAssignedJobs();
       const raw = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
       setMyWork(raw);
+      if (raw.length > 0) {
+        setKanbanTasks(raw.map(j => ({
+          id: j._id,
+          title: j.title,
+          partner: j.client?.firstName ? `${j.client.firstName} ${j.client.lastName}` : 'Client',
+          val: `₹${j.budget?.toLocaleString('en-IN')}`,
+          status: j.status,
+          start: new Date(j.createdAt).toLocaleDateString(),
+          end: 'Ongoing',
+          column: j.status === 'completed' ? 'done' : j.status === 'in_progress' ? 'in_progress' : 'todo'
+        })));
+      }
     } catch (err) { console.error('Fetch my work error:', err); }
     finally { setMyWorkLoading(false); }
   };
@@ -2655,12 +2674,80 @@ const FreelancerDashboard = () => {
         {/* ── MY WORK TAB ── */}
         {activeTab === 'mywork' && (
           <div className="fd-card">
-            <div className="fd-card-header">
-              <h2 className="fd-card-title">Contracts & Active Assignments</h2>
+            <div className="fd-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <h2 className="fd-card-title">Contracts & Active Assignments</h2>
+                <button 
+                  onClick={() => setKanbanMode(!kanbanMode)} 
+                  style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid #10b981', color: '#10b981', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {kanbanMode ? '📊 Show List View' : '📋 Show Trello Project Board'}
+                </button>
+              </div>
               <span className="fd-summary-pill">{myWork.length} total contracts</span>
             </div>
             {myWorkLoading ? <LoadingSpinner /> : filteredMyWork.length === 0 ? (
               <EmptyState message="No contracts match your search." />
+            ) : kanbanMode ? (
+              /* Trello Kanban Board UI */
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: 12, marginTop: 12 }}>
+                {[
+                  { key: 'todo', name: '📋 To Do', color: '#3b82f6' },
+                  { key: 'in_progress', name: '⚡ In Progress', color: '#f59e0b' },
+                  { key: 'review', name: '👁️ Under Review', color: '#a855f7' },
+                  { key: 'done', name: '✅ Completed', color: '#10b981' }
+                ].map(col => {
+                  const tasks = kanbanTasks.filter(t => t.column === col.key && t.title.toLowerCase().includes(contractsSearchQuery || ''));
+                  return (
+                    <div key={col.key} style={{ background: '#0e1320', borderRadius: 10, padding: 12, border: '1px solid #1d2433', minHeight: 340, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid #1d2433', paddingBottom: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: col.color }}>{col.name} ({tasks.length})</span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, overflowY: 'auto' }}>
+                        {tasks.map(t => (
+                          <div key={t.id} style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{t.title}</div>
+                            <div style={{ fontSize: 10.5, color: '#94a3b8' }}>Client: {t.partner}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>{t.val}</span>
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                {col.key !== 'todo' && (
+                                  <button 
+                                    onClick={() => {
+                                      const prevCols = { in_progress: 'todo', review: 'in_progress', done: 'review' };
+                                      setKanbanTasks(prev => prev.map(item => item.id === t.id ? { ...item, column: prevCols[col.key] } : item));
+                                    }}
+                                    style={{ background: '#1e293b', border: 'none', borderRadius: 4, color: '#cbd5e1', fontSize: 10, padding: '2px 6px', cursor: 'pointer' }}
+                                  >
+                                    ◀
+                                  </button>
+                                )}
+                                {col.key !== 'done' && (
+                                  <button 
+                                    onClick={() => {
+                                      const nextCols = { todo: 'in_progress', in_progress: 'review', review: 'done' };
+                                      setKanbanTasks(prev => prev.map(item => item.id === t.id ? { ...item, column: nextCols[col.key] } : item));
+                                    }}
+                                    style={{ background: '#1e293b', border: 'none', borderRadius: 4, color: '#cbd5e1', fontSize: 10, padding: '2px 6px', cursor: 'pointer' }}
+                                  >
+                                    ▶
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {tasks.length === 0 && (
+                          <div style={{ textAlign: 'center', padding: '40px 0', color: '#475569', fontSize: 11, fontStyle: 'italic', margin: 'auto' }}>
+                            No tasks in this stage.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               <div className="fd-list-stack">
                 {filteredMyWork.map((job) => {

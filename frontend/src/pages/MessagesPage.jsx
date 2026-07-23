@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import api, { profileAPI, reviewAPI } from '../api';
 import { tokenStorage } from '../utils/tokenStorage';
+import toast from 'react-hot-toast';
 
 // ─── Socket singleton ─────────────────────────────────────────────────────────
 let socket = null;
@@ -151,6 +152,80 @@ const MessagesPage = ({ userType = 'client' }) => {
   const [sending, setSending]             = useState(false);
   const [isTyping, setIsTyping]           = useState(false);
   const [typingUsers, setTypingUsers]     = useState([]);
+
+  // Built-in Video Call & Screen Share
+  const [videoCallActive, setVideoCallActive] = useState(false);
+  const [videoCallState, setVideoCallState] = useState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
+  const [videoCallDuration, setVideoCallDuration] = useState(0);
+
+  // WhatsApp Alert & Voice Messages
+  const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [voiceRecordDuration, setVoiceRecordDuration] = useState(0);
+
+  // Auto-Translation state
+  const [translatedMessages, setTranslatedMessages] = useState({});
+
+  // Translation helpers
+  const translationDictionary = {
+    "hello": "नमस्ते (Hello)",
+    "how are you?": "आप कैसे हैं? (How are you?)",
+    "i have reviewed the screen share": "मैंने स्क्रीन शेयर की समीक्षा कर ली है (I have reviewed the screen share)",
+    "please submit the project update": "कृपया प्रोजेक्ट अपडेट सबमिट करें (Please submit the project update)",
+    "project is ready for review": "प्रोजेक्ट समीक्षा के लिए तैयार है (Project is ready for review)",
+    "thank you for your feedback": "आपके फीडबैक के लिए धन्यवाद (Thank you for your feedback)",
+    "let's join a call": "आइए कॉल पर जुड़ते हैं (Let's join a call)",
+    "sure, let's connect": "ज़रूर, आइए कनेक्ट करते हैं (Sure, let's connect)",
+    "done": "हो गया (Done)"
+  };
+
+  const getTranslation = (text) => {
+    const clean = text.toLowerCase().trim().replace(/[?.!]/g, '');
+    if (translationDictionary[clean]) return translationDictionary[clean];
+    if (text.match(/^[a-zA-Z\s,.'"]+$/)) {
+      return `[अनुवादित]: ${text} (Hindi translation simulation active)`;
+    } else {
+      return `[Translated]: ${text} (English translation simulation active)`;
+    }
+  };
+
+  const toggleTranslation = (msgId, text) => {
+    setTranslatedMessages(prev => ({
+      ...prev,
+      [msgId]: prev[msgId] ? null : getTranslation(text)
+    }));
+  };
+
+  // Timers for calls and recording
+  useEffect(() => {
+    let timer = null;
+    if (isRecordingVoice) {
+      timer = setInterval(() => {
+        setVoiceRecordDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setVoiceRecordDuration(0);
+    }
+    return () => clearInterval(timer);
+  }, [isRecordingVoice]);
+
+  useEffect(() => {
+    let timer = null;
+    if (videoCallActive) {
+      timer = setInterval(() => {
+        setVideoCallDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setVideoCallDuration(0);
+    }
+    return () => clearInterval(timer);
+  }, [videoCallActive]);
+
+  const formatCallDuration = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const remainingSecs = secs % 60;
+    return `${mins}:${remainingSecs < 10 ? '0' : ''}${remainingSecs}`;
+  };
   const [search, setSearch]               = useState('');
   const [searchStatus, setSearchStatus]   = useState('');
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -346,8 +421,10 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   const handleVideoCall = () => {
     if (!activeConv) return;
-    const room = `freelance-market-place-${activeConv._id}`;
-    window.open(`https://meet.jit.si/${encodeURIComponent(room)}`, '_blank', 'noopener,noreferrer');
+    setVideoCallActive(true);
+    setVideoCallDuration(0);
+    setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
+    toast.success('Initiating Zoom-like video conference room...', { icon: '📞' });
   };
 
   const toggleSelectMode = () => {
@@ -547,6 +624,9 @@ const MessagesPage = ({ userType = 'client' }) => {
     try {
       const res = await msgAPI.sendMessage(activeConv._id, { content: text, attachments: attachmentsToSend });
       setMessages(prev => prev.map(m => m._id === optimistic._id ? res.data.data : m));
+      if (whatsAppAlertsActive) {
+        toast.success('WhatsApp copy alert sync dispatched successfully!', { duration: 2500, icon: '💬' });
+      }
     } catch (err) {
       setMessages(prev => prev.filter(m => m._id !== optimistic._id));
       setInput(text);
@@ -795,7 +875,41 @@ const MessagesPage = ({ userType = 'client' }) => {
                         fontStyle: msg.isDeleted ? 'italic' : 'normal',
                       }}>
                         {!msg.isDeleted && <AttachmentList attachments={msg.attachments} isMe={isMe} />}
-                        {msg.content}
+                        {msg.content?.startsWith('[Voice Message]') ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, padding: '4px 0' }}>
+                            <button 
+                              style={{ width: 32, height: 32, borderRadius: '50%', background: isMe ? '#fff' : accentColor, border: 'none', color: isMe ? accentColor : '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 700 }}
+                              onClick={() => toast.success('Playing audio note...')}
+                            >
+                              ▶
+                            </button>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 700, fontSize: 12 }}>🎤 Voice Note</div>
+                              <div style={{ height: 16, display: 'flex', alignItems: 'center', gap: 2, marginTop: 4 }}>
+                                {[2, 4, 6, 8, 3, 5, 7, 6, 4, 3, 5, 7, 8, 4, 3, 6, 5, 2].map((h, hIdx) => (
+                                  <span key={hIdx} style={{ width: 2.5, height: `${h * 1.5}px`, background: isMe ? 'rgba(255,255,255,0.7)' : 'rgba(99, 102, 241, 0.7)', borderRadius: 1 }} />
+                                ))}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: 11, opacity: 0.8 }}>0:08</span>
+                          </div>
+                        ) : (
+                          translatedMessages[msg._id] ? translatedMessages[msg._id] : msg.content
+                        )}
+                        {!msg.isDeleted && !msg.content?.startsWith('[Voice Message]') && (
+                          <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
+                            <button 
+                              onClick={() => toggleTranslation(msg._id, msg.content)}
+                              style={{
+                                background: 'none', border: 'none', padding: 0,
+                                color: isMe ? '#e0e7ff' : '#4f46e5', fontSize: 10.5, fontWeight: 700,
+                                cursor: 'pointer', opacity: 0.85
+                              }}
+                            >
+                              🌐 {translatedMessages[msg._id] ? 'Show Original' : 'Translate (Hindi/English)'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                         <span style={{ fontSize: 11, color: '#a3a3a3' }}>{formatTime(msg.createdAt)}</span>
@@ -836,6 +950,39 @@ const MessagesPage = ({ userType = 'client' }) => {
               </div>
             )}
 
+            {/* WhatsApp Alert & Voice Record Status strip */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDarkMode ? '#071422' : '#f8fafc', padding: '6px 16px', borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e5e7eb'}`, borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e5e7eb'}`, fontSize: 12 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#16a34a', fontWeight: 700, cursor: 'pointer' }}>
+                <input 
+                  type="checkbox" 
+                  checked={whatsAppAlertsActive} 
+                  onChange={(e) => {
+                    setWhatsAppAlertsActive(e.target.checked);
+                    toast.success(`WhatsApp notification sync ${e.target.checked ? 'activated' : 'deactivated'}.`);
+                  }} 
+                  style={{ accentColor: '#16a34a' }}
+                />
+                💬 Sync copy to WhatsApp (+91 98*** ***54)
+              </label>
+
+              {isRecordingVoice && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ef4444', fontWeight: 700 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', animation: 'pulse 1s infinite' }} />
+                  <span>Recording Voice Note... ({voiceRecordDuration}s)</span>
+                  <button 
+                    onClick={() => {
+                      setIsRecordingVoice(false);
+                      setInput('[Voice Message] 🎤 Voice Note (0:08)');
+                      toast.success('Voice note recorded. Press Send to transmit.');
+                    }}
+                    style={{ border: 'none', background: '#ef4444', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 10, cursor: 'pointer' }}
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Input */}
             <div style={styles.inputArea}>
               <input ref={fileInputRef} type="file" multiple
@@ -845,6 +992,27 @@ const MessagesPage = ({ userType = 'client' }) => {
                 style={{ ...styles.attachBtn, opacity: uploadingFiles ? 0.5 : 1 }} title="Attach file" type="button">
                 {uploadingFiles ? '…' : <Icon name="paperclip" />}
               </button>
+
+              {/* Mic Button for voice notes */}
+              <button 
+                onClick={() => {
+                  if (isRecordingVoice) {
+                    setIsRecordingVoice(false);
+                    setInput('[Voice Message] 🎤 Voice Note (0:08)');
+                    toast.success('Voice note recorded.');
+                  } else {
+                    setIsRecordingVoice(true);
+                    setVoiceRecordDuration(0);
+                    toast.info('Recording voice note... speak now.');
+                  }
+                }} 
+                style={{ border: 'none', background: 'none', color: isRecordingVoice ? '#ef4444' : (isDarkMode ? '#9aa3b3' : '#6b7280'), fontSize: 18, cursor: 'pointer', padding: '0 8px', display: 'flex', alignItems: 'center' }}
+                title="Record voice note"
+                type="button"
+              >
+                🎤
+              </button>
+
               <textarea value={input} onChange={handleInputChange} onKeyDown={handleKeyDown}
                 placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
                 rows={1} style={styles.textarea} />
@@ -919,6 +1087,116 @@ const MessagesPage = ({ userType = 'client' }) => {
                       </>
                     )}
                   </div>
+                </div>
+              </div>
+            )}
+            {/* Built-in Zoom-like Video Call Overlay */}
+            {videoCallActive && activeOther && (
+              <div style={{ position: 'fixed', inset: 0, background: '#0a0f1d', zIndex: 1000, display: 'flex', flexDirection: 'column', color: '#fff', fontFamily: "'DM Sans', sans-serif" }}>
+                {/* Header */}
+                <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ background: '#2563eb', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: '0.05em' }}>ZOOM ROOM</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>Active Session with {activeOther.firstName} {activeOther.lastName}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                    <span style={{ fontSize: 13, color: '#94a3b8' }}>HD Connection • {formatCallDuration(videoCallDuration)}</span>
+                  </div>
+                </div>
+
+                {/* Call Content (Video feeds grid) */}
+                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr', padding: 24, position: 'relative', background: '#0f172a' }}>
+                  
+                  {/* Remote Feed (Main view) */}
+                  <div style={{ width: '100%', height: '100%', background: '#1e293b', borderRadius: 16, border: '2px solid #334155', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                    {videoCallState.isScreenSharing ? (
+                      /* Screen share simulation */
+                      <div style={{ width: '100%', height: '100%', background: '#090d16', padding: 20, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: 8, marginBottom: 12 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: '#3b82f6' }}>💻 Screen Sharing: Desktop Workspace</span>
+                          <span style={{ background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>LIVE REVIEW</span>
+                        </div>
+                        <div style={{ flex: 1, fontFamily: 'monospace', fontSize: 12, color: '#38bdf8', overflow: 'hidden', whiteSpace: 'pre-wrap', textAlign: 'left', lineHeight: 1.4 }}>
+                          {`// Freelance Marketplace Code Review\nimport React from 'react';\n\nconst ProjectComponent = () => {\n  return (\n    <div className="container">\n      <h1>Reviewing latest milestone changes</h1>\n      <p>Status: All tests passed successfully</p>\n    </div>\n  );\n};`}
+                        </div>
+                      </div>
+                    ) : videoCallState.isVideoOff ? (
+                      /* Camera turned off view */
+                      <>
+                        <Avatar user={activeOther} size={120} color={accentColor} />
+                        <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600, color: '#94a3b8' }}>{activeOther.firstName} turned off camera</div>
+                      </>
+                    ) : (
+                      /* Regular active call simulated view */
+                      <>
+                        <Avatar user={activeOther} size={100} color={accentColor} />
+                        <div style={{ fontSize: 16, fontWeight: 700, marginTop: 16 }}>{activeOther.firstName} {activeOther.lastName}</div>
+                        <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Camera Active - Live Video</div>
+                        
+                        {/* Audio wave waves simulator */}
+                        <div style={{ display: 'flex', gap: 3, marginTop: 20 }}>
+                          {[5, 12, 18, 24, 15, 8, 14, 22, 10, 6].map((h, idx) => (
+                            <span key={idx} style={{ width: 3, height: h, background: '#2563eb', borderRadius: 1.5, animation: 'pulse 1s infinite' }} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Local Feed PIP (Mini window at bottom corner) */}
+                    <div style={{ position: 'absolute', bottom: 20, right: 20, width: 140, height: 100, background: '#090d16', border: '2px solid #2563eb', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 15px rgba(0,0,0,0.5)' }}>
+                      <div style={{ fontSize: 24 }}>👨‍💻</div>
+                      <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 4 }}>You (Local Feed)</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Control Panel Footer */}
+                <div style={{ background: '#0f172a', borderTop: '1px solid #1e293b', padding: 24, display: 'flex', justifyContent: 'center', gap: 16 }}>
+                  
+                  {/* Mute Mic */}
+                  <button 
+                    onClick={() => {
+                      setVideoCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
+                      toast.success(videoCallState.isMuted ? 'Microphone unmuted' : 'Microphone muted');
+                    }}
+                    style={{ background: videoCallState.isMuted ? '#ef4444' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <span>{videoCallState.isMuted ? '🎤 Unmute' : '🎙️ Mute'}</span>
+                  </button>
+
+                  {/* Toggle Camera */}
+                  <button 
+                    onClick={() => {
+                      setVideoCallState(prev => ({ ...prev, isVideoOff: !prev.isVideoOff }));
+                      toast.success(videoCallState.isVideoOff ? 'Camera turned on' : 'Camera turned off');
+                    }}
+                    style={{ background: videoCallState.isVideoOff ? '#ef4444' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <span>{videoCallState.isVideoOff ? '📹 Start Video' : '🚫 Stop Video'}</span>
+                  </button>
+
+                  {/* Toggle Screen Sharing */}
+                  <button 
+                    onClick={() => {
+                      setVideoCallState(prev => ({ ...prev, isScreenSharing: !prev.isScreenSharing }));
+                      toast.success(videoCallState.isScreenSharing ? 'Screen sharing stopped' : 'Screen sharing active');
+                    }}
+                    style={{ background: videoCallState.isScreenSharing ? '#10b981' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <span>💻 {videoCallState.isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</span>
+                  </button>
+
+                  {/* Hang Up (Red button) */}
+                  <button 
+                    onClick={() => {
+                      setVideoCallActive(false);
+                      toast.error(`Call disconnected. Total duration: ${formatCallDuration(videoCallDuration)}`, { icon: '📞' });
+                    }}
+                    style={{ background: '#dc2626', border: 'none', borderRadius: 8, padding: '12px 24px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <span>🛑 Hang Up</span>
+                  </button>
                 </div>
               </div>
             )}

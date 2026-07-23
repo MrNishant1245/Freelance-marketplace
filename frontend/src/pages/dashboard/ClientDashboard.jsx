@@ -4931,150 +4931,237 @@ const ClientDashboard = () => {
                   </div>
                 </div>
 
-                {/* Filter Tabs */}
-                <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid #1d2433', pb: 10, mb: 14, overflowX: 'auto', paddingBottom: 10 }}>
-                  {['All', 'Active', 'Pending', 'Completed', 'Cancelled'].map((tab, idx) => (
-                    <span 
-                      key={idx} 
-                      onClick={() => { setSelectedContractTab(tab); setContractsPage(1); }}
-                      style={{ fontSize: 12.5, fontWeight: selectedContractTab === tab ? 700 : 500, color: selectedContractTab === tab ? '#10b981' : '#64748b', cursor: 'pointer' }}
-                    >
-                      {tab}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Contracts Table */}
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left', minWidth: 500 }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b' }}>
-                        <th style={{ padding: '8px 0', fontWeight: 600 }}>Contract</th>
-                        <th style={{ padding: '8px 0', fontWeight: 600 }}>Client / Freelancer</th>
-                        <th style={{ padding: '8px 0', fontWeight: 600 }}>Value</th>
-                        <th style={{ padding: '8px 0', fontWeight: 600 }}>Status</th>
-                        <th style={{ padding: '8px 0', fontWeight: 600 }}>Start Date</th>
-                        <th style={{ padding: '8px 0', fontWeight: 600 }}>End Date</th>
-                        <th style={{ padding: '8px 0', fontWeight: 600, textAlign: 'center' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedContracts.map((ctr, idx) => (
-                        <tr key={ctr.id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                          <td style={{ padding: '12px 0', verticalAlign: 'middle' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1d4ed8', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700 }}>
-                                {ctr.initial}
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: 700, color: '#fff' }}>{ctr.title}</div>
-                                <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 1 }}>{ctr.id}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: '12px 0', color: '#cbd5e1' }}>{ctr.partner}</td>
-                          <td style={{ padding: '12px 0', fontWeight: 700, color: '#fff' }}>{ctr.val}</td>
-                          <td style={{ padding: '12px 0' }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6, background: ctr.bg, color: ctr.color }}>{ctr.status}</span>
-                          </td>
-                          <td style={{ padding: '12px 0', color: '#94a3b8' }}>{ctr.start}</td>
-                          <td style={{ padding: '12px 0', color: '#94a3b8' }}>{ctr.end}</td>
-                          <td style={{ padding: '12px 0', textAlign: 'center', color: '#64748b', cursor: 'pointer', position: 'relative' }}>
-                            <span 
-                              style={{ display: 'block', width: '100%' }}
-                              onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === `contract-${ctr.id}` ? null : `contract-${ctr.id}`); }}
+                {kanbanMode ? (
+                  /* Trello Kanban Board UI */
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: 12, marginTop: 12 }}>
+                    {[
+                      { key: 'todo', name: '📋 To Do', color: '#3b82f6' },
+                      { key: 'in_progress', name: '⚡ In Progress', color: '#f59e0b' },
+                      { key: 'review', name: '👁️ Under Review', color: '#a855f7' },
+                      { key: 'done', name: '✅ Completed', color: '#10b981' }
+                    ].map(col => {
+                      const tasks = kanbanTasks.filter(t => t.column === col.key && t.title.toLowerCase().includes(contractsSearchQuery.toLowerCase()));
+                      return (
+                        <div key={col.key} style={{ background: '#0e1320', borderRadius: 10, padding: 12, border: '1px solid #1d2433', minHeight: 340, display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid #1d2433', paddingBottom: 6 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: col.color }}>{col.name} ({tasks.length})</span>
+                            <button 
+                              onClick={() => {
+                                const title = prompt("Enter task title:");
+                                if (title) {
+                                  const newTask = {
+                                    id: `TSK-${Date.now().toString().slice(-4)}`,
+                                    title,
+                                    partner: 'Acme Corp / Unassigned',
+                                    val: '₹20,000',
+                                    status: 'ACTIVE',
+                                    start: new Date().toISOString().slice(0, 10),
+                                    end: 'Ongoing',
+                                    column: col.key
+                                  };
+                                  setKanbanTasks(prev => [...prev, newTask]);
+                                  toast.success(`Task added to ${col.key}!`);
+                                }
+                              }}
+                              style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 14, cursor: 'pointer', fontWeight: 700 }}
                             >
-                              •••
-                            </span>
-                            {activeDropdown === `contract-${ctr.id}` && (
-                              <div style={{ position: 'absolute', right: 0, top: '80%', background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 0', zIndex: 100, width: 150, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-                                <div 
-                                  onClick={() => { setActiveDropdown(null); toast.success(`Contract Agreement PDF for ${ctr.id} downloaded!`); }}
-                                  style={{ padding: '8px 12px', fontSize: 11.5, color: '#cbd5e1', cursor: 'pointer' }}
-                                  onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
-                                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                >
-                                  📄 Download Agreement
-                                </div>
-                                <div 
-                                  onClick={() => { setActiveDropdown(null); toast.success(`Audit logs retrieved for ${ctr.id}!`); }}
-                                  style={{ padding: '8px 12px', fontSize: 11.5, color: '#cbd5e1', cursor: 'pointer' }}
-                                  onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
-                                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                >
-                                  🔍 View Audit Log
-                                </div>
-                                {ctr.status !== 'CANCELLED' && (
-                                  <div 
-                                    onClick={() => { setActiveDropdown(null); handleTerminateContract(ctr.id); }}
-                                    style={{ padding: '8px 12px', fontSize: 11.5, color: '#ef4444', cursor: 'pointer' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                  >
-                                    ⚠️ Terminate Contract
+                              +
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, overflowY: 'auto' }}>
+                            {tasks.map(t => (
+                              <div key={t.id} style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{t.title}</div>
+                                <div style={{ fontSize: 10.5, color: '#94a3b8' }}>Assignee: {t.partner}</div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>{t.val}</span>
+                                  <div style={{ display: 'flex', gap: 4 }}>
+                                    {col.key !== 'todo' && (
+                                      <button 
+                                        onClick={() => {
+                                          const prevCols = { in_progress: 'todo', review: 'in_progress', done: 'review' };
+                                          setKanbanTasks(prev => prev.map(item => item.id === t.id ? { ...item, column: prevCols[col.key] } : item));
+                                        }}
+                                        style={{ background: '#1e293b', border: 'none', borderRadius: 4, color: '#cbd5e1', fontSize: 10, padding: '2px 6px', cursor: 'pointer' }}
+                                      >
+                                        ◀
+                                      </button>
+                                    )}
+                                    {col.key !== 'done' && (
+                                      <button 
+                                        onClick={() => {
+                                          const nextCols = { todo: 'in_progress', in_progress: 'review', review: 'done' };
+                                          setKanbanTasks(prev => prev.map(item => item.id === t.id ? { ...item, column: nextCols[col.key] } : item));
+                                        }}
+                                        style={{ background: '#1e293b', border: 'none', borderRadius: 4, color: '#cbd5e1', fontSize: 10, padding: '2px 6px', cursor: 'pointer' }}
+                                      >
+                                        ▶
+                                      </button>
+                                    )}
                                   </div>
-                                )}
+                                </div>
+                              </div>
+                            ))}
+                            {tasks.length === 0 && (
+                              <div style={{ textAlign: 'center', padding: '40px 0', color: '#475569', fontSize: 11, fontStyle: 'italic', margin: 'auto' }}>
+                                No tasks in this stage.
                               </div>
                             )}
-                          </td>
-                        </tr>
-                      ))}
-                      {paginatedContracts.length === 0 && (
-                        <tr>
-                          <td colSpan="7" style={{ padding: '40px 0', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
-                            No contracts found matching current filters.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Table Footer / Pagination */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, flexWrap: 'wrap', gap: 10 }}>
-                  <span style={{ fontSize: 12, color: '#64748b' }}>
-                    Showing {filteredContracts.length === 0 ? 0 : ((currentContractsPage - 1) * contractsPerPage) + 1} to {Math.min(currentContractsPage * contractsPerPage, filteredContracts.length)} of {filteredContracts.length} contracts
-                  </span>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button 
-                      onClick={() => setContractsPage(1)} 
-                      disabled={currentContractsPage === 1}
-                      style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
-                    >
-                      «
-                    </button>
-                    <button 
-                      onClick={() => setContractsPage(prev => Math.max(prev - 1, 1))} 
-                      disabled={currentContractsPage === 1}
-                      style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
-                    >
-                      ‹
-                    </button>
-                    {Array.from({ length: totalContractPages }, (_, i) => i + 1).map(page => (
-                      <button 
-                        key={page} 
-                        onClick={() => setContractsPage(page)} 
-                        style={{ width: 24, height: 24, borderRadius: 6, background: currentContractsPage === page ? '#10b981' : '#161c2c', border: currentContractsPage === page ? 'none' : '1px solid #1d2433', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11, fontWeight: currentContractsPage === page ? 700 : 500 }}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button 
-                      onClick={() => setContractsPage(prev => Math.min(prev + 1, totalContractPages))} 
-                      disabled={currentContractsPage === totalContractPages}
-                      style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
-                    >
-                      ›
-                    </button>
-                    <button 
-                      onClick={() => setContractsPage(totalContractPages)} 
-                      disabled={currentContractsPage === totalContractPages}
-                      style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
-                    >
-                      »
-                    </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
+                ) : (
+                  /* Standard Table View */
+                  <>
+                    {/* Filter Tabs */}
+                    <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid #1d2433', pb: 10, mb: 14, overflowX: 'auto', paddingBottom: 10 }}>
+                      {['All', 'Active', 'Pending', 'Completed', 'Cancelled'].map((tab, idx) => (
+                        <span 
+                          key={idx} 
+                          onClick={() => { setSelectedContractTab(tab); setContractsPage(1); }}
+                          style={{ fontSize: 12.5, fontWeight: selectedContractTab === tab ? 700 : 500, color: selectedContractTab === tab ? '#10b981' : '#64748b', cursor: 'pointer' }}
+                        >
+                          {tab}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Contracts Table */}
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left', minWidth: 500 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b' }}>
+                            <th style={{ padding: '8px 0', fontWeight: 600 }}>Contract</th>
+                            <th style={{ padding: '8px 0', fontWeight: 600 }}>Client / Freelancer</th>
+                            <th style={{ padding: '8px 0', fontWeight: 600 }}>Value</th>
+                            <th style={{ padding: '8px 0', fontWeight: 600 }}>Status</th>
+                            <th style={{ padding: '8px 0', fontWeight: 600 }}>Start Date</th>
+                            <th style={{ padding: '8px 0', fontWeight: 600 }}>End Date</th>
+                            <th style={{ padding: '8px 0', fontWeight: 600, textAlign: 'center' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedContracts.map((ctr, idx) => (
+                            <tr key={ctr.id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                              <td style={{ padding: '12px 0', verticalAlign: 'middle' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1d4ed8', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700 }}>
+                                    {ctr.initial}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontWeight: 700, color: '#fff' }}>{ctr.title}</div>
+                                    <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 1 }}>{ctr.id}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: '12px 0', color: '#cbd5e1' }}>{ctr.partner}</td>
+                              <td style={{ padding: '12px 0', fontWeight: 700, color: '#fff' }}>{ctr.val}</td>
+                              <td style={{ padding: '12px 0' }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6, background: ctr.bg, color: ctr.color }}>{ctr.status}</span>
+                              </td>
+                              <td style={{ padding: '12px 0', color: '#94a3b8' }}>{ctr.start}</td>
+                              <td style={{ padding: '12px 0', color: '#94a3b8' }}>{ctr.end}</td>
+                              <td style={{ padding: '12px 0', textAlign: 'center', color: '#64748b', cursor: 'pointer', position: 'relative' }}>
+                                <span 
+                                  style={{ display: 'block', width: '100%' }}
+                                  onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === `contract-${ctr.id}` ? null : `contract-${ctr.id}`); }}
+                                >
+                                  •••
+                                </span>
+                                {activeDropdown === `contract-${ctr.id}` && (
+                                  <div style={{ position: 'absolute', right: 0, top: '80%', background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 0', zIndex: 100, width: 150, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                                    <div 
+                                      onClick={() => { setActiveDropdown(null); toast.success(`Contract Agreement PDF for ${ctr.id} downloaded!`); }}
+                                      style={{ padding: '8px 12px', fontSize: 11.5, color: '#cbd5e1', cursor: 'pointer' }}
+                                      onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
+                                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                    >
+                                      📄 Download Agreement
+                                    </div>
+                                    <div 
+                                      onClick={() => { setActiveDropdown(null); toast.success(`Audit logs retrieved for ${ctr.id}!`); }}
+                                      style={{ padding: '8px 12px', fontSize: 11.5, color: '#cbd5e1', cursor: 'pointer' }}
+                                      onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
+                                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                    >
+                                      🔍 View Audit Log
+                                    </div>
+                                    {ctr.status !== 'CANCELLED' && (
+                                      <div 
+                                        onClick={() => { setActiveDropdown(null); handleTerminateContract(ctr.id); }}
+                                        style={{ padding: '8px 12px', fontSize: 11.5, color: '#ef4444', cursor: 'pointer' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        ⚠️ Terminate Contract
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          {paginatedContracts.length === 0 && (
+                            <tr>
+                              <td colSpan="7" style={{ padding: '40px 0', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
+                                No contracts found matching current filters.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Table Footer / Pagination */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, flexWrap: 'wrap', gap: 10 }}>
+                      <span style={{ fontSize: 12, color: '#64748b' }}>
+                        Showing {filteredContracts.length === 0 ? 0 : ((currentContractsPage - 1) * contractsPerPage) + 1} to {Math.min(currentContractsPage * contractsPerPage, filteredContracts.length)} of {filteredContracts.length} contracts
+                      </span>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button 
+                          onClick={() => setContractsPage(1)} 
+                          disabled={currentContractsPage === 1}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                        >
+                          «
+                        </button>
+                        <button 
+                          onClick={() => setContractsPage(prev => Math.max(prev - 1, 1))} 
+                          disabled={currentContractsPage === 1}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                        >
+                          ‹
+                        </button>
+                        {Array.from({ length: totalContractPages }, (_, i) => i + 1).map(page => (
+                          <button 
+                            key={page} 
+                            onClick={() => setContractsPage(page)} 
+                            style={{ width: 24, height: 24, borderRadius: 6, background: currentContractsPage === page ? '#10b981' : '#161c2c', border: currentContractsPage === page ? 'none' : '1px solid #1d2433', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11, fontWeight: currentContractsPage === page ? 700 : 500 }}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        <button 
+                          onClick={() => setContractsPage(prev => Math.min(prev + 1, totalContractPages))} 
+                          disabled={currentContractsPage === totalContractPages}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                        >
+                          ›
+                        </button>
+                        <button 
+                          onClick={() => setContractsPage(totalContractPages)} 
+                          disabled={currentContractsPage === totalContractPages}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                        >
+                          »
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Right Column: Expirations, Actions, Health */}
