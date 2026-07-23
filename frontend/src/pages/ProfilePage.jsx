@@ -169,6 +169,7 @@ const ProfilePage = () => {
   const userRole = String(user?.role || '').trim().toLowerCase();
   const isFreelancer = userRole === 'freelancer';
   const [activeTab, setActiveTab] = useState('basic');
+  const [showBadgesShowcaseModal, setShowBadgesShowcaseModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [skillInput, setSkillInput] = useState('');
   const [aboutMeTagInput, setAboutMeTagInput] = useState('');
@@ -496,6 +497,106 @@ const ProfilePage = () => {
   const dashboardPath = isFreelancer ? '/freelancer/dashboard' : '/dashboard';
   const accentColor = isFreelancer ? '#10b981' : '#2563eb';
 
+  const freelancerBadges = [
+    { id: 'rising_star', name: 'Rising Star', emoji: '🌟', category: 'Performance', desc: 'Completed first job' },
+    { id: 'on_fire', name: 'On Fire', emoji: '🔥', category: 'Performance', desc: 'Completed 5 jobs' },
+    { id: 'top_rated', name: 'Top Rated', emoji: '💎', category: 'Performance', desc: '4.8+ rating with 10+ reviews' },
+    { id: 'pro_freelancer', name: 'Pro Freelancer', emoji: '🚀', category: 'Performance', desc: 'Completed 25 jobs' },
+    { id: 'elite_freelancer', name: 'Elite', emoji: '👑', category: 'Performance', desc: '50+ jobs, 4.9+ rating' },
+    { id: 'fast_responder', name: 'Fast Responder', emoji: '⚡', category: 'Speed', desc: 'Submitted proposal within 1 hour' },
+    { id: 'deadline_master', name: 'Deadline Master', emoji: '🎯', category: 'Speed', desc: 'Delivered 10 jobs on time' },
+    { id: 'quick_starter', name: 'Quick Starter', emoji: '🏃', category: 'Speed', desc: 'Started work within 24 hours' },
+    { id: 'zero_disputes', name: 'Zero Disputes', emoji: '✅', category: 'Quality', desc: 'Never had a dispute' },
+    { id: 'perfect_score', name: 'Perfect Score', emoji: '💯', category: 'Quality', desc: '5/5 rating from 5+ clients' },
+    { id: 'repeat_hire', name: 'Repeat Hire', emoji: '🔄', category: 'Quality', desc: 'Same client hired 3+ times' },
+    { id: 'detail_oriented', name: 'Detail Oriented', emoji: '📝', category: 'Quality', desc: 'Always includes cover letter' },
+    { id: 'verified_skills', name: 'Verified Skills', emoji: '🛡️', category: 'Skills', desc: 'Passed a skill test' },
+    { id: 'expert_skills', name: 'Expert', emoji: '🎓', category: 'Skills', desc: 'Passed 5+ skill tests' },
+    { id: 'multilingual', name: 'Multilingual', emoji: '🌐', category: 'Skills', desc: 'Worked in Hindi + English both' },
+    { id: '1year_member', name: '1 Year Member', emoji: '📅', category: 'Loyalty', desc: '1 year on platform' },
+    { id: 'community_helper', name: 'Community Helper', emoji: '🤝', category: 'Loyalty', desc: 'Referred 10 users' },
+    { id: 'responsive', name: 'Responsive', emoji: '💌', category: 'Loyalty', desc: '95%+ response rate' }
+  ];
+
+  const clientBadges = [
+    { id: 'first_hire', name: 'First Hire', emoji: '🎯', category: 'Hiring', desc: 'Hired first freelancer' },
+    { id: 'active_employer', name: 'Active Employer', emoji: '💼', category: 'Hiring', desc: 'Posted 5 jobs' },
+    { id: 'project_builder', name: 'Project Builder', emoji: '🏗️', category: 'Hiring', desc: 'Completed 10 projects' },
+    { id: 'top_client', name: 'Top Client', emoji: '🌟', category: 'Hiring', desc: '20+ jobs, 4.8+ rating' },
+    { id: 'verified_payer', name: 'Verified Payer', emoji: '💳', category: 'Payment', desc: 'Payment verified' },
+    { id: 'quick_payer', name: 'Quick Payer', emoji: '⚡', category: 'Payment', desc: 'Always released payment within 24h' },
+    { id: 'escrow_user', name: 'Escrow User', emoji: '🔒', category: 'Payment', desc: 'Made 5+ escrow payments' },
+    { id: 'big_spender', name: 'Big Spender', emoji: '💰', category: 'Payment', desc: 'Spent ₹1 Lakh+ on platform' },
+    { id: 'trusted_client', name: 'Trusted Client', emoji: '🛡️', category: 'Trust', desc: 'Zero disputes' },
+    { id: 'clear_brief', name: 'Clear Brief', emoji: '✅', category: 'Trust', desc: '5 stars for job clarity' },
+    { id: 'fair_player', name: 'Fair Player', emoji: '🤝', category: 'Trust', desc: 'Never rejected proposal without reason' },
+    { id: 'detailed_poster', name: 'Detailed Poster', emoji: '📋', category: 'Trust', desc: 'Complete/detailed job posts' },
+    { id: 'loyal_client', name: 'Loyal Client', emoji: '🔄', category: 'Loyalty', desc: 'Same freelancer hired 3+ times' },
+    { id: '1year_member', name: '1 Year Member', emoji: '📅', category: 'Loyalty', desc: '1 year on platform' },
+    { id: 'community_builder', name: 'Community Builder', emoji: '🌱', category: 'Loyalty', desc: 'Referred 5 freelancers' },
+    { id: 'ambassador', name: 'Ambassador', emoji: '🌟', category: 'Loyalty', desc: 'Referred 10+ users' }
+  ];
+
+  const specialBadges = [
+    { id: 'early_adopter', name: 'Early Adopter', emoji: '🌈', category: 'Special', desc: 'First 100 users' },
+    { id: 'bug_hunter', name: 'Bug Hunter', emoji: '🐛', category: 'Special', desc: 'Reported a bug' },
+    { id: 'anniversary', name: 'Anniversary', emoji: '🎉', category: 'Special', desc: 'Milestone anniversary' },
+    { id: 'global', name: 'Global', emoji: '🌍', category: 'Special', desc: 'Worked with 5+ countries' }
+  ];
+
+  const getBadgeStatus = (badgeId) => {
+    const jCount = stats.jobsCount || 0;
+    const rating = stats.rating || 0;
+    const revCount = stats.reviewsCount || 0;
+    const money = stats.moneyValue || 0;
+    const skillCount = form.skills?.length || 0;
+    const portfolioCount = portfolio.length || 0;
+
+    switch (badgeId) {
+      case 'rising_star': return jCount >= 1;
+      case 'on_fire': return jCount >= 5;
+      case 'top_rated': return rating >= 4.8 && revCount >= 10;
+      case 'pro_freelancer': return jCount >= 25;
+      case 'elite_freelancer': return jCount >= 50 && rating >= 4.9;
+      case 'fast_responder': return true;
+      case 'deadline_master': return jCount >= 10;
+      case 'quick_starter': return jCount >= 2;
+      case 'zero_disputes': return true;
+      case 'perfect_score': return rating === 5.0 && revCount >= 5;
+      case 'repeat_hire': return jCount >= 3;
+      case 'detail_oriented': return portfolioCount >= 1;
+      case 'verified_skills': return skillCount >= 3;
+      case 'expert_skills': return skillCount >= 5;
+      case 'multilingual': return true;
+      case '1year_member': return true;
+      case 'community_helper': return false;
+      case 'responsive': return true;
+
+      case 'first_hire': return jCount >= 1;
+      case 'active_employer': return jCount >= 5;
+      case 'project_builder': return jCount >= 10;
+      case 'top_client': return jCount >= 20 && rating >= 4.8;
+      case 'verified_payer': return true;
+      case 'quick_payer': return true;
+      case 'escrow_user': return jCount >= 5;
+      case 'big_spender': return money >= 100000;
+      case 'trusted_client': return true;
+      case 'clear_brief': return rating === 5.0;
+      case 'fair_player': return true;
+      case 'detailed_poster': return true;
+      case 'loyal_client': return jCount >= 3;
+      case 'community_builder': return false;
+      case 'ambassador': return false;
+
+      case 'early_adopter': return true;
+      case 'bug_hunter': return false;
+      case 'anniversary': return true;
+      case 'global': return jCount >= 5;
+
+      default: return false;
+    }
+  };
+
   if (isDarkMode) {
     try {
       Object.assign(s.shell, { background: '#0f172a', color: '#f1f5f9' });
@@ -655,6 +756,55 @@ const ProfilePage = () => {
                 <span style={s.mockupStatLabel}>Average Rating</span>
                 <span style={s.mockupStatVal}>{stats.rating || '4.9'}</span>
                 <span style={s.mockupStatChange}>Based on {stats.reviewsCount || 124} reviews</span>
+              </div>
+            </div>
+
+            {/* Badges System Strip */}
+            <div style={{ background: isDarkMode ? '#071422' : '#ffffff', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e2e8f0'}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, color: isDarkMode ? '#ffffff' : '#0f172a', margin: 0 }}>🎖️ Achievements & Badges</h3>
+                  <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0 0' }}>Earn profile badges by completing projects, skill tests, and payment milestones</p>
+                </div>
+                <button 
+                  onClick={() => setShowBadgesShowcaseModal(true)} 
+                  style={{ border: 'none', background: 'none', color: accentColor, fontWeight: 700, fontSize: 12.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  View All Badges ({isFreelancer ? 18 + 4 : 16 + 4}) →
+                </button>
+              </div>
+
+              {/* Grid of active / earned badges (featured) */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {(isFreelancer ? freelancerBadges : clientBadges).concat(specialBadges)
+                  .filter(b => getBadgeStatus(b.id))
+                  .slice(0, 8)
+                  .map(b => (
+                    <div 
+                      key={b.id} 
+                      title={`${b.name}: ${b.desc}`} 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 6, 
+                        background: isDarkMode ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.08)', 
+                        border: `1.5px solid ${accentColor}`,
+                        borderRadius: 8, 
+                        padding: '6px 12px', 
+                        fontSize: 12.5, 
+                        fontWeight: 700, 
+                        color: isDarkMode ? '#a5b4fc' : '#4f46e5',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
+                      }}
+                    >
+                      <span>{b.emoji}</span>
+                      <span>{b.name}</span>
+                    </div>
+                ))}
+                {(isFreelancer ? freelancerBadges : clientBadges).concat(specialBadges)
+                  .filter(b => getBadgeStatus(b.id)).length === 0 && (
+                    <div style={{ fontSize: 12.5, color: '#64748b', fontStyle: 'italic' }}>No badges unlocked yet. Keep working to earn your first badge!</div>
+                )}
               </div>
             </div>
 
@@ -1413,6 +1563,69 @@ const ProfilePage = () => {
           onSave={handlePortfolioSave}
           accentColor={accentColor}
         />
+      )}
+
+      {/* Badges Showcase Modal */}
+      {showBadgesShowcaseModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300 }} onClick={() => setShowBadgesShowcaseModal(false)}>
+          <div style={{ background: isDarkMode ? '#071422' : '#ffffff', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : '#e2e8f0'}`, borderRadius: 16, padding: 24, width: '90%', maxWidth: 640, maxHeight: '80vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : '#e2e8f0'}`, paddingBottom: 12, marginBottom: 18 }}>
+              <div>
+                <h3 style={{ fontSize: 16.5, fontWeight: 800, color: isDarkMode ? '#ffffff' : '#0f172a', margin: 0 }}>🎖️ Achievements & Badges</h3>
+                <span style={{ fontSize: 12, color: '#64748b' }}>Complete platform milestones to unlock medals</span>
+              </div>
+              <button onClick={() => setShowBadgesShowcaseModal(false)} style={{ background: 'none', border: 'none', fontSize: 18, color: '#64748b', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Render categories for Badges */}
+              {['Performance', 'Hiring', 'Speed', 'Quality', 'Skills', 'Payment', 'Trust', 'Loyalty', 'Special'].map(cat => {
+                const list = (isFreelancer ? freelancerBadges : clientBadges).concat(specialBadges).filter(b => b.category === cat);
+                if (list.length === 0) return null;
+                return (
+                  <div key={cat}>
+                    <h4 style={{ fontSize: 12.5, fontWeight: 700, color: accentColor, textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.05em', borderLeft: `3px solid ${accentColor}`, paddingLeft: 8 }}>{cat}</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      {list.map(b => {
+                        const unlocked = getBadgeStatus(b.id);
+                        return (
+                          <div 
+                            key={b.id} 
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 10, 
+                              background: unlocked ? (isDarkMode ? 'rgba(99, 102, 241, 0.12)' : '#f5f3ff') : (isDarkMode ? '#0b1220' : '#f8fafc'), 
+                              border: unlocked ? `1.5px solid ${accentColor}` : `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e2e8f0'}`, 
+                              borderRadius: 10, 
+                              padding: 10,
+                              opacity: unlocked ? 1 : 0.6
+                            }}
+                          >
+                            <span style={{ fontSize: 20, filter: unlocked ? 'none' : 'grayscale(100%)' }}>{b.emoji}</span>
+                            <div>
+                              <div style={{ fontSize: 12.5, fontWeight: 700, color: unlocked ? (isDarkMode ? '#a5b4fc' : '#4f46e5') : (isDarkMode ? '#cbd5e1' : '#475569') }}>{b.name}</div>
+                              <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{b.desc}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 22, borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : '#e2e8f0'}`, paddingTop: 14 }}>
+              <button 
+                onClick={() => setShowBadgesShowcaseModal(false)} 
+                style={{ background: accentColor, border: 'none', borderRadius: 8, padding: '8px 16px', color: '#ffffff', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}
+              >
+                Close Showcase
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Custom styles override */}
