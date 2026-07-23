@@ -2690,14 +2690,14 @@ const FreelancerDashboard = () => {
               <EmptyState message="No contracts match your search." />
             ) : kanbanMode ? (
               /* Trello Kanban Board UI */
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: 12, marginTop: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(4, 1fr)', gap: 12, marginTop: 12 }}>
                 {[
                   { key: 'todo', name: '📋 To Do', color: '#3b82f6' },
                   { key: 'in_progress', name: '⚡ In Progress', color: '#f59e0b' },
                   { key: 'review', name: '👁️ Under Review', color: '#a855f7' },
                   { key: 'done', name: '✅ Completed', color: '#10b981' }
                 ].map(col => {
-                  const tasks = kanbanTasks.filter(t => t.column === col.key && t.title.toLowerCase().includes(contractsSearchQuery || ''));
+                  const tasks = kanbanTasks.filter(t => t.column === col.key && t.title.toLowerCase().includes(searchQuery || ''));
                   return (
                     <div key={col.key} style={{ background: '#0e1320', borderRadius: 10, padding: 12, border: '1px solid #1d2433', minHeight: 340, display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid #1d2433', paddingBottom: 6 }}>
