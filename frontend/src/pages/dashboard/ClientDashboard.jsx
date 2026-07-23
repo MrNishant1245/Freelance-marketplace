@@ -1236,6 +1236,10 @@ const ClientDashboard = () => {
   const { user, logout, updateUser, isDarkMode, toggleDarkMode } = useAuth();
 
   const [jobs, setJobs] = useState([]);
+  const [activeReceipt, setActiveReceipt] = useState(null);
+  const [shortlistStatus, setShortlistStatus] = useState({ rajesh: false, priya: false });
+  const [rankingResult, setRankingResult] = useState(null);
+  const [rankingLoading, setRankingLoading] = useState(false);
   
   // Derive candidates list dynamically from real proposals in database
   const realCandidatesList = [];
