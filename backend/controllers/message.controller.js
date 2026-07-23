@@ -36,7 +36,8 @@ const getConversations = async (req, res) => {
 // ─── Get or create a conversation with another user ──────────────────────────
 const getOrCreateConversation = async (req, res) => {
   try {
-    const { userId, jobId } = req.body;
+    const userId = req.body.userId || req.body.recipientId || req.body.participantId;
+    const { jobId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ success: false, message: 'userId required.' });
