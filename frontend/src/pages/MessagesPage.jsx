@@ -529,6 +529,25 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   const isBlocked = activeOther ? blockedUsers.has(activeOther._id) : false;
 
+  // ── Select conversation ───────────────────────────────────────────────────────
+  const selectConversation = useCallback(async (conv) => {
+    if (activeConv) socketRef.current?.emit('leaveConversation', activeConv._id);
+    setActiveConv(conv);
+    setMessages([]);
+    setMsgLoading(true);
+    setPendingFiles([]);
+    try {
+      const res = await msgAPI.getMessages(conv._id, 1);
+      setMessages(res.data?.data || []);
+    } catch (err) {
+      console.error('Load messages error:', err);
+    } finally {
+      setMsgLoading(false);
+    }
+    socketRef.current?.emit('joinConversation', conv._id);
+    setConversations(prev => prev.map(c => c._id === conv._id ? { ...c, unreadCount: 0 } : c));
+  }, [activeConv]);
+
   // ── Load conversations ────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
@@ -553,7 +572,7 @@ const MessagesPage = ({ userType = 'client' }) => {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [selectConversation]);
 
   // ── Scroll to bottom ──────────────────────────────────────────────────────────
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -570,25 +589,6 @@ const MessagesPage = ({ userType = 'client' }) => {
       }
     }
   }, [location.search, conversations, activeConv, selectConversation]);
-
-  // ── Select conversation ───────────────────────────────────────────────────────
-  const selectConversation = useCallback(async (conv) => {
-    if (activeConv) socketRef.current?.emit('leaveConversation', activeConv._id);
-    setActiveConv(conv);
-    setMessages([]);
-    setMsgLoading(true);
-    setPendingFiles([]);
-    try {
-      const res = await msgAPI.getMessages(conv._id, 1);
-      setMessages(res.data?.data || []);
-    } catch (err) {
-      console.error('Load messages error:', err);
-    } finally {
-      setMsgLoading(false);
-    }
-    socketRef.current?.emit('joinConversation', conv._id);
-    setConversations(prev => prev.map(c => c._id === conv._id ? { ...c, unreadCount: 0 } : c));
-  }, [activeConv]);
 
   // ── File attach ───────────────────────────────────────────────────────────────
   const handleAttachClick = () => fileInputRef.current?.click();
