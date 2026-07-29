@@ -100,7 +100,7 @@ const LoadingSpinner = () => (
 );
 
 // ── Client Feature Hub Component ─────────────────────────────────────────────
-const FeatureHub = ({ isDarkMode, navigate, realJobs }) => {
+const FeatureHub = ({ isDarkMode, navigate, realJobs, selectedCurrency, formatBudget }) => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [hoveredBox, setHoveredBox] = useState(null);
 
@@ -410,15 +410,15 @@ const FeatureHub = ({ isDarkMode, navigate, realJobs }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, background: isDarkMode ? 'rgba(255,255,255,0.03)' : '#f8fafc', border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, marginBottom: 16 }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', textTransform: 'uppercase' }}>Released</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: themeText }}>₹{totalReleased.toLocaleString('en-IN')}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: themeText }}>{formatBudget ? formatBudget(totalReleased) : `₹${totalReleased.toLocaleString('en-IN')}`}</div>
               </div>
               <div style={{ textAlign: 'center', borderLeft: `1px solid ${themeBorder}`, borderRight: `1px solid ${themeBorder}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', textTransform: 'uppercase' }}>In Escrow</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: themeText }}>₹{totalFunded.toLocaleString('en-IN')}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: themeText }}>{formatBudget ? formatBudget(totalFunded) : `₹${totalFunded.toLocaleString('en-IN')}`}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase' }}>Drafted</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: themeText }}>₹{totalDraft.toLocaleString('en-IN')}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: themeText }}>{formatBudget ? formatBudget(totalDraft) : `₹${totalDraft.toLocaleString('en-IN')}`}</div>
               </div>
             </div>
 
@@ -427,7 +427,7 @@ const FeatureHub = ({ isDarkMode, navigate, realJobs }) => {
                 <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: `1px solid ${themeBorder}`, borderRadius: 8, background: isDarkMode ? '#172033' : '#fff' }}>
                   <div>
                     <div style={{ fontSize: 13.5, fontWeight: 700, color: themeText }}>{m.name}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Amount: <strong>₹{m.amount.toLocaleString('en-IN')}</strong></div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Amount: <strong>{formatBudget ? formatBudget(m.amount) : `₹${m.amount.toLocaleString('en-IN')}`}</strong></div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ 
@@ -1240,6 +1240,53 @@ const ClientDashboard = () => {
   const [shortlistStatus, setShortlistStatus] = useState({ rajesh: false, priya: false });
   const [rankingResult, setRankingResult] = useState(null);
   const [rankingLoading, setRankingLoading] = useState(false);
+
+  // Advanced Payments Tiers & Currency States
+  const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem('selectedCurrency') || 'INR');
+  const [userSubTier, setUserSubTier] = useState(localStorage.getItem('client_sub_tier') || 'free');
+  const [showUpgradePaymentModal, setShowUpgradePaymentModal] = useState(false);
+  const [upgradeTargetPlan, setUpgradeTargetPlan] = useState(null);
+
+  // Escrow funding & tip modal states
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutTargetMilestone, setCheckoutTargetMilestone] = useState(null);
+  const [checkoutMethod, setCheckoutMethod] = useState('card');
+  const [cryptoCurrency, setCryptoCurrency] = useState('USDT');
+
+  const [showReleaseTipModal, setShowReleaseTipModal] = useState(false);
+  const [releaseTargetMilestoneId, setReleaseTargetMilestoneId] = useState(null);
+  const [selectedTipPct, setSelectedTipPct] = useState(0);
+  const [customTipAmount, setCustomTipAmount] = useState('');
+
+  const exchangeRates = {
+    INR: 1,
+    USD: 0.012,
+    EUR: 0.011,
+    GBP: 0.0094
+  };
+
+  const currencySymbols = {
+    INR: '₹',
+    USD: '$',
+    EUR: '€',
+    GBP: '£'
+  };
+
+  const formatBudget = (budget) => {
+    if (!budget) return '—';
+    const cleanAmt = typeof budget === 'number' 
+      ? budget 
+      : parseFloat(String(budget).replace(/[^0-9.]/g, '')) || 0;
+    
+    const rate = exchangeRates[selectedCurrency] || 1;
+    const symbol = currencySymbols[selectedCurrency] || '₹';
+    const converted = cleanAmt * rate;
+    
+    if (selectedCurrency === 'INR') {
+      return `${symbol}${Math.round(converted).toLocaleString('en-IN')}`;
+    }
+    return `${symbol}${converted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
   
   // Derive candidates list dynamically from real proposals in database
   const realCandidatesList = [];
@@ -2788,6 +2835,33 @@ const ClientDashboard = () => {
               </div>
 
               <div className="fd-header-right" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => {
+                    setSelectedCurrency(e.target.value);
+                    localStorage.setItem('selectedCurrency', e.target.value);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: 8,
+                    background: isDarkMode ? '#0f172a' : '#ffffff',
+                    border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                    color: isDarkMode ? '#cbd5e1' : '#475569',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    outline: 'none',
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <option value="INR">₹ INR</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                  <option value="GBP">£ GBP</option>
+                </select>
+
                 <button 
                   className="fd-icon-btn" 
                   onClick={() => toggleDarkMode()} 
@@ -3187,6 +3261,8 @@ const ClientDashboard = () => {
                   isDarkMode={true} 
                   navigate={navigate} 
                   realJobs={jobs}
+                  selectedCurrency={selectedCurrency}
+                  formatBudget={formatBudget}
                   handleProposalAction={async (proposalId, jobId, action) => {
                     await handleProposalAction(jobId, proposalId, action);
                   }}
@@ -3212,7 +3288,7 @@ const ClientDashboard = () => {
               <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Released</div>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>₹{totalReleased.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>{formatBudget(totalReleased)}</div>
                   <div style={{ fontSize: 12.5, color: '#94a3b8', marginTop: 4 }}>Total released to freelancers</div>
                 </div>
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
@@ -3224,7 +3300,7 @@ const ClientDashboard = () => {
               <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>In Escrow</div>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>₹{totalFunded.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>{formatBudget(totalFunded)}</div>
                   <div style={{ fontSize: 12.5, color: '#94a3b8', marginTop: 4 }}>Funds securely held in escrow</div>
                 </div>
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
@@ -3236,7 +3312,7 @@ const ClientDashboard = () => {
               <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Crafted</div>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>₹{(totalReleased + totalFunded + totalDraft).toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>{formatBudget(totalReleased + totalFunded + totalDraft)}</div>
                   <div style={{ fontSize: 12.5, color: '#94a3b8', marginTop: 4 }}>Total milestones created</div>
                 </div>
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(249, 115, 22, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f97316' }}>

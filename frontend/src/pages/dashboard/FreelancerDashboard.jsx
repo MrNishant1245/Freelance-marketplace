@@ -775,6 +775,47 @@ const FreelancerDashboard = () => {
   const { user, updateUser, logout, isDarkMode, toggleDarkMode } = useAuth();
   const [now, setNow] = useState(new Date());
 
+  // Advanced Payments & Currency States
+  const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem('selectedCurrency') || 'INR');
+  const [userSubTier, setUserSubTier] = useState(localStorage.getItem('freelancer_sub_tier') || 'free');
+  const [showUpgradePaymentModal, setShowUpgradePaymentModal] = useState(false);
+  const [upgradeTargetPlan, setUpgradeTargetPlan] = useState(null);
+
+  // UPI withdrawal states
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [upiId, setUpiId] = useState('');
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+  const exchangeRates = {
+    INR: 1,
+    USD: 0.012,
+    EUR: 0.011,
+    GBP: 0.0094
+  };
+
+  const currencySymbols = {
+    INR: '₹',
+    USD: '$',
+    EUR: '€',
+    GBP: '£'
+  };
+
+  const formatBudget = (budget) => {
+    if (!budget) return '—';
+    const cleanAmt = typeof budget === 'number' 
+      ? budget 
+      : parseFloat(String(budget).replace(/[^0-9.]/g, '')) || 0;
+    
+    const rate = exchangeRates[selectedCurrency] || 1;
+    const symbol = currencySymbols[selectedCurrency] || '₹';
+    const converted = cleanAmt * rate;
+    
+    if (selectedCurrency === 'INR') {
+      return `${symbol}${Math.round(converted).toLocaleString('en-IN')}`;
+    }
+    return `${symbol}${converted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
@@ -1891,6 +1932,7 @@ const FreelancerDashboard = () => {
             { id: 'saved', label: 'Saved Jobs', icon: 'bookmark' },
             { id: 'payments', label: 'Payments', icon: 'dollar' },
             { id: 'analytics', label: 'Analytics', icon: 'analytics' },
+            { id: 'subscriptions', label: 'Subscriptions', icon: 'award' },
             { id: 'community', label: 'Community', icon: 'people' },
             { id: 'skilltests', label: 'Skill Tests', icon: 'award' },
             { id: 'referrals', label: 'Referrals', icon: 'gift', newBadge: true },
@@ -1970,8 +2012,35 @@ const FreelancerDashboard = () => {
           </div>
 
           <div className="fd-header-right">
-            {(activeTab === 'overview' || activeTab === 'jobs' || activeTab === 'proposals' || activeTab === 'mywork' || activeTab === 'saved' || activeTab === 'payments' || activeTab === 'analytics') && (
+            {(activeTab === 'overview' || activeTab === 'jobs' || activeTab === 'proposals' || activeTab === 'mywork' || activeTab === 'saved' || activeTab === 'payments' || activeTab === 'analytics' || activeTab === 'subscriptions' || activeTab === 'referrals') && (
               <div className="fd-header-actions">
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => {
+                    setSelectedCurrency(e.target.value);
+                    localStorage.setItem('selectedCurrency', e.target.value);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: 8,
+                    background: isDarkMode ? '#0f172a' : '#ffffff',
+                    border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                    color: isDarkMode ? '#cbd5e1' : '#475569',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    outline: 'none',
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <option value="INR">₹ INR</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                  <option value="GBP">£ GBP</option>
+                </select>
+
                 <button className="fd-icon-btn" onClick={() => toggleDarkMode()} title="Switch Theme">
                   <Icon name={isDarkMode ? 'sun' : 'moon'} />
                 </button>
@@ -2825,7 +2894,7 @@ const FreelancerDashboard = () => {
                 <div>
                   <h3 style={{ fontSize: 13, color: '#64748b', textTransform: 'uppercase', marginBottom: 12, fontWeight: 700 }}>Financial Balance</h3>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 32, fontWeight: 800, color: '#0f172a' }}>₹{availableBalance.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: 32, fontWeight: 800, color: '#0f172a' }}>{formatBudget(availableBalance)}</div>
                     <button className="fd-btn-payout-primary" style={{ padding: '10px 20px', fontSize: 13.5 }} onClick={() => setWithdrawModal({ ...withdrawModal, open: true })}>
                       Withdraw Funds
                     </button>
@@ -2834,15 +2903,15 @@ const FreelancerDashboard = () => {
                 <div style={{ display: 'flex', gap: 20, borderTop: '1px solid #f1f5f9', paddingTop: 14, marginTop: 14 }}>
                   <div>
                     <div style={{ fontSize: 11, color: '#94a3b8' }}>Total Earned</div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>₹{netEarnings.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{formatBudget(netEarnings)}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: '#94a3b8' }}>Withdrawn</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#ef4444' }}>₹{totalWithdrawn.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#ef4444' }}>{formatBudget(totalWithdrawn)}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: '#94a3b8' }}>Pending Approval</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#d97706' }}>₹{myWork.filter(j => j.status === 'submitted').reduce((sum, j) => sum + (Number(j.budget) || 0), 0).toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#d97706' }}>{formatBudget(myWork.filter(j => j.status === 'submitted').reduce((sum, j) => sum + (Number(j.budget) || 0), 0))}</div>
                   </div>
                 </div>
               </div>
@@ -3285,7 +3354,7 @@ const FreelancerDashboard = () => {
                   <div className="fd-ref-stat-lbl">Active Signups</div>
                 </div>
                 <div className="fd-ref-stat-card">
-                  <div className="fd-ref-stat-val">₹4,500</div>
+                  <div className="fd-ref-stat-val">{formatBudget(4500)}</div>
                   <div className="fd-ref-stat-lbl">Commissions Earned</div>
                 </div>
               </div>
@@ -3327,10 +3396,208 @@ const FreelancerDashboard = () => {
                       <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{item.name}</div>
                       <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{item.date}</div>
                     </div>
-                    <span style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>{item.earnings}</span>
+                    <span style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>
+                      {item.earnings.startsWith('₹') 
+                        ? `${formatBudget(parseInt(item.earnings.replace(/[^0-9]/g, '')))} bonus earned` 
+                        : item.earnings}
+                    </span>
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── SUBSCRIPTIONS TAB ── */}
+        {activeTab === 'subscriptions' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 20 }}>💎</span>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: 0 }}>Freelancer Subscription Plans</h2>
+                <span style={{ fontSize: 12, color: '#64748b', marginTop: 2, display: 'block' }}>Choose a tier to boost your monthly bid proposals limits and lower platform commission rates.</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(3, 1fr)', gap: 16, marginTop: 10 }}>
+              {[
+                {
+                  tier: 'free',
+                  name: 'Starter Club',
+                  price: 0,
+                  commission: '10% Commission',
+                  features: ['15 bid applications per month', 'Standard job matching ranking', 'Community/Email support services', 'Standard payout processing'],
+                  accent: '#94a3b8',
+                },
+                {
+                  tier: 'pro',
+                  name: 'Pro Member',
+                  price: 999,
+                  commission: '5% Commission',
+                  features: ['100 bid applications per month', 'Highlight badge on client proposal list', 'Double matching algorithm score boost', 'Priority instant payout access', 'Pro badge on user profile card'],
+                  accent: '#10b981',
+                },
+                {
+                  tier: 'elite',
+                  name: 'Elite Club VIP',
+                  price: 2499,
+                  commission: '2.5% Commission',
+                  features: ['Unlimited bid applications per month', 'Top-tier VIP proposal list ranking placement', 'Dedicated career growth manager support', 'Free access to premium skills assessments', 'Elite Crown badge on profile card'],
+                  accent: '#3b82f6',
+                }
+              ].map(plan => {
+                const isCurrent = (userSubTier || 'free') === plan.tier;
+                return (
+                  <div key={plan.tier} style={{ background: '#111625', border: isCurrent ? `2px solid ${plan.accent}` : '1px solid #1d2433', borderRadius: 12, padding: 24, display: 'flex', flexDirection: 'column', gap: 16, position: 'relative' }}>
+                    {isCurrent && (
+                      <span style={{ position: 'absolute', top: -11, left: 16, background: plan.accent, color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 6, textTransform: 'uppercase' }}>
+                        Active Plan
+                      </span>
+                    )}
+                    <div>
+                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>{plan.name}</h3>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 8 }}>
+                        <span style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>{formatBudget(plan.price)}</span>
+                        <span style={{ fontSize: 12, color: '#64748b' }}>/ month</span>
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: plan.accent, marginTop: 4 }}>{plan.commission}</div>
+                    </div>
+
+                    <div style={{ height: 1, background: '#1d2433' }} />
+
+                    <ul style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      {plan.features.map((feat, i) => (
+                        <li key={i} style={{ fontSize: 12, color: '#cbd5e1', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                          <span style={{ color: plan.accent }}>✓</span>
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <button 
+                      onClick={() => {
+                        if (isCurrent) return;
+                        setUpgradeTargetPlan(plan);
+                        setShowUpgradePaymentModal(true);
+                      }}
+                      disabled={isCurrent}
+                      style={{ 
+                        width: '100%', 
+                        padding: '10px 0', 
+                        background: isCurrent ? 'rgba(255,255,255,0.05)' : plan.accent, 
+                        color: isCurrent ? '#475569' : '#fff', 
+                        border: 'none', 
+                        borderRadius: 8, 
+                        fontSize: 12.5, 
+                        fontWeight: 700, 
+                        cursor: isCurrent ? 'default' : 'pointer',
+                        transition: 'opacity 0.2s'
+                      }}
+                    >
+                      {isCurrent ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Upgrade Payment Simulation Modal */}
+        {showUpgradePaymentModal && upgradeTargetPlan && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'grid', placeItems: 'center' }} onClick={() => setShowUpgradePaymentModal(false)}>
+            <div style={{ background: '#111625', border: '1px solid #1d2433', padding: 28, borderRadius: 16, width: 440, display: 'flex', flexDirection: 'column', gap: 18, color: '#fff', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 15, fontWeight: 800 }}>Complete Subscription Upgrade</span>
+                <button onClick={() => setShowUpgradePaymentModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 20, cursor: 'pointer' }}>×</button>
+              </div>
+
+              <div style={{ background: '#0e1320', padding: 16, borderRadius: 10, border: '1px solid #1d2433' }}>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>PLAN TARGET</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginTop: 4 }}>{upgradeTargetPlan.name}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#10b981', marginTop: 8 }}>{formatBudget(upgradeTargetPlan.price)} <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>/ month</span></div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>CHOOSE PAYMENT METHOD</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['card', 'upi', 'crypto'].map(method => (
+                    <button
+                      key={method}
+                      onClick={() => setCheckoutMethod(method)}
+                      style={{
+                        flex: 1,
+                        padding: '10px 0',
+                        background: checkoutMethod === method ? 'rgba(59,130,246,0.12)' : '#0e1320',
+                        border: checkoutMethod === method ? '1px solid #3b82f6' : '1px solid #1d2433',
+                        borderRadius: 8,
+                        color: checkoutMethod === method ? '#3b82f6' : '#cbd5e1',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      {method}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {checkoutMethod === 'crypto' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: '#0e1320', padding: 14, borderRadius: 10, border: '1px solid #1d2433', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                    {['USDT', 'BTC'].map(coin => (
+                      <button
+                        key={coin}
+                        onClick={() => setCryptoCurrency(coin)}
+                        style={{
+                          flex: 1,
+                          padding: '6px 0',
+                          background: cryptoCurrency === coin ? '#3b82f6' : 'rgba(255,255,255,0.02)',
+                          border: 'none',
+                          borderRadius: 6,
+                          color: '#fff',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {coin}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ width: 120, height: 120, background: '#fff', borderRadius: 8, display: 'grid', placeItems: 'center', padding: 8 }}>
+                    <div style={{ width: '100%', height: '100%', background: `repeating-linear-gradient(45deg, #000, #000 6px, #fff 6px, #fff 12px)` }} />
+                  </div>
+
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>CONVERTED AMOUNT</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 800, color: '#fff', marginTop: 3 }}>
+                      {cryptoCurrency === 'USDT' 
+                        ? `${(upgradeTargetPlan.price * 0.012).toFixed(2)} USDT` 
+                        : `${(upgradeTargetPlan.price * 0.0000002).toFixed(6)} BTC`}
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: 9.5, color: '#64748b', fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'center' }}>
+                    Address: {cryptoCurrency === 'USDT' ? '0x71C7656EC7ab88b098defB751B7401B5f6d8976F' : 'bc1qxy2kgdygjrsqtzq56n805474686486'}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  setUserSubTier(upgradeTargetPlan.tier);
+                  localStorage.setItem('freelancer_sub_tier', upgradeTargetPlan.tier);
+                  setShowUpgradePaymentModal(false);
+                  toast.success(`Subscription upgraded successfully! You are now a ${upgradeTargetPlan.name} member.`, { icon: '🚀' });
+                }}
+                style={{ width: '100%', padding: '12px 0', background: '#10b981', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 6 }}
+              >
+                {checkoutMethod === 'crypto' ? 'Simulate Blockchain Payout Confirmation' : 'Authorize Simulated Checkout'}
+              </button>
             </div>
           </div>
         )}
