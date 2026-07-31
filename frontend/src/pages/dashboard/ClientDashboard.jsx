@@ -1243,6 +1243,13 @@ const ClientDashboard = () => {
 
   // Advanced Payments Tiers & Currency States
   const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem('selectedCurrency') || 'INR');
+  const [kanbanMode, setKanbanMode] = useState(false);
+  const [kanbanTasks, setKanbanTasks] = useState([
+    { id: 'TSK-101', title: 'React Frontend Implementation', partner: 'Rajesh Kumar', val: '₹45,000', column: 'in_progress' },
+    { id: 'TSK-102', title: 'Database Schema Design', partner: 'Priya Sharma', val: '₹18,000', column: 'done' },
+    { id: 'TSK-103', title: 'API Integration Testing', partner: 'Rajesh Kumar', val: '₹35,000', column: 'todo' },
+    { id: 'TSK-104', title: 'Security Audit & Fixes', partner: 'Priya Sharma', val: '₹60,000', column: 'review' }
+  ]);
   const [userSubTier, setUserSubTier] = useState(localStorage.getItem('client_sub_tier') || 'free');
   const [showUpgradePaymentModal, setShowUpgradePaymentModal] = useState(false);
   const [upgradeTargetPlan, setUpgradeTargetPlan] = useState(null);
@@ -5109,6 +5116,21 @@ const ClientDashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>All Contracts</span>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button 
+                      onClick={() => setKanbanMode(!kanbanMode)}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid #1d2433',
+                        borderRadius: 8,
+                        color: '#10b981',
+                        fontSize: 12,
+                        padding: '5.5px 10.5px',
+                        cursor: 'pointer',
+                        fontWeight: 600
+                      }}
+                    >
+                      {kanbanMode ? '📊 List View' : '📋 Kanban Board'}
+                    </button>
                     <input 
                       value={contractsSearchQuery}
                       onChange={(e) => { setContractsSearchQuery(e.target.value); setContractsPage(1); }}
