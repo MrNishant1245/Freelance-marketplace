@@ -3270,6 +3270,131 @@ const ClientDashboard = () => {
               )}
             </div>
           </div>
+        )}
+
+        {/* ── JOBS / PROJECTS TAB ── */}
+        {activeTab === 'jobs' && (
+          <div style={s.card}>
+            <div style={{ ...s.cardHeader, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={s.cardTitle}>My Posted Jobs & Projects</h2>
+                <span style={{ fontSize: 12, color: '#64748b', marginTop: 2, display: 'block' }}>Manage your active listings, view proposal responses, or monitor milestones.</span>
+              </div>
+              <span style={s.countBadge}>{filteredJobs.length} active listings</span>
+            </div>
+
+            {jobsLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
+                <div style={{ width: 32, height: 32, border: '3px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              </div>
+            ) : jobsError ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: '#ef4444', fontWeight: 600 }}>{jobsError}</div>
+            ) : filteredJobs.length === 0 ? (
+              <EmptyState message={searchQuery ? "No posted jobs match your search." : "You haven't posted any jobs yet."} />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+                {filteredJobs.map((job) => {
+                  const proposalCount = job.proposals?.length || 0;
+                  const hiredName = job.hiredFreelancer 
+                    ? `${job.hiredFreelancer.firstName || ''} ${job.hiredFreelancer.lastName || ''}`.trim()
+                    : null;
+                  
+                  const statusColors = {
+                    open: { bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', label: 'Accepting Proposals' },
+                    in_progress: { bg: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', label: 'In Progress' },
+                    completed: { bg: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', label: 'Completed' },
+                    draft: { bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', label: 'Draft' }
+                  };
+                  const statusInfo = statusColors[job.status] || statusColors.open;
+
+                  return (
+                    <div key={job._id} style={{ ...s.proposalRow, background: isDarkMode ? '#111625' : '#ffffff', border: '1px solid #1d2433', borderRadius: 12, padding: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                      <div style={{ flex: 1, minWidth: 260 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: isDarkMode ? '#fff' : '#0f172a' }}>{job.title}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: statusInfo.bg, color: statusInfo.color, textTransform: 'uppercase' }}>
+                            {statusInfo.label}
+                          </span>
+                        </div>
+                        
+                        <div style={{ fontSize: 12.5, color: isDarkMode ? '#cbd5e1' : '#475569', marginBottom: 10, lineHeight: 1.5 }}>
+                          {job.description?.slice(0, 180)}{job.description?.length > 180 ? '...' : ''}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 11.5, color: '#94a3b8', fontWeight: 600 }}>
+                          <span>Category: <strong style={{ color: isDarkMode ? '#fff' : '#0f172a' }}>{job.category}</strong></span>
+                          <span>•</span>
+                          <span>Budget: <strong style={{ color: '#10b981' }}>{formatBudget(job.budget)}</strong> ({job.budgetType || 'fixed'})</span>
+                          <span>•</span>
+                          <span>Level: <strong style={{ color: isDarkMode ? '#fff' : '#0f172a' }}>{job.experienceLevel}</strong></span>
+                          <span>•</span>
+                          <span>Posted: <strong style={{ color: isDarkMode ? '#fff' : '#0f172a' }}>{new Date(job.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></span>
+                        </div>
+
+                        {hiredName && (
+                          <div style={{ fontSize: 12, color: '#3b82f6', fontWeight: 700, marginTop: 8 }}>
+                            🤝 Hired Freelancer: {hiredName}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                        <button
+                          onClick={() => {
+                            setSearchQuery(job.title);
+                            setActiveTab('proposals');
+                          }}
+                          style={{
+                            padding: '8px 14px',
+                            background: isDarkMode ? '#0e1320' : '#f8fafc',
+                            border: isDarkMode ? '1px solid #1d2433' : '1px solid #cbd5e1',
+                            borderRadius: 8,
+                            color: isDarkMode ? '#cbd5e1' : '#475569',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6
+                          }}
+                        >
+                          📩 Proposals ({proposalCount})
+                        </button>
+
+                        {job.status === 'open' && (
+                          <button
+                            onClick={async () => {
+                              if (window.confirm("Are you sure you want to mark this job as completed?")) {
+                                try {
+                                  await jobAPI.markJobCompleted(job._id);
+                                  toast.success("Job completed successfully!");
+                                  fetchJobs();
+                                } catch (err) {
+                                  toast.error("Failed to complete job.");
+                                }
+                              }
+                            }}
+                            style={{
+                              padding: '8px 14px',
+                              background: 'rgba(16, 185, 129, 0.15)',
+                              border: 'none',
+                              borderRadius: 8,
+                              color: '#10b981',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ✓ Complete Job
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}{/* ──standlone workspace tabs ── */}
         {activeTab === 'payments' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
