@@ -1,22 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import api, { profileAPI, reviewAPI, jobAPI } from '../api';
 import { tokenStorage } from '../utils/tokenStorage';
 import toast from 'react-hot-toast';
-
-// ─── Socket singleton ─────────────────────────────────────────────────────────
-let socket = null;
-const getSocket = (token) => {
-  if (!socket || !socket.connected) {
-    socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000', {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-    });
-  }
-  return socket;
-};
+import { getSocket } from '../utils/socket';
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 const msgAPI = {
@@ -216,6 +204,7 @@ const MessagesPage = ({ userType = 'client' }) => {
   const [incomingCall, setIncomingCall] = useState(null);
   const [outgoingCall, setOutgoingCall] = useState(null);
   const ringtoneRef = useRef(null);
+  const callTimeoutRef = useRef(null);
 
   // WhatsApp Alert & Voice Messages
   const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
@@ -368,6 +357,7 @@ const MessagesPage = ({ userType = 'client' }) => {
       setIncomingCall({ conversationId, callerName, callerId });
     });
     s.on('callAccepted', ({ conversationId }) => {
+      if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       setOutgoingCall(null);
       setVideoCallActive(true);
       setVideoCallDuration(0);
@@ -375,10 +365,12 @@ const MessagesPage = ({ userType = 'client' }) => {
       toast.success('Call connected! Zoom Room starting...', { icon: '📞' });
     });
     s.on('callDeclined', ({ conversationId }) => {
+      if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       setOutgoingCall(null);
       toast.error('Call declined by user.', { icon: '📞' });
     });
     s.on('callEnded', ({ conversationId }) => {
+      if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       setIncomingCall(null);
       setOutgoingCall(null);
       setVideoCallActive(false);
@@ -540,9 +532,16 @@ const MessagesPage = ({ userType = 'client' }) => {
 
     setOutgoingCall({ conversationId: activeConv._id, targetUserId });
     toast.success(`Calling ${activeOther.firstName || 'user'}...`, { icon: '📞' });
+
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
+    callTimeoutRef.current = setTimeout(() => {
+      handleEndCall();
+      toast.error('No answer from user.', { icon: '📞' });
+    }, 15000);
   };
 
   const handleAcceptCall = () => {
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
     if (!incomingCall) return;
     const { conversationId, callerId } = incomingCall;
 
@@ -558,6 +557,7 @@ const MessagesPage = ({ userType = 'client' }) => {
   };
 
   const handleDeclineCall = () => {
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
     if (!incomingCall) return;
     const { conversationId, callerId } = incomingCall;
 
@@ -570,6 +570,7 @@ const MessagesPage = ({ userType = 'client' }) => {
   };
 
   const handleEndCall = () => {
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
     if (outgoingCall) {
       socketRef.current?.emit('endCall', {
         conversationId: outgoingCall.conversationId,
@@ -978,8 +979,18 @@ const MessagesPage = ({ userType = 'client' }) => {
       if (match && (!activeConv || activeConv._id !== match._id)) {
         selectConversationRef.current(match);
       }
+      const startCall = queryParams.get('startCall');
+      if (startCall === 'true') {
+        setVideoCallActive(true);
+        setVideoCallDuration(0);
+        setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
+        // Clear startCall query parameter from URL
+        const newSearch = new URLSearchParams(location.search);
+        newSearch.delete('startCall');
+        navigate({ search: newSearch.toString() }, { replace: true });
+      }
     }
-  }, [location.search, conversations, activeConv]);
+  }, [location.search, conversations, activeConv, navigate]);
 
   // ── File attach ───────────────────────────────────────────────────────────────
   const handleAttachClick = () => fileInputRef.current?.click();

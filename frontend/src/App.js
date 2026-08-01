@@ -1,10 +1,10 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 import './styles/global.css';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { GuestRoute, ProtectedRoute, RoleRoute } from './components/auth/ProtectedRoute';
 
 import RegisterPage          from './pages/auth/RegisterPage';
@@ -21,10 +21,197 @@ import PostJobPage           from './pages/client/PostJobPage';
 import MessagesPage          from './pages/MessagesPage';
 import ProfilePage           from './pages/ProfilePage';
 import PaymentPage           from './pages/PaymentPage';
+import { getSocket }         from './utils/socket';
+import { tokenStorage }      from './utils/tokenStorage';
+
+const playRingtone = (type) => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+    const ctx = new AudioContext();
+    
+    const playTone = () => {
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      if (type === 'incoming') {
+        osc1.frequency.value = 440;
+        osc2.frequency.value = 480;
+      } else {
+        osc1.frequency.value = 400;
+        osc2.frequency.value = 450;
+      }
+      
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+      
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      
+      osc1.start();
+      osc2.start();
+      
+      setTimeout(() => {
+        try {
+          osc1.stop();
+          osc2.stop();
+        } catch (err) {}
+      }, type === 'incoming' ? 1800 : 1200);
+    };
+    
+    playTone();
+    const interval = setInterval(playTone, type === 'incoming' ? 4000 : 3000);
+    return {
+      stop: () => {
+        clearInterval(interval);
+        try {
+          ctx.close();
+        } catch (e) {}
+      }
+    };
+  } catch (err) {
+    console.error('Failed to play ringtone:', err);
+    return null;
+  }
+};
+
+const CallManager = () => {
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  const [incomingCall, setIncomingCall] = useState(null);
+  const ringtoneRef = useRef(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = tokenStorage.getAccess();
+    if (!token) return;
+
+    const s = getSocket(token);
+
+    s.on('incomingCall', ({ conversationId, callerName, callerId }) => {
+      setIncomingCall({ conversationId, callerName, callerId });
+    });
+
+    s.on('callEnded', () => {
+      setIncomingCall(null);
+    });
+
+    return () => {
+      s.off('incomingCall');
+      s.off('callEnded');
+    };
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (incomingCall) {
+      // Auto decline/timeout after 15 seconds
+      const timer = setTimeout(() => {
+        handleDeclineCall();
+      }, 15000);
+
+      if (ringtoneRef.current) ringtoneRef.current.stop();
+      ringtoneRef.current = playRingtone('incoming');
+
+      return () => {
+        clearTimeout(timer);
+        if (ringtoneRef.current) {
+          ringtoneRef.current.stop();
+          ringtoneRef.current = null;
+        }
+      };
+    }
+  }, [incomingCall]);
+
+  const handleAcceptCall = () => {
+    if (!incomingCall) return;
+    const { conversationId, callerId } = incomingCall;
+    const s = getSocket(tokenStorage.getAccess());
+    s?.emit('acceptCall', {
+      conversationId,
+      targetUserId: callerId
+    });
+    setIncomingCall(null);
+    const messagesPath = user?.role === 'freelancer' ? '/freelancer/messages' : '/messages';
+    navigate(`${messagesPath}?conversation=${conversationId}&startCall=true`);
+  };
+
+  const handleDeclineCall = () => {
+    if (!incomingCall) return;
+    const { conversationId, callerId } = incomingCall;
+    const s = getSocket(tokenStorage.getAccess());
+    s?.emit('declineCall', {
+      conversationId,
+      targetUserId: callerId
+    });
+    setIncomingCall(null);
+  };
+
+  if (!incomingCall) return null;
+
+  const accentColor = user?.role === 'freelancer' ? '#16a34a' : '#2563eb';
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.96)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      color: '#fff', zIndex: 9999, fontFamily: "'DM Sans', sans-serif"
+    }}>
+      <style>{`
+        @keyframes pulseCallGlobal {
+          0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
+          70% { box-shadow: 0 0 0 20px rgba(37, 99, 235, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+      `}</style>
+      <div style={{
+        width: 110, height: 110, borderRadius: '50%',
+        background: accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 36, fontWeight: 700, textTransform: 'uppercase',
+        boxShadow: '0 0 0 0 rgba(37, 99, 235, 0.7)',
+        animation: 'pulseCallGlobal 1.8s infinite'
+      }}>
+        {incomingCall.callerName?.slice(0, 2)}
+      </div>
+      <h2 style={{ marginTop: 24, fontSize: 22, fontWeight: 700 }}>Incoming Video Call</h2>
+      <p style={{ marginTop: 8, fontSize: 15, color: '#94a3b8' }}>{incomingCall.callerName} is calling you...</p>
+      <div style={{ display: 'flex', gap: 24, marginTop: 40 }}>
+        <button 
+          onClick={handleAcceptCall}
+          style={{
+            width: 60, height: 60, borderRadius: '50%', background: '#10b981',
+            border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)'
+          }}
+          title="Accept Call"
+        >
+          📞
+        </button>
+        <button 
+          onClick={handleDeclineCall}
+          style={{
+            width: 60, height: 60, borderRadius: '50%', background: '#ef4444',
+            border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3)'
+          }}
+          title="Decline Call"
+        >
+          ❌
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
+      <CallManager />
       <Routes>
         {/* ── Guest only ── */}
         <Route path="/register"              element={<GuestRoute><RegisterPage /></GuestRoute>} />
