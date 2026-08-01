@@ -77,6 +77,22 @@ io.on('connection', (socket) => {
     socket.to(conversationId).emit('userStoppedTyping', { userId: socket.userId });
   });
 
+  socket.on('callUser', ({ conversationId, targetUserId, callerName, callerId }) => {
+    socket.to(`user:${targetUserId}`).emit('incomingCall', { conversationId, callerName, callerId });
+  });
+
+  socket.on('acceptCall', ({ conversationId, targetUserId }) => {
+    socket.to(`user:${targetUserId}`).emit('callAccepted', { conversationId });
+  });
+
+  socket.on('declineCall', ({ conversationId, targetUserId }) => {
+    socket.to(`user:${targetUserId}`).emit('callDeclined', { conversationId });
+  });
+
+  socket.on('endCall', ({ conversationId, targetUserId }) => {
+    socket.to(`user:${targetUserId}`).emit('callEnded', { conversationId });
+  });
+
   socket.on('disconnect', () => {
     console.log(`🔌 Socket disconnected: ${socket.userId}`);
   });

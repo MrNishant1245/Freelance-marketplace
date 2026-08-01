@@ -59,6 +59,61 @@ const getOtherParticipant = (conv, myId) => {
     || conv.participants[0];
 };
 
+const playRingtone = (type) => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+    const ctx = new AudioContext();
+    
+    const playTone = () => {
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      if (type === 'incoming') {
+        osc1.frequency.value = 440;
+        osc2.frequency.value = 480;
+      } else {
+        osc1.frequency.value = 400;
+        osc2.frequency.value = 450;
+      }
+      
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+      
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      
+      osc1.start();
+      osc2.start();
+      
+      setTimeout(() => {
+        try {
+          osc1.stop();
+          osc2.stop();
+        } catch (err) {}
+      }, type === 'incoming' ? 1800 : 1200);
+    };
+    
+    playTone();
+    const interval = setInterval(playTone, type === 'incoming' ? 4000 : 3000);
+    return {
+      stop: () => {
+        clearInterval(interval);
+        try {
+          ctx.close();
+        } catch (e) {}
+      }
+    };
+  } catch (err) {
+    console.error('Failed to play ringtone:', err);
+    return null;
+  }
+};
+
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const Icon = ({ name }) => {
   const icons = {
@@ -158,6 +213,9 @@ const MessagesPage = ({ userType = 'client' }) => {
   const [videoCallActive, setVideoCallActive] = useState(false);
   const [videoCallState, setVideoCallState] = useState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
   const [videoCallDuration, setVideoCallDuration] = useState(0);
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [outgoingCall, setOutgoingCall] = useState(null);
+  const ringtoneRef = useRef(null);
 
   // WhatsApp Alert & Voice Messages
   const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
@@ -223,6 +281,27 @@ const MessagesPage = ({ userType = 'client' }) => {
     return () => clearInterval(timer);
   }, [videoCallActive]);
 
+  useEffect(() => {
+    if (incomingCall) {
+      if (ringtoneRef.current) ringtoneRef.current.stop();
+      ringtoneRef.current = playRingtone('incoming');
+    } else if (outgoingCall) {
+      if (ringtoneRef.current) ringtoneRef.current.stop();
+      ringtoneRef.current = playRingtone('outgoing');
+    } else {
+      if (ringtoneRef.current) {
+        ringtoneRef.current.stop();
+        ringtoneRef.current = null;
+      }
+    }
+    return () => {
+      if (ringtoneRef.current) {
+        ringtoneRef.current.stop();
+        ringtoneRef.current = null;
+      }
+    };
+  }, [incomingCall, outgoingCall]);
+
   const formatCallDuration = (secs) => {
     const mins = Math.floor(secs / 60);
     const remainingSecs = secs % 60;
@@ -285,9 +364,32 @@ const MessagesPage = ({ userType = 'client' }) => {
       setMessages(p => p.map(m => m._id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted.' } : m))
     );
 
+    s.on('incomingCall', ({ conversationId, callerName, callerId }) => {
+      setIncomingCall({ conversationId, callerName, callerId });
+    });
+    s.on('callAccepted', ({ conversationId }) => {
+      setOutgoingCall(null);
+      setVideoCallActive(true);
+      setVideoCallDuration(0);
+      setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
+      toast.success('Call connected! Zoom Room starting...', { icon: '📞' });
+    });
+    s.on('callDeclined', ({ conversationId }) => {
+      setOutgoingCall(null);
+      toast.error('Call declined by user.', { icon: '📞' });
+    });
+    s.on('callEnded', ({ conversationId }) => {
+      setIncomingCall(null);
+      setOutgoingCall(null);
+      setVideoCallActive(false);
+      toast.error('Call ended.', { icon: '📞' });
+    });
+
     return () => {
       s.off('newMessage'); s.off('conversationUpdated');
       s.off('userTyping'); s.off('userStoppedTyping'); s.off('messageDeleted');
+      s.off('incomingCall'); s.off('callAccepted');
+      s.off('callDeclined'); s.off('callEnded');
     };
   }, [token]);
 
@@ -425,11 +527,68 @@ const MessagesPage = ({ userType = 'client' }) => {
   };
 
   const handleVideoCall = () => {
-    if (!activeConv) return;
+    if (!activeConv || !activeOther) return;
+    const callerName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Someone';
+    const targetUserId = activeOther._id || activeOther;
+
+    socketRef.current?.emit('callUser', {
+      conversationId: activeConv._id,
+      targetUserId,
+      callerName,
+      callerId: myId
+    });
+
+    setOutgoingCall({ conversationId: activeConv._id, targetUserId });
+    toast.success(`Calling ${activeOther.firstName || 'user'}...`, { icon: '📞' });
+  };
+
+  const handleAcceptCall = () => {
+    if (!incomingCall) return;
+    const { conversationId, callerId } = incomingCall;
+
+    socketRef.current?.emit('acceptCall', {
+      conversationId,
+      targetUserId: callerId
+    });
+
+    setIncomingCall(null);
     setVideoCallActive(true);
     setVideoCallDuration(0);
     setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
-    toast.success('Initiating Zoom-like video conference room...', { icon: '📞' });
+  };
+
+  const handleDeclineCall = () => {
+    if (!incomingCall) return;
+    const { conversationId, callerId } = incomingCall;
+
+    socketRef.current?.emit('declineCall', {
+      conversationId,
+      targetUserId: callerId
+    });
+
+    setIncomingCall(null);
+  };
+
+  const handleEndCall = () => {
+    if (outgoingCall) {
+      socketRef.current?.emit('endCall', {
+        conversationId: outgoingCall.conversationId,
+        targetUserId: outgoingCall.targetUserId
+      });
+      setOutgoingCall(null);
+      return;
+    }
+
+    if (activeConv && activeOther) {
+      socketRef.current?.emit('endCall', {
+        conversationId: activeConv._id,
+        targetUserId: activeOther._id || activeOther
+      });
+    }
+
+    setIncomingCall(null);
+    setOutgoingCall(null);
+    setVideoCallActive(false);
   };
 
   const toggleSelectMode = () => {
@@ -1461,7 +1620,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                   {/* Hang Up (Red button) */}
                   <button 
                     onClick={() => {
-                      setVideoCallActive(false);
+                      handleEndCall();
                       toast.error(`Call disconnected. Total duration: ${formatCallDuration(videoCallDuration)}`, { icon: '📞' });
                     }}
                     style={{ background: '#dc2626', border: 'none', borderRadius: 8, padding: '12px 24px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
@@ -1475,7 +1634,103 @@ const MessagesPage = ({ userType = 'client' }) => {
         )}
       </div>
 
-      <style>{`* { box-sizing: border-box; } textarea { resize: none; }`}</style>
+      {/* ── Incoming Call Modal ── */}
+      {incomingCall && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.95)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', zIndex: 1100, fontFamily: "'DM Sans', sans-serif"
+        }}>
+          <div style={{
+            width: 110, height: 110, borderRadius: '50%',
+            background: accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 36, fontWeight: 700, textTransform: 'uppercase',
+            boxShadow: '0 0 0 0 rgba(37, 99, 235, 0.7)',
+            animation: 'pulseCall 1.8s infinite'
+          }}>
+            {incomingCall.callerName?.slice(0, 2)}
+          </div>
+          <h2 style={{ marginTop: 24, fontSize: 22, fontWeight: 700 }}>Incoming Video Call</h2>
+          <p style={{ marginTop: 8, fontSize: 15, color: '#94a3b8' }}>{incomingCall.callerName} is calling you...</p>
+          <div style={{ display: 'flex', gap: 24, marginTop: 40 }}>
+            <button 
+              onClick={handleAcceptCall}
+              style={{
+                width: 60, height: 60, borderRadius: '50%', background: '#10b981',
+                border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)'
+              }}
+              title="Accept Call"
+            >
+              📞
+            </button>
+            <button 
+              onClick={handleDeclineCall}
+              style={{
+                width: 60, height: 60, borderRadius: '50%', background: '#ef4444',
+                border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3)'
+              }}
+              title="Decline Call"
+            >
+              ❌
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Outgoing Call Modal ── */}
+      {outgoingCall && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.95)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', zIndex: 1100, fontFamily: "'DM Sans', sans-serif"
+        }}>
+          <div style={{
+            width: 110, height: 110, borderRadius: '50%',
+            background: accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 36, fontWeight: 700, textTransform: 'uppercase',
+            boxShadow: '0 0 0 0 rgba(37, 99, 235, 0.7)',
+            animation: 'pulseCall 1.8s infinite'
+          }}>
+            {activeOther?.firstName?.slice(0, 1)}{activeOther?.lastName?.slice(0, 1)}
+          </div>
+          <h2 style={{ marginTop: 24, fontSize: 22, fontWeight: 700 }}>Calling...</h2>
+          <p style={{ marginTop: 8, fontSize: 15, color: '#94a3b8' }}>Ringing {activeOther?.firstName} {activeOther?.lastName}...</p>
+          <div style={{ marginTop: 40 }}>
+            <button 
+              onClick={handleEndCall}
+              style={{
+                width: 60, height: 60, borderRadius: '50%', background: '#ef4444',
+                border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3)'
+              }}
+              title="Cancel Call"
+            >
+              🛑
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        * { box-sizing: border-box; } 
+        textarea { resize: none; }
+        @keyframes pulseCall {
+          0% {
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
+          }
+          70% {
+            box-shadow: 0 0 0 20px rgba(37, 99, 235, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
