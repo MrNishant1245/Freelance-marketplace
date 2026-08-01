@@ -166,6 +166,7 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   // Auto-Translation state
   const [translatedMessages, setTranslatedMessages] = useState({});
+  const [playingVoiceId, setPlayingVoiceId] = useState(null);
 
   // Translation helpers
   const translationDictionary = {
@@ -576,6 +577,41 @@ const MessagesPage = ({ userType = 'client' }) => {
     selectConversationRef.current = selectConversation;
   }, [selectConversation]);
 
+  const playVoiceNoteAudio = (msgId) => {
+    if (playingVoiceId === msgId) {
+      setPlayingVoiceId(null);
+      return;
+    }
+    setPlayingVoiceId(msgId);
+    toast.success('Playing audio note...', { icon: '🔊' });
+
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const melody = [262, 330, 392, 440, 523, 659, 784, 880];
+        melody.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.15);
+          gain.gain.setValueAtTime(0.12, ctx.currentTime + idx * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (idx + 1) * 0.15);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.15);
+          osc.stop(ctx.currentTime + (idx + 1) * 0.15);
+        });
+      }
+    } catch (err) {
+      console.error('Audio playback error:', err);
+    }
+
+    setTimeout(() => {
+      setPlayingVoiceId(prev => prev === msgId ? null : prev);
+    }, 1500);
+  };
+
   // ── Load conversations ────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
@@ -816,6 +852,12 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   return (
     <div style={styles.shell}>
+      <style>{`
+        @keyframes voiceWaveJump {
+          from { transform: scaleY(1); }
+          to { transform: scaleY(2.0); }
+        }
+      `}</style>
       {/* ── Sidebar ── */}
       <div style={styles.sidebar}>
           <div style={styles.sidebarHeader}>
@@ -987,16 +1029,29 @@ const MessagesPage = ({ userType = 'client' }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, padding: '4px 0' }}>
                             <button 
                               style={{ width: 32, height: 32, borderRadius: '50%', background: isMe ? '#fff' : accentColor, border: 'none', color: isMe ? accentColor : '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 700 }}
-                              onClick={() => toast.success('Playing audio note...')}
+                              onClick={() => playVoiceNoteAudio(msg._id)}
                             >
-                              ▶
+                              {playingVoiceId === msg._id ? '⏸' : '▶'}
                             </button>
                             <div style={{ flex: 1 }}>
                               <div style={{ fontWeight: 700, fontSize: 12 }}>🎤 Voice Note</div>
-                              <div style={{ height: 16, display: 'flex', alignItems: 'center', gap: 2, marginTop: 4 }}>
-                                {[2, 4, 6, 8, 3, 5, 7, 6, 4, 3, 5, 7, 8, 4, 3, 6, 5, 2].map((h, hIdx) => (
-                                  <span key={hIdx} style={{ width: 2.5, height: `${h * 1.5}px`, background: isMe ? 'rgba(255,255,255,0.7)' : 'rgba(99, 102, 241, 0.7)', borderRadius: 1 }} />
-                                ))}
+                              <div style={{ height: 16, display: 'flex', alignItems: 'flex-end', gap: 2.5, marginTop: 4 }}>
+                                {[2, 4, 6, 8, 3, 5, 7, 6, 4, 3, 5, 7, 8, 4, 3, 6, 5, 2].map((h, hIdx) => {
+                                  const isPlaying = playingVoiceId === msg._id;
+                                  return (
+                                    <span 
+                                      key={hIdx} 
+                                      style={{ 
+                                        width: 2.5, 
+                                        height: `${h * 1.5}px`, 
+                                        background: isMe ? 'rgba(255,255,255,0.75)' : 'rgba(37, 99, 235, 0.75)', 
+                                        borderRadius: 1,
+                                        transformOrigin: 'bottom',
+                                        animation: isPlaying ? `voiceWaveJump 0.4s ease-in-out ${hIdx * 0.03}s infinite alternate` : 'none'
+                                      }} 
+                                    />
+                                  );
+                                })}
                               </div>
                             </div>
                             <span style={{ fontSize: 11, opacity: 0.8 }}>0:08</span>
