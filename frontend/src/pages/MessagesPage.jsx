@@ -541,6 +541,8 @@ const MessagesPage = ({ userType = 'client' }) => {
           // Replace virtual conversation in local state
           setConversations(prev => prev.map(c => c._id === conv._id ? realConv : c));
           targetConv = realConv;
+          const path = userType === 'freelancer' ? '/freelancer/messages' : '/messages';
+          navigate(`${path}?conversation=${realConv._id}`, { replace: true });
         } else {
           throw new Error("Invalid server response");
         }
@@ -567,7 +569,7 @@ const MessagesPage = ({ userType = 'client' }) => {
     }
     socketRef.current?.emit('joinConversation', targetConv._id);
     setConversations(prev => prev.map(c => c._id === targetConv._id ? { ...c, unreadCount: 0 } : c));
-  }, [activeConv]);
+  }, [activeConv, userType, navigate]);
 
   // ── Load conversations ────────────────────────────────────────────────────────
   useEffect(() => {
