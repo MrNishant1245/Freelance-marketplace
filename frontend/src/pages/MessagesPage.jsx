@@ -610,7 +610,11 @@ const MessagesPage = ({ userType = 'client' }) => {
             setPlayingVoiceId(null);
             audioPlayerRef.current = null;
           };
-          audio.play();
+          audio.play().catch(playErr => {
+            console.error('Audio play promise error:', playErr);
+            setPlayingVoiceId(null);
+            audioPlayerRef.current = null;
+          });
         } catch (err) {
           console.error('Audio play error:', err);
           toast.error('Audio playback failed.');
@@ -651,10 +655,18 @@ const MessagesPage = ({ userType = 'client' }) => {
   };
 
   const startRecordingAudio = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error('Microphone access is not supported by your browser or context.');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      let options = {};
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/webm' };
+      }
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
