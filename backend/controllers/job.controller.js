@@ -65,8 +65,8 @@ const getJobs = async (req, res) => {
     }
 
     const jobs = await Job.find(filter)
-      .populate('client', 'firstName lastName clientProfile.companyName profilePhoto')
-      .populate('hiredFreelancer', 'firstName lastName freelancerProfile.title profilePhoto')
+      .populate('client', 'firstName lastName clientProfile.companyName profilePhoto phone')
+      .populate('hiredFreelancer', 'firstName lastName freelancerProfile.title profilePhoto phone')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, count: jobs.length, data: jobs });
@@ -80,8 +80,8 @@ const getJobs = async (req, res) => {
 const getJobById = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id)
-      .populate('client', 'firstName lastName email clientProfile')
-      .populate('hiredFreelancer', 'firstName lastName email freelancerProfile')
+      .populate('client', 'firstName lastName email clientProfile phone')
+      .populate('hiredFreelancer', 'firstName lastName email freelancerProfile phone')
       .populate('proposals.freelancer', 'firstName lastName freelancerProfile.rating freelancerProfile.skills');
 
     if (!job) {
@@ -98,7 +98,7 @@ const getJobById = async (req, res) => {
 const getMyJobs = async (req, res) => {
   try {
     const jobs = await Job.find({ client: req.user.id })
-      .populate('hiredFreelancer', 'firstName lastName')
+      .populate('hiredFreelancer', 'firstName lastName phone')
       .populate('proposals.freelancer', 'firstName lastName email freelancerProfile')
       .sort({ createdAt: -1 });
 
@@ -112,7 +112,7 @@ const getMyJobs = async (req, res) => {
 const getMyAssignedJobs = async (req, res) => {
   try {
     const jobs = await Job.find({ hiredFreelancer: req.user.id })
-      .populate('client', 'firstName lastName clientProfile.companyName')
+      .populate('client', 'firstName lastName clientProfile.companyName phone')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, count: jobs.length, data: jobs });

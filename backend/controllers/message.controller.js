@@ -9,7 +9,7 @@ const getConversations = async (req, res) => {
       participants: req.user.id,
       isActive: true,
     })
-      .populate('participants', 'firstName lastName role profilePhoto')
+      .populate('participants', 'firstName lastName role profilePhoto phone')
       .populate({
         path: 'lastMessage',
         select: 'content createdAt sender attachments',
@@ -52,7 +52,7 @@ const getOrCreateConversation = async (req, res) => {
     let conversation = await Conversation.findOne({
       participants: { $all: [req.user.id, userId] },
     })
-      .populate('participants', 'firstName lastName role profilePhoto')
+      .populate('participants', 'firstName lastName role profilePhoto phone')
       .populate('lastMessage')
       .populate('job', 'title');
 
@@ -61,7 +61,7 @@ const getOrCreateConversation = async (req, res) => {
         participants: [req.user.id, userId],
         job: jobId || null,
       });
-      conversation = await conversation.populate('participants', 'firstName lastName role profilePhoto');
+      conversation = await conversation.populate('participants', 'firstName lastName role profilePhoto phone');
     }
 
     return res.json({ success: true, data: conversation });
