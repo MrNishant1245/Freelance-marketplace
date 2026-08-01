@@ -571,6 +571,11 @@ const MessagesPage = ({ userType = 'client' }) => {
     setConversations(prev => prev.map(c => c._id === targetConv._id ? { ...c, unreadCount: 0 } : c));
   }, [activeConv, userType, navigate]);
 
+  const selectConversationRef = useRef(selectConversation);
+  useEffect(() => {
+    selectConversationRef.current = selectConversation;
+  }, [selectConversation]);
+
   // ── Load conversations ────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
@@ -640,18 +645,18 @@ const MessagesPage = ({ userType = 'client' }) => {
         if (targetConvId) {
           const match = convs.find(c => c._id === targetConvId);
           if (match) {
-            selectConversation(match);
+            selectConversationRef.current(match);
             return;
           }
         }
-        if (convs.length > 0) selectConversation(convs[0]);
+        if (convs.length > 0) selectConversationRef.current(convs[0]);
       } catch (err) {
         console.error('Load conversations error:', err);
       } finally {
         setLoading(false);
       }
     })();
-  }, [selectConversation, user, userType]);
+  }, [user, userType]);
 
   // ── Scroll to bottom ──────────────────────────────────────────────────────────
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -664,10 +669,10 @@ const MessagesPage = ({ userType = 'client' }) => {
     if (targetConvId) {
       const match = conversations.find(c => c._id === targetConvId);
       if (match && (!activeConv || activeConv._id !== match._id)) {
-        selectConversation(match);
+        selectConversationRef.current(match);
       }
     }
-  }, [location.search, conversations, activeConv, selectConversation]);
+  }, [location.search, conversations, activeConv]);
 
   // ── File attach ───────────────────────────────────────────────────────────────
   const handleAttachClick = () => fileInputRef.current?.click();
