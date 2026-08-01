@@ -252,6 +252,9 @@ const MessagesPage = ({ userType = 'client' }) => {
   const bottomRef    = useRef(null);
   const typingTimer  = useRef(null);
   const socketRef    = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const audioPlayerRef = useRef(null);
 
   const myId        = user?._id || user?.id;
   const activeOther = activeConv ? getOtherParticipant(activeConv, myId) : null;
@@ -577,11 +580,46 @@ const MessagesPage = ({ userType = 'client' }) => {
     selectConversationRef.current = selectConversation;
   }, [selectConversation]);
 
-  const playVoiceNoteAudio = (msgId) => {
+  const playVoiceNoteAudio = (msgId, content) => {
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+      } catch (err) {}
+      audioPlayerRef.current = null;
+    }
+
     if (playingVoiceId === msgId) {
       setPlayingVoiceId(null);
       return;
     }
+
+    if (content && content.startsWith('[Voice Message] url:')) {
+      const audioUrl = content.replace('[Voice Message] url:', '').trim();
+      if (audioUrl) {
+        setPlayingVoiceId(msgId);
+        toast.success('Playing voice message...', { icon: '🔊' });
+        try {
+          const audio = new Audio(audioUrl);
+          audioPlayerRef.current = audio;
+          audio.onended = () => {
+            setPlayingVoiceId(null);
+            audioPlayerRef.current = null;
+          };
+          audio.onerror = () => {
+            toast.error('Failed to play voice note.');
+            setPlayingVoiceId(null);
+            audioPlayerRef.current = null;
+          };
+          audio.play();
+        } catch (err) {
+          console.error('Audio play error:', err);
+          toast.error('Audio playback failed.');
+          setPlayingVoiceId(null);
+        }
+        return;
+      }
+    }
+
     setPlayingVoiceId(msgId);
     toast.success('Playing audio note...', { icon: '🔊' });
 
@@ -610,6 +648,68 @@ const MessagesPage = ({ userType = 'client' }) => {
     setTimeout(() => {
       setPlayingVoiceId(prev => prev === msgId ? null : prev);
     }, 1500);
+  };
+
+  const startRecordingAudio = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size === 0) return;
+
+        const fileName = `voicenote-${Date.now()}.webm`;
+        const audioFile = new File([audioBlob], fileName, { type: 'audio/webm' });
+
+        setUploadingFiles(true);
+        const loadingToastId = toast.loading('Uploading voice note...');
+        try {
+          const formData = new FormData();
+          formData.append('file', audioFile);
+          const res = await profileAPI.uploadFile(formData);
+          const url  = res.data?.data?.url || res.data?.url || res.data?.fileUrl;
+          if (url) {
+            toast.dismiss(loadingToastId);
+            toast.success('Voice note uploaded! Click send to share.');
+            setInput(`[Voice Message] url:${url}`);
+          } else {
+            throw new Error("Invalid response url");
+          }
+        } catch (uploadErr) {
+          toast.dismiss(loadingToastId);
+          toast.error('Failed to upload voice note.');
+          console.error('Voice note upload error:', uploadErr);
+        } finally {
+          setUploadingFiles(false);
+        }
+      };
+
+      mediaRecorder.start(250);
+      setIsRecordingVoice(true);
+      setVoiceRecordDuration(0);
+      toast('Recording voice note... speak now.', { icon: '🎤' });
+    } catch (err) {
+      console.error('Failed to access microphone:', err);
+      toast.error('Could not access microphone.');
+    }
+  };
+
+  const stopRecordingAudio = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      setIsRecordingVoice(false);
+    }
   };
 
   // ── Load conversations ────────────────────────────────────────────────────────
@@ -1029,7 +1129,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, padding: '4px 0' }}>
                             <button 
                               style={{ width: 32, height: 32, borderRadius: '50%', background: isMe ? '#fff' : accentColor, border: 'none', color: isMe ? accentColor : '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 700 }}
-                              onClick={() => playVoiceNoteAudio(msg._id)}
+                              onClick={() => playVoiceNoteAudio(msg._id, msg.content)}
                             >
                               {playingVoiceId === msg._id ? '⏸' : '▶'}
                             </button>
@@ -1160,13 +1260,9 @@ const MessagesPage = ({ userType = 'client' }) => {
               <button 
                 onClick={() => {
                   if (isRecordingVoice) {
-                    setIsRecordingVoice(false);
-                    setInput('[Voice Message] 🎤 Voice Note (0:08)');
-                    toast.success('Voice note recorded.');
+                    stopRecordingAudio();
                   } else {
-                    setIsRecordingVoice(true);
-                    setVoiceRecordDuration(0);
-                    toast('Recording voice note... speak now.');
+                    startRecordingAudio();
                   }
                 }} 
                 style={{ border: 'none', background: 'none', color: isRecordingVoice ? '#ef4444' : (isDarkMode ? '#9aa3b3' : '#6b7280'), fontSize: 18, cursor: 'pointer', padding: '0 8px', display: 'flex', alignItems: 'center' }}
