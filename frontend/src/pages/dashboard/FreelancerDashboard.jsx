@@ -3262,7 +3262,7 @@ const FreelancerDashboard = () => {
                         <button className="fd-card-header-link" style={{ fontSize: 11, color: isJoined ? '#10b981' : '#2563eb', fontWeight: isJoined ? '700' : 'normal' }} onClick={() => {
                           if (isJoined) {
                             setJoinedCommunities(joinedCommunities.filter(c => c !== comm.name));
-                            toast.info(`Left the ${comm.name} Community.`);
+                             toast(`Left the ${comm.name} Community.`);
                           } else {
                             setJoinedCommunities([...joinedCommunities, comm.name]);
                             toast.success(`Joined the ${comm.name} Community! 👥`);

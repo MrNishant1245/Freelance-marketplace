@@ -1111,7 +1111,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                   } else {
                     setIsRecordingVoice(true);
                     setVoiceRecordDuration(0);
-                    toast.info('Recording voice note... speak now.');
+                    toast('Recording voice note... speak now.');
                   }
                 }} 
                 style={{ border: 'none', background: 'none', color: isRecordingVoice ? '#ef4444' : (isDarkMode ? '#9aa3b3' : '#6b7280'), fontSize: 18, cursor: 'pointer', padding: '0 8px', display: 'flex', alignItems: 'center' }}

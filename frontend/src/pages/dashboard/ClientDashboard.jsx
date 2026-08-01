@@ -3614,7 +3614,7 @@ const ClientDashboard = () => {
                   {paymentMethods.map((method) => (
                     <div 
                       key={method.id}
-                      onClick={() => toast.info(`${method.type} (${method.bankName}) authorized on ${method.date}.`)}
+                      onClick={() => toast(`${method.type} (${method.bankName}) authorized on ${method.date}.`)}
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid #1d2433', borderRadius: 10, background: '#161c2c', cursor: 'pointer' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
