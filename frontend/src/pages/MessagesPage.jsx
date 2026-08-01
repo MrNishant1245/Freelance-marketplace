@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
-import api, { profileAPI, reviewAPI } from '../api';
+import api, { profileAPI, reviewAPI, jobAPI } from '../api';
 import { tokenStorage } from '../utils/tokenStorage';
 import toast from 'react-hot-toast';
 
@@ -531,21 +531,42 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   // ── Select conversation ───────────────────────────────────────────────────────
   const selectConversation = useCallback(async (conv) => {
+    let targetConv = conv;
+    if (conv.isVirtual) {
+      try {
+        setMsgLoading(true);
+        const res = await api.post('/messages/start', { userId: conv.recipientId, jobId: conv.jobId });
+        const realConv = res.data?.data;
+        if (realConv) {
+          // Replace virtual conversation in local state
+          setConversations(prev => prev.map(c => c._id === conv._id ? realConv : c));
+          targetConv = realConv;
+        } else {
+          throw new Error("Invalid server response");
+        }
+      } catch (err) {
+        console.error('Failed to create/start virtual conversation:', err);
+        toast.error('Failed to start conversation.');
+        setMsgLoading(false);
+        return;
+      }
+    }
+
     if (activeConv) socketRef.current?.emit('leaveConversation', activeConv._id);
-    setActiveConv(conv);
+    setActiveConv(targetConv);
     setMessages([]);
     setMsgLoading(true);
     setPendingFiles([]);
     try {
-      const res = await msgAPI.getMessages(conv._id, 1);
+      const res = await msgAPI.getMessages(targetConv._id, 1);
       setMessages(res.data?.data || []);
     } catch (err) {
       console.error('Load messages error:', err);
     } finally {
       setMsgLoading(false);
     }
-    socketRef.current?.emit('joinConversation', conv._id);
-    setConversations(prev => prev.map(c => c._id === conv._id ? { ...c, unreadCount: 0 } : c));
+    socketRef.current?.emit('joinConversation', targetConv._id);
+    setConversations(prev => prev.map(c => c._id === targetConv._id ? { ...c, unreadCount: 0 } : c));
   }, [activeConv]);
 
   // ── Load conversations ────────────────────────────────────────────────────────
@@ -553,7 +574,63 @@ const MessagesPage = ({ userType = 'client' }) => {
     (async () => {
       try {
         const res  = await msgAPI.getConversations();
-        const convs = res.data?.data || [];
+        let convs = res.data?.data || [];
+
+        // Fetch jobs to load virtual conversations for hired partners
+        try {
+          let jobsRes;
+          if (userType === 'client') {
+            jobsRes = await jobAPI.getMyPostedJobs();
+          } else {
+            jobsRes = await jobAPI.getMyAssignedJobs();
+          }
+          const jobsList = jobsRes.data?.data || [];
+
+          jobsList.forEach(job => {
+            if (userType === 'client' && job.hiredFreelancer && ['in_progress', 'submitted', 'completed'].includes(job.status)) {
+              const partner = job.hiredFreelancer;
+              const alreadyExists = convs.some(c => {
+                const otherParticipantId = c.otherParticipant?._id || c.otherParticipant;
+                return otherParticipantId && otherParticipantId.toString() === partner._id.toString();
+              });
+              if (!alreadyExists) {
+                convs.push({
+                  _id: `virtual-${partner._id}-${job._id}`,
+                  participants: [user, partner],
+                  otherParticipant: partner,
+                  lastMessage: { content: "Click to start chatting!", createdAt: new Date().toISOString() },
+                  unreadCount: 0,
+                  job: { title: job.title },
+                  isVirtual: true,
+                  recipientId: partner._id,
+                  jobId: job._id
+                });
+              }
+            } else if (userType === 'freelancer' && job.client && ['in_progress', 'submitted', 'completed'].includes(job.status)) {
+              const partner = job.client;
+              const alreadyExists = convs.some(c => {
+                const otherParticipantId = c.otherParticipant?._id || c.otherParticipant;
+                return otherParticipantId && otherParticipantId.toString() === partner._id.toString();
+              });
+              if (!alreadyExists) {
+                convs.push({
+                  _id: `virtual-${partner._id}-${job._id}`,
+                  participants: [user, partner],
+                  otherParticipant: partner,
+                  lastMessage: { content: "Click to start chatting!", createdAt: new Date().toISOString() },
+                  unreadCount: 0,
+                  job: { title: job.title },
+                  isVirtual: true,
+                  recipientId: partner._id,
+                  jobId: job._id
+                });
+              }
+            }
+          });
+        } catch (jobErr) {
+          console.error('Failed to load jobs for virtual conversations:', jobErr);
+        }
+
         setConversations(convs);
 
         const queryParams = new URLSearchParams(window.location.search);
@@ -572,7 +649,7 @@ const MessagesPage = ({ userType = 'client' }) => {
         setLoading(false);
       }
     })();
-  }, [selectConversation]);
+  }, [selectConversation, user, userType]);
 
   // ── Scroll to bottom ──────────────────────────────────────────────────────────
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
