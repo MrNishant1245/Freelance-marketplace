@@ -9010,7 +9010,7 @@ const s = {
   userRole:     { fontSize: 11, color: '#a3a3a3' },
   logoutBtn:    { display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', border: 'none', background: 'none', color: '#dc2626', fontSize: 13, borderRadius: 8, fontWeight: 500 },
   main:         { flex: 1, padding: '26px 28px' },
-  header:       { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 },
+  header:       { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
   greeting:     { fontSize: 22, fontWeight: 600, color: '#111', margin: 0, marginBottom: 4 },
   subGreeting:  { fontSize: 13.5, color: '#a3a3a3', margin: 0 },
   postBtn:      { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 600, flexShrink: 0 },
