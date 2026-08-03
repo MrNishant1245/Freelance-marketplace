@@ -7,16 +7,26 @@ const LandingPage = () => {
   const { isAuthenticated, user } = useAuth();
   const [activeFaq, setActiveFaq] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Interactive Freelancers Carousel State
   const [carouselIndex, setCarouselIndex] = useState(0);
 
-  // Animated Statistics State
-  const [freelancerCount, setFreelancerCount] = useState(0);
-  const [projectCount, setProjectCount] = useState(0);
-  const [paymentCount, setPaymentCount] = useState(0);
-  const [successCount, setSuccessCount] = useState(0);
+  // Stats Counters
+  const [freelancers, setFreelancers] = useState(0);
+  const [projects, setProjects] = useState(0);
+  const [payments, setPayments] = useState(0);
+  const [successRate, setSuccessRate] = useState(0);
 
+  // Dynamic Google Font Injection
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
+  // Stats counting animation
   useEffect(() => {
     let fc = 0;
     let pc = 0;
@@ -28,14 +38,14 @@ const LandingPage = () => {
       if (pc < 8500) { pc += 250; done = false; }
       if (payc < 25) { payc += 1; done = false; }
       if (sc < 99) { sc += 3; done = false; }
-      
-      setFreelancerCount(fc);
-      setProjectCount(pc);
-      setPaymentCount(payc);
-      setSuccessCount(sc);
-      
+
+      setFreelancers(fc);
+      setProjects(pc);
+      setPayments(payc);
+      setSuccessRate(sc);
+
       if (done) clearInterval(interval);
-    }, 35);
+    }, 30);
     return () => clearInterval(interval);
   }, []);
 
@@ -55,94 +65,43 @@ const LandingPage = () => {
     }
   };
 
-  const toggleFaq = (idx) => {
-    setActiveFaq(activeFaq === idx ? null : idx);
-  };
+  const categories = [
+    { title: 'Web Development', count: '3,450 Freelancers', price: 'Avg. ₹1,200/hr', icon: '💻', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
+    { title: 'App Development', count: '2,120 Freelancers', price: 'Avg. ₹1,500/hr', icon: '📱', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
+    { title: 'AI & ML', count: '1,280 Freelancers', price: 'Avg. ₹2,500/hr', icon: '🤖', bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
+    { title: 'Graphic Design', count: '1,890 Freelancers', price: 'Avg. ₹900/hr', icon: '🎨', bg: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' },
+    { title: 'Content Writing', count: '1,450 Freelancers', price: 'Avg. ₹700/hr', icon: '✍️', bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
+    { title: 'Video Editing', count: '1,150 Freelancers', price: 'Avg. ₹1,100/hr', icon: '🎬', bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' },
+    { title: 'Digital Marketing', count: '1,560 Freelancers', price: 'Avg. ₹800/hr', icon: '📊', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
+    { title: 'UI UX', count: '1,980 Freelancers', price: 'Avg. ₹1,300/hr', icon: '📐', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
+    { title: 'Cloud', count: '940 Freelancers', price: 'Avg. ₹2,000/hr', icon: '☁️', bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
+    { title: 'Cyber Security', count: '820 Freelancers', price: 'Avg. ₹2,200/hr', icon: '🔒', bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }
+  ];
 
-  const featuredFreelancers = [
-    { name: 'John Smith', rating: '★★★★★', role: 'React Developer', rate: '₹1200/hr', success: '98% Job Success', avatarBg: '#10B981' },
-    { name: 'Priya Sharma', rating: '★★★★★', role: 'UI/UX Designer', rate: '₹900/hr', success: '95% Job Success', avatarBg: '#3B82F6' },
-    { name: 'Amit Verma', rating: '★★★★★', role: 'AI Engineer', rate: '₹2500/hr', success: '100% Job Success', avatarBg: '#8B5CF6' },
-    { name: 'Sarah Connor', rating: '★★★★★', role: 'Cyber Security Analyst', rate: '₹2200/hr', success: '99% Job Success', avatarBg: '#EF4444' },
-    { name: 'David Miller', rating: '★★★★★', role: 'Cloud Architect', rate: '₹2000/hr', success: '97% Job Success', avatarBg: '#F59E0B' }
+  const freelancersList = [
+    { name: 'John Smith', role: 'React Developer', rate: '₹1200/hr', success: '98% Job Success', initial: 'JS', bg: '#10B981' },
+    { name: 'Priya Sharma', role: 'UI/UX Designer', rate: '₹900/hr', success: '95% Job Success', initial: 'PS', bg: '#3B82F6' },
+    { name: 'Amit Verma', role: 'AI Engineer', rate: '₹2500/hr', success: '100% Job Success', initial: 'AV', bg: '#8B5CF6' },
+    { name: 'Sarah Connor', role: 'Cyber Security Analyst', rate: '₹2200/hr', success: '99% Job Success', initial: 'SC', bg: '#EF4444' },
+    { name: 'David Miller', role: 'Cloud Architect', rate: '₹2000/hr', success: '97% Job Success', initial: 'DM', bg: '#F59E0B' }
   ];
 
   const nextFreelancer = () => {
-    setCarouselIndex((prev) => (prev + 1) % (featuredFreelancers.length - 2));
+    setCarouselIndex((prev) => (prev + 1) % (freelancersList.length - 2));
   };
 
   const prevFreelancer = () => {
-    setCarouselIndex((prev) => (prev - 1 + (featuredFreelancers.length - 2)) % (featuredFreelancers.length - 2));
-  };
-
-  // Modern Styled SVG Icons
-  const icons = {
-    web: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </svg>
-    ),
-    app: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <rect x="5" y="2" width="14" height="20" rx="2" />
-        <line x1="12" y1="18" x2="12.01" y2="18" />
-      </svg>
-    ),
-    ai: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-        <circle cx="12" cy="12" r="4" />
-      </svg>
-    ),
-    design: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
-        <path d="M12 6V12L16 14" />
-      </svg>
-    ),
-    security: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
-    writing: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-      </svg>
-    ),
-    video: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M23 7l-7 5 7 5V7z" />
-        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-      </svg>
-    ),
-    marketing: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />
-      </svg>
-    ),
-    uiux: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-      </svg>
-    ),
-    cloud: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
-      </svg>
-    )
+    setCarouselIndex((prev) => (prev - 1 + (freelancersList.length - 2)) % (freelancersList.length - 2));
   };
 
   return (
-    <div style={{ background: '#0F172A', color: '#FFFFFF', minHeight: '100vh', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' }}>
+    <div style={{ background: '#0F172A', color: '#FFFFFF', minHeight: '100vh', fontFamily: "'Plus Jakarta Sans', 'Outfit', sans-serif", overflowX: 'hidden' }}>
       
       {/* ─── NAVBAR ─── */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 8%', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, zIndex: 1000, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(12px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/')}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18 }}>FM</div>
-          <span style={{ fontSize: 20, fontWeight: 800, tracking: '-0.03em' }}>FreelanceMarket</span>
+          <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>FreelanceMarket</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }} className="nav-links">
           <span className="nav-item" onClick={() => navigate('/login')}>Explore</span>
@@ -160,26 +119,27 @@ const LandingPage = () => {
 
       {/* ─── SECTION 1: HERO (100vh) ─── */}
       <section style={{ minHeight: 'calc(100vh - 80px)', padding: '60px 8%', display: 'flex', alignItems: 'center', position: 'relative' }}>
-        {/* Glow Effects */}
-        <div style={{ position: 'absolute', top: '15%', left: '10%', width: 300, height: 300, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', filter: 'blur(100px)', zIndex: 0 }} />
-        <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: 350, height: 350, borderRadius: '50%', background: 'rgba(59, 130, 246, 0.12)', filter: 'blur(120px)', zIndex: 0 }} />
+        {/* Decorative Gradients */}
+        <div style={{ position: 'absolute', top: '15%', left: '5%', width: 350, height: 350, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.12)', filter: 'blur(120px)', zIndex: 0 }} />
+        <div style={{ position: 'absolute', bottom: '15%', right: '5%', width: 400, height: 400, borderRadius: '50%', background: 'rgba(59, 130, 246, 0.12)', filter: 'blur(130px)', zIndex: 0 }} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 60, width: '100%', alignItems: 'center', zIndex: 10 }}>
-          {/* Left Text and Search */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 60, width: '100%', alignItems: 'center', zIndex: 10 }}>
+          {/* Hero Left Content */}
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '6px 16px', borderRadius: 99, fontSize: 12.5, fontWeight: 700, color: '#10B981', textTransform: 'uppercase', marginBottom: 24 }}>
               🤖 AI Talent Matching • 🔒 Escrow Protected • ⚡ Fast Hiring
             </div>
-            <h1 style={{ fontSize: '3.6rem', fontWeight: 800, lineHeight: 1.15, margin: '0 0 20px', tracking: '-0.02em' }}>
+            <h1 style={{ fontSize: '3.6rem', fontWeight: 900, lineHeight: 1.15, margin: '0 0 20px', letterSpacing: '-0.03em' }}>
               Find the Perfect <br />
-              <span style={{ background: 'linear-gradient(135deg, #10B981 0%, #3B82F6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Freelancer</span> for Every Project.
+              <span style={{ background: 'linear-gradient(135deg, #10B981 0%, #3B82F6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Freelancer</span> <br />
+              for Every Project.
             </h1>
             <p style={{ fontSize: 17, color: '#94A3B8', margin: '0 0 36px', lineHeight: 1.6, maxWidth: 540 }}>
-              Hire top-tier background verified designers, engineers, and AI developers. Protect payments securely inside milestone escrows.
+              Hire pre-vetted remote talent instantly. Complete work safely under milestone escrow agreements and AI candidate fit auditing.
             </p>
 
             {/* Search Bar */}
-            <div style={{ display: 'flex', background: '#111827', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 6, maxWidth: 540, marginBottom: 20, boxShadow: '0 12px 30px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', background: '#111827', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 6, maxWidth: 540, marginBottom: 20, boxShadow: '0 12px 30px rgba(0,0,0,0.3)' }}>
               <input 
                 type="text" 
                 placeholder="Search services, skills, or job titles..." 
@@ -194,8 +154,8 @@ const LandingPage = () => {
 
             {/* Popular Searches */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, color: '#64748B', fontWeight: 600 }}>Popular:</span>
-              {['React', 'UI/UX', 'Python', 'AI', 'Flutter', 'Video Editing'].map((tag, i) => (
+              <span style={{ fontSize: 13, color: '#64748B', fontWeight: 600 }}>Popular Searches:</span>
+              {['React', 'UI/UX', 'Python', 'AI', 'Flutter', 'Video Editing', 'Logo Design'].map((tag, i) => (
                 <span 
                   key={i} 
                   onClick={() => navigate(`/login?search=${tag}`)}
@@ -208,7 +168,7 @@ const LandingPage = () => {
               ))}
             </div>
 
-            {/* Hero CTAs */}
+            {/* CTA Buttons */}
             <div style={{ display: 'flex', gap: 16, marginTop: 40 }}>
               <button onClick={() => navigate('/register')} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 22px -5px rgba(16, 185, 129, 0.4)' }}>
                 Hire Freelancer
@@ -219,38 +179,45 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Right Illustration/Mockup */}
-          <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <div style={{ position: 'relative', width: '100%', maxWidth: 440, height: 440, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24, boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
-              {/* Header inside Mockup */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#94A3B8' }}>🤖 AI Talent Auditor</span>
-                <span style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>Match Rate 98%</span>
+          {/* Right Side: Professional Figma-Style Collaboration Canvas Mockup */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ width: '100%', maxWidth: 460, background: 'linear-gradient(145deg, #111827 0%, #0B0F19 100%)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24, boxShadow: '0 25px 60px rgba(0,0,0,0.4)', position: 'relative', overflow: 'hidden' }}>
+              {/* Figma Canvas header banner */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: 16, marginBottom: 20 }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#F59E0B' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981' }} />
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Figma Workspace Mockup</div>
               </div>
-              {/* Profile Card */}
-              <div style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 16 }}>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>VG</div>
-                  <div>
-                    <div style={{ fontSize: 14.5, fontWeight: 700 }}>Vivek Gahlan</div>
-                    <div style={{ fontSize: 12, color: '#64748B' }}>React Native specialist</div>
+
+              {/* Developer editor mockup pane */}
+              <div style={{ background: '#0F172A', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 16, fontFamily: 'monospace', fontSize: 12, color: '#38BDF8', marginBottom: 16, position: 'relative' }}>
+                <div style={{ color: '#64748B', marginBottom: 8 }}>// React Component Collaboration</div>
+                <div><span style={{ color: '#F472B6' }}>const</span> <span style={{ color: '#FCD34D' }}>FreelanceMarket</span> = () =&gt; &#123;</div>
+                <div style={{ paddingLeft: 12 }}><span style={{ color: '#F472B6' }}>const</span> [aiMatches] = useState(true);</div>
+                <div style={{ paddingLeft: 12 }}><span style={{ color: '#F472B6' }}>return</span> &lt;<span style={{ color: '#10B981' }}>EscrowProtected</span> /&gt;;</div>
+                <div>&#125;;</div>
+                {/* Developer cursor */}
+                <div style={{ position: 'absolute', bottom: 12, right: 30, background: '#8B5CF6', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span>↗</span> Dev cursor
+                </div>
+              </div>
+
+              {/* Designer design card mockup pane */}
+              <div style={{ background: '#1F2937', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 18, position: 'relative' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#94A3B8', marginBottom: 12 }}>UI Kit Alignment</div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>F</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ width: '80%', height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 4, marginBottom: 6 }} />
+                    <div style={{ width: '40%', height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3 }} />
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-                  {['React', 'TypeScript', 'Tailwind', 'Redux'].map((skill, i) => (
-                    <span key={i} style={{ fontSize: 11, color: '#94A3B8', background: 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: 4 }}>{skill}</span>
-                  ))}
-                </div>
-              </div>
-              {/* Audio/Voice verification mockup */}
-              <div style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 16 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#94A3B8', marginBottom: 10 }}>🎙️ Verified Voice Note Resume</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 10 }}>
-                  <button style={{ width: 28, height: 28, borderRadius: '50%', background: '#10B981', border: 'none', color: '#fff', fontSize: 12 }}>▶</button>
-                  <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, position: 'relative' }}>
-                    <div style={{ width: '40%', height: '100%', background: '#10B981', borderRadius: 2 }} />
-                  </div>
-                  <span style={{ fontSize: 11, color: '#64748B' }}>0:12</span>
+                {/* Designer cursor */}
+                <div style={{ position: 'absolute', top: 25, right: 60, background: '#EC4899', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span>↗</span> Designer
                 </div>
               </div>
             </div>
@@ -258,28 +225,32 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ─── SECTION 2: TRUSTED COMPANIES ─── */}
-      <section style={{ padding: '40px 8%', background: '#0B0F19', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 20 }}>Trusted by global leaders</div>
-        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: 32, flexWrap: 'wrap', opacity: 0.65 }}>
-          {['Google', 'Microsoft', 'Amazon', 'Adobe', 'Netflix', 'OpenAI', 'Spotify'].map((company, i) => (
-            <span key={i} style={{ fontSize: 18, fontWeight: 800, color: '#94A3B8' }}>{company}</span>
-          ))}
+      {/* ─── SECTION 2: TRUSTED COMPANIES (Scrolling Marquee) ─── */}
+      <section style={{ padding: '40px 0', background: '#0B0F19', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center', marginBottom: 24 }}>Trusted by global leaders</div>
+        
+        {/* Marquee track wrapper */}
+        <div className="marquee-container" style={{ display: 'flex', overflow: 'hidden', width: '100%' }}>
+          <div className="marquee-content" style={{ display: 'flex', gap: 60, whiteSpace: 'nowrap', minWidth: '100%', justifyContent: 'space-around', animation: 'marqueeScroll 25s linear infinite' }}>
+            {['Google', 'Microsoft', 'Amazon', 'Adobe', 'Netflix', 'OpenAI', 'Spotify', 'Google', 'Microsoft', 'Amazon', 'Adobe', 'Netflix', 'OpenAI', 'Spotify'].map((company, i) => (
+              <span key={i} style={{ fontSize: 20, fontWeight: 900, color: '#334155', letterSpacing: '-0.02em' }}>{company}</span>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ─── SECTION 3: STATISTICS ─── */}
-      <section style={{ padding: '60px 8%', background: '#0F172A', textAlign: 'center' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }}>
+      <section style={{ padding: '80px 8%', background: '#0F172A', textAlign: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
           {[
-            { num: `${freelancerCount}K+`, label: 'Freelancers' },
-            { num: `${projectCount}+`, label: 'Projects' },
-            { num: `₹${paymentCount}Cr+`, label: 'Payments' },
-            { num: `${successCount}%`, label: 'Success Rate' }
+            { num: `${freelancers}K+`, label: 'Freelancers' },
+            { num: `${projects}+`, label: 'Projects Completed' },
+            { num: `₹${payments}Cr+`, label: 'Payments Protected' },
+            { num: `${successRate}%`, label: 'Success Rate' }
           ].map((stat, i) => (
-            <div key={i} style={{ padding: 20 }}>
-              <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10B981', marginBottom: 8, transition: 'all 0.5s ease' }}>{stat.num}</div>
-              <div style={{ fontSize: 14, color: '#94A3B8', fontWeight: 600 }}>{stat.label}</div>
+            <div key={i} style={{ padding: 24, background: '#111827', border: '1px solid rgba(255,255,255,0.02)', borderRadius: 16 }}>
+              <div style={{ fontSize: '2.8rem', fontWeight: 800, color: '#10B981', marginBottom: 6 }}>{stat.num}</div>
+              <div style={{ fontSize: 13.5, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</div>
             </div>
           ))}
         </div>
@@ -288,27 +259,16 @@ const LandingPage = () => {
       {/* ─── SECTION 4: POPULAR CATEGORIES ─── */}
       <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Popular Categories</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Popular Categories</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Explore talent across major technology domains</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
-          {[
-            { title: 'Web Development', freelancers: '3.4k freelancers', price: 'Avg. ₹1200/hr', icon: 'web' },
-            { title: 'App Development', freelancers: '2.1k freelancers', price: 'Avg. ₹1500/hr', icon: 'app' },
-            { title: 'AI & ML', freelancers: '1.2k freelancers', price: 'Avg. ₹2500/hr', icon: 'ai' },
-            { title: 'Graphic Design', freelancers: '1.8k freelancers', price: 'Avg. ₹900/hr', icon: 'design' },
-            { title: 'Content Writing', freelancers: '1.4k freelancers', price: 'Avg. ₹700/hr', icon: 'writing' },
-            { title: 'Video Editing', freelancers: '1.1k freelancers', price: 'Avg. ₹1100/hr', icon: 'video' },
-            { title: 'Digital Marketing', freelancers: '1.5k freelancers', price: 'Avg. ₹800/hr', icon: 'marketing' },
-            { title: 'UI UX', freelancers: '1.9k freelancers', price: 'Avg. ₹1300/hr', icon: 'uiux' },
-            { title: 'Cloud', freelancers: '900 freelancers', price: 'Avg. ₹2000/hr', icon: 'cloud' },
-            { title: 'Cyber Security', freelancers: '800 freelancers', price: 'Avg. ₹2200/hr', icon: 'security' }
-          ].map((cat, i) => (
-            <div key={i} className="category-card" style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#10B981'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
-              <span style={{ color: '#10B981', display: 'inline-block', marginBottom: 16 }}>{icons[cat.icon] || icons['web']}</span>
+          {categories.map((cat, i) => (
+            <div key={i} className="category-card" style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = cat.color; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
+              <span style={{ fontSize: 28, display: 'inline-block', marginBottom: 16, background: cat.bg, padding: 8, borderRadius: 10 }}>{cat.icon}</span>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{cat.title}</div>
-              <div style={{ fontSize: 12.5, color: '#94A3B8', marginBottom: 4 }}>{cat.freelancers}</div>
-              <div style={{ fontSize: 12.5, color: '#10B981', fontWeight: 700 }}>{cat.price}</div>
+              <div style={{ fontSize: 12.5, color: '#94A3B8', marginBottom: 4 }}>{cat.count}</div>
+              <div style={{ fontSize: 12.5, color: cat.color, fontWeight: 700 }}>{cat.price}</div>
             </div>
           ))}
         </div>
@@ -317,7 +277,7 @@ const LandingPage = () => {
       {/* ─── SECTION 5: WHY CHOOSE US ─── */}
       <section style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Why Choose Us</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Why Choose Us</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Designed for complete transparency and efficiency</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
@@ -336,24 +296,27 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ─── SECTION 6: HOW IT WORKS ─── */}
+      {/* ─── SECTION 6: HOW IT WORKS (Timeline Steps Connector) ─── */}
       <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>How It Works</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>How It Works</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Simple timeline to hire the best talent</p>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+        
+        {/* Timeline connection connector container */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap', position: 'relative' }}>
           {[
-            { step: '1', title: 'Post Project' },
-            { step: '2', title: 'Receive Proposals' },
-            { step: '3', title: 'AI Ranking' },
-            { step: '4', title: 'Hire Freelancer' },
-            { step: '5', title: 'Escrow Payment' },
-            { step: '6', title: 'Project Delivered' }
+            { step: '1', title: 'Post Project', desc: 'Describe scope & details' },
+            { step: '2', title: 'Receive Proposals', desc: 'Bids from active talent' },
+            { step: '3', title: 'AI Ranking', desc: 'Instantly audited fit' },
+            { step: '4', title: 'Hire Freelancer', desc: 'Award & sign contracts' },
+            { step: '5', title: 'Escrow Payment', desc: 'Fund secure milestones' },
+            { step: '6', title: 'Project Delivered', desc: 'Approve & release payout' }
           ].map((item, i) => (
             <div key={i} style={{ flex: 1, minWidth: 150, textAlign: 'center', position: 'relative', padding: 12 }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', border: '1.5px solid #10B981', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, margin: '0 auto 16px' }}>{item.step}</div>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{item.title}</div>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.08)', border: '1.5px solid #10B981', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, margin: '0 auto 16px', boxShadow: '0 0 16px rgba(16, 185, 129, 0.1)' }}>{item.step}</div>
+              <div style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 4 }}>{item.title}</div>
+              <div style={{ fontSize: 11.5, color: '#64748B' }}>{item.desc}</div>
             </div>
           ))}
         </div>
@@ -362,7 +325,7 @@ const LandingPage = () => {
       {/* ─── SECTION 7: FEATURED FREELANCERS (Carousel) ─── */}
       <section style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Featured Freelancers</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Featured Freelancers</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Top developers ready to build</p>
         </div>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
@@ -371,11 +334,11 @@ const LandingPage = () => {
           
           {/* Carousel Wrapper */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, width: '100%', maxWidth: 1000, overflow: 'hidden' }}>
-            {featuredFreelancers.slice(carouselIndex, carouselIndex + 3).map((free, i) => (
-              <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 16, padding: 24, textAlign: 'center', animation: 'fadeIn 0.4s ease' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', background: free.avatarBg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 20, margin: '0 auto 16px', boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>{free.name[0]}</div>
+            {freelancersList.slice(carouselIndex, carouselIndex + 3).map((free, i) => (
+              <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 16, padding: 24, textAlign: 'center', transition: 'all 0.3s' }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', background: free.bg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 20, margin: '0 auto 16px', boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>{free.initial}</div>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{free.name}</div>
-                <div style={{ color: '#F59E0B', fontSize: 12, marginBottom: 12 }}>{free.rating}</div>
+                <div style={{ color: '#F59E0B', fontSize: 12, marginBottom: 12 }}>★★★★★</div>
                 <div style={{ fontSize: 13.5, color: '#94A3B8', marginBottom: 4 }}>{free.role}</div>
                 <div style={{ fontSize: 14.5, fontWeight: 700, color: '#10B981', marginBottom: 6 }}>{free.rate}</div>
                 <div style={{ fontSize: 12.5, color: '#64748B', marginBottom: 20 }}>{free.success}</div>
@@ -392,7 +355,7 @@ const LandingPage = () => {
       {/* ─── SECTION 8: FEATURED PROJECTS ─── */}
       <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Active Projects</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Featured Projects</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Recent requests from clients</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
@@ -425,7 +388,7 @@ const LandingPage = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 60, alignItems: 'center' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 20 }}>Our Unique Selling Proposition</div>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 16px', lineHeight: 1.2 }}>Meet Your AI Hiring Assistant</h2>
+            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 16px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>Meet Your AI Hiring Assistant</h2>
             <p style={{ fontSize: 15, color: '#94A3B8', lineHeight: 1.6, marginBottom: 28 }}>
               Let our customized AI matching models read resumes, rank freelancer proposals automatically by alignment score, and speed up recruitment cycles.
             </p>
@@ -481,7 +444,7 @@ const LandingPage = () => {
       {/* ─── SECTION 10: TESTIMONIALS ─── */}
       <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>What Clients Say</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Testimonials</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Success stories from startups and developers</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
@@ -501,7 +464,7 @@ const LandingPage = () => {
       {/* ─── SECTION 11: PLATFORM FEATURES ─── */}
       <section style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Feature Rich Ecosystem</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Platform Features</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Everything you need for remote development collaboration</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
@@ -526,7 +489,7 @@ const LandingPage = () => {
       {/* ─── SECTION 12: PRICING ─── */}
       <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Simple Pricing Plans</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Pricing Plans</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Choose a plan that fits your business scale</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, maxWidth: 960, margin: '0 auto' }}>
@@ -551,10 +514,10 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ─── SECTION 13: FAQ ─── */}
+      {/* ─── SECTION 13: FAQ (Accordion) ─── */}
       <section style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Frequently Asked Questions</h2>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Frequently Asked Questions</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Got questions? We have answers.</p>
         </div>
         <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -564,7 +527,7 @@ const LandingPage = () => {
             { q: 'Can I withdraw anytime?', a: 'Yes. Freelancers can initiate withdrawals to active bank accounts immediately as soon as a milestone is approved and released by the client.' },
             { q: 'How payments work?', a: 'Payments are protected dynamically inside milestone compartments. The client pays to fund a milestone, the freelancer delivers the work, and the client releases the fund upon review.' }
           ].map((faq, i) => (
-            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 18, cursor: 'pointer', transition: 'all 0.3s ease' }} onClick={() => toggleFaq(i)}>
+            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 18, cursor: 'pointer' }} onClick={() => toggleFaq(i)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: 14.5 }}>
                 <span>{faq.q}</span>
                 <span style={{ color: '#10B981', fontSize: 16 }}>{activeFaq === i ? '−' : '+'}</span>
@@ -579,8 +542,8 @@ const LandingPage = () => {
 
       {/* ─── SECTION 14: CTA ─── */}
       <section style={{ padding: '100px 8%', background: 'linear-gradient(135deg, #111827 0%, #0F172A 100%)', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 16px' }}>Ready to build your next project?</h2>
-        <p style={{ fontSize: 16, color: '#94A3B8', marginBottom: 32 }}>Start hiring top talent in less than 5 minutes.</p>
+        <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-0.02em' }}>Ready to build your next project?</h2>
+        <p style={{ fontSize: 16, color: '#94A3B8', marginBottom: 32 }}>Start hiring in less than 5 minutes.</p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
           <button onClick={() => navigate('/register')} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 22px -5px rgba(16, 185, 129, 0.4)' }}>
             Hire Freelancer
@@ -651,9 +614,9 @@ const LandingPage = () => {
           scrollbar-width: none !important;
         }
 
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.96); }
-          to { opacity: 1; transform: scale(1); }
+        @keyframes marqueeScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
 
         @keyframes float {
@@ -664,7 +627,7 @@ const LandingPage = () => {
 
         @keyframes pulse {
           0% { transform: scale(1); }
-          50% { transform: scale(1.08); }
+          50% { transform: scale(1.06); }
           100% { transform: scale(1); }
         }
       `}</style>
