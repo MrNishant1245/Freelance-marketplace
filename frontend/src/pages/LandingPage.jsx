@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,6 +7,37 @@ const LandingPage = () => {
   const { isAuthenticated, user } = useAuth();
   const [activeFaq, setActiveFaq] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Interactive Freelancers Carousel State
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  // Animated Statistics State
+  const [freelancerCount, setFreelancerCount] = useState(0);
+  const [projectCount, setProjectCount] = useState(0);
+  const [paymentCount, setPaymentCount] = useState(0);
+  const [successCount, setSuccessCount] = useState(0);
+
+  useEffect(() => {
+    let fc = 0;
+    let pc = 0;
+    let payc = 0;
+    let sc = 0;
+    const interval = setInterval(() => {
+      let done = true;
+      if (fc < 12) { fc += 1; done = false; }
+      if (pc < 8500) { pc += 250; done = false; }
+      if (payc < 25) { payc += 1; done = false; }
+      if (sc < 99) { sc += 3; done = false; }
+      
+      setFreelancerCount(fc);
+      setProjectCount(pc);
+      setPaymentCount(payc);
+      setSuccessCount(sc);
+      
+      if (done) clearInterval(interval);
+    }, 35);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleJoinNow = () => {
     if (isAuthenticated) {
@@ -26,6 +57,22 @@ const LandingPage = () => {
 
   const toggleFaq = (idx) => {
     setActiveFaq(activeFaq === idx ? null : idx);
+  };
+
+  const featuredFreelancers = [
+    { name: 'John Smith', rating: '★★★★★', role: 'React Developer', rate: '₹1200/hr', success: '98% Job Success', avatarBg: '#10B981' },
+    { name: 'Priya Sharma', rating: '★★★★★', role: 'UI/UX Designer', rate: '₹900/hr', success: '95% Job Success', avatarBg: '#3B82F6' },
+    { name: 'Amit Verma', rating: '★★★★★', role: 'AI Engineer', rate: '₹2500/hr', success: '100% Job Success', avatarBg: '#8B5CF6' },
+    { name: 'Sarah Connor', rating: '★★★★★', role: 'Cyber Security Analyst', rate: '₹2200/hr', success: '99% Job Success', avatarBg: '#EF4444' },
+    { name: 'David Miller', rating: '★★★★★', role: 'Cloud Architect', rate: '₹2000/hr', success: '97% Job Success', avatarBg: '#F59E0B' }
+  ];
+
+  const nextFreelancer = () => {
+    setCarouselIndex((prev) => (prev + 1) % (featuredFreelancers.length - 2));
+  };
+
+  const prevFreelancer = () => {
+    setCarouselIndex((prev) => (prev - 1 + (featuredFreelancers.length - 2)) % (featuredFreelancers.length - 2));
   };
 
   // Modern Styled SVG Icons
@@ -59,6 +106,32 @@ const LandingPage = () => {
       <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
+    ),
+    writing: (
+      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+      </svg>
+    ),
+    video: (
+      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M23 7l-7 5 7 5V7z" />
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+      </svg>
+    ),
+    marketing: (
+      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+    ),
+    uiux: (
+      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+      </svg>
+    ),
+    cloud: (
+      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+      </svg>
     )
   };
 
@@ -71,12 +144,13 @@ const LandingPage = () => {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18 }}>FM</div>
           <span style={{ fontSize: 20, fontWeight: 800, tracking: '-0.03em' }}>FreelanceMarket</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="nav-links">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }} className="nav-links">
           <span className="nav-item" onClick={() => navigate('/login')}>Explore</span>
           <span className="nav-item" onClick={() => navigate('/login')}>Find Freelancers</span>
           <span className="nav-item" onClick={() => navigate('/login')}>Find Jobs</span>
           <span className="nav-item" onClick={() => navigate('/login')}>Pricing</span>
           <span className="nav-item" onClick={() => navigate('/login')}>About</span>
+          <span className="nav-item" onClick={() => navigate('/login')}>Contact</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <button onClick={handleSignIn} style={{ background: 'none', border: 'none', color: '#94A3B8', fontWeight: 600, fontSize: 14.5, cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = '#94A3B8'}>Sign In</button>
@@ -198,13 +272,13 @@ const LandingPage = () => {
       <section style={{ padding: '60px 8%', background: '#0F172A', textAlign: 'center' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }}>
           {[
-            { num: '12K+', label: 'Freelancers' },
-            { num: '8500+', label: 'Projects' },
-            { num: '₹25Cr+', label: 'Payments' },
-            { num: '99%', label: 'Success Rate' }
+            { num: `${freelancerCount}K+`, label: 'Freelancers' },
+            { num: `${projectCount}+`, label: 'Projects' },
+            { num: `₹${paymentCount}Cr+`, label: 'Payments' },
+            { num: `${successCount}%`, label: 'Success Rate' }
           ].map((stat, i) => (
             <div key={i} style={{ padding: 20 }}>
-              <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10B981', marginBottom: 8 }}>{stat.num}</div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10B981', marginBottom: 8, transition: 'all 0.5s ease' }}>{stat.num}</div>
               <div style={{ fontSize: 14, color: '#94A3B8', fontWeight: 600 }}>{stat.label}</div>
             </div>
           ))}
@@ -223,10 +297,15 @@ const LandingPage = () => {
             { title: 'App Development', freelancers: '2.1k freelancers', price: 'Avg. ₹1500/hr', icon: 'app' },
             { title: 'AI & ML', freelancers: '1.2k freelancers', price: 'Avg. ₹2500/hr', icon: 'ai' },
             { title: 'Graphic Design', freelancers: '1.8k freelancers', price: 'Avg. ₹900/hr', icon: 'design' },
+            { title: 'Content Writing', freelancers: '1.4k freelancers', price: 'Avg. ₹700/hr', icon: 'writing' },
+            { title: 'Video Editing', freelancers: '1.1k freelancers', price: 'Avg. ₹1100/hr', icon: 'video' },
+            { title: 'Digital Marketing', freelancers: '1.5k freelancers', price: 'Avg. ₹800/hr', icon: 'marketing' },
+            { title: 'UI UX', freelancers: '1.9k freelancers', price: 'Avg. ₹1300/hr', icon: 'uiux' },
+            { title: 'Cloud', freelancers: '900 freelancers', price: 'Avg. ₹2000/hr', icon: 'cloud' },
             { title: 'Cyber Security', freelancers: '800 freelancers', price: 'Avg. ₹2200/hr', icon: 'security' }
           ].map((cat, i) => (
             <div key={i} className="category-card" style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#10B981'; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
-              <span style={{ color: '#10B981', display: 'inline-block', marginBottom: 16 }}>{icons[cat.icon]}</span>
+              <span style={{ color: '#10B981', display: 'inline-block', marginBottom: 16 }}>{icons[cat.icon] || icons['web']}</span>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{cat.title}</div>
               <div style={{ fontSize: 12.5, color: '#94A3B8', marginBottom: 4 }}>{cat.freelancers}</div>
               <div style={{ fontSize: 12.5, color: '#10B981', fontWeight: 700 }}>{cat.price}</div>
@@ -280,28 +359,33 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ─── SECTION 7: FEATURED FREELANCERS ─── */}
+      {/* ─── SECTION 7: FEATURED FREELANCERS (Carousel) ─── */}
       <section style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px' }}>Featured Freelancers</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Top developers ready to build</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
-          {[
-            { name: 'John Smith', rating: '★★★★★', role: 'React Developer', rate: '₹1200/hr', success: '98% Job Success' },
-            { name: 'Priya Sharma', rating: '★★★★★', role: 'UI/UX Designer', rate: '₹900/hr', success: '95% Job Success' },
-            { name: 'Amit Verma', rating: '★★★★★', role: 'AI Engineer', rate: '₹2500/hr', success: '100% Job Success' }
-          ].map((free, i) => (
-            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 20, margin: '0 auto 16px' }}>{free.name[0]}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{free.name}</div>
-              <div style={{ color: '#F59E0B', fontSize: 12, marginBottom: 12 }}>{free.rating}</div>
-              <div style={{ fontSize: 13.5, color: '#94A3B8', marginBottom: 4 }}>{free.role}</div>
-              <div style={{ fontSize: 14.5, fontWeight: 700, color: '#10B981', marginBottom: 6 }}>{free.rate}</div>
-              <div style={{ fontSize: 12.5, color: '#64748B', marginBottom: 20 }}>{free.success}</div>
-              <button onClick={() => navigate('/login')} style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.04)'}>Hire Now</button>
-            </div>
-          ))}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+          {/* Previous Arrow */}
+          <button onClick={prevFreelancer} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.04)'}>◀</button>
+          
+          {/* Carousel Wrapper */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, width: '100%', maxWidth: 1000, overflow: 'hidden' }}>
+            {featuredFreelancers.slice(carouselIndex, carouselIndex + 3).map((free, i) => (
+              <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 16, padding: 24, textAlign: 'center', animation: 'fadeIn 0.4s ease' }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', background: free.avatarBg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 20, margin: '0 auto 16px', boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>{free.name[0]}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{free.name}</div>
+                <div style={{ color: '#F59E0B', fontSize: 12, marginBottom: 12 }}>{free.rating}</div>
+                <div style={{ fontSize: 13.5, color: '#94A3B8', marginBottom: 4 }}>{free.role}</div>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: '#10B981', marginBottom: 6 }}>{free.rate}</div>
+                <div style={{ fontSize: 12.5, color: '#64748B', marginBottom: 20 }}>{free.success}</div>
+                <button onClick={() => navigate('/login')} style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.04)'}>Hire Now</button>
+              </div>
+            ))}
+          </div>
+
+          {/* Next Arrow */}
+          <button onClick={nextFreelancer} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.04)'}>▶</button>
         </div>
       </section>
 
@@ -363,10 +447,10 @@ const LandingPage = () => {
             </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            {/* Robot/AI Animation widget mockup */}
-            <div style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 440, boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+            {/* Floating Robot Mockup Illustration */}
+            <div style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 440, boxShadow: '0 20px 40px rgba(0,0,0,0.15)', position: 'relative', animation: 'float 3.5s ease-in-out infinite' }}>
               <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 24 }}>
-                <span style={{ fontSize: 32 }}>🤖</span>
+                <span style={{ fontSize: 36, animation: 'pulse 2s infinite' }}>🤖</span>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700 }}>Candidate Fit Ranking</div>
                   <div style={{ fontSize: 12, color: '#64748B' }}>Audit finished in 1.4s</div>
@@ -376,7 +460,7 @@ const LandingPage = () => {
                 {[
                   { name: 'John Smith (React)', score: '98%', match: 'Perfect Match' },
                   { name: 'Priya Sharma (Design)', score: '91%', match: 'High Match' },
-                  { name: 'Amit Verma (AI Node)', score: '87%', match: 'Optimal Match' }
+                  { name: 'Sarah Connor (Security)', score: '88%', match: 'Optimal Match' }
                 ].map((item, idx) => (
                   <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.03)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>
@@ -480,14 +564,14 @@ const LandingPage = () => {
             { q: 'Can I withdraw anytime?', a: 'Yes. Freelancers can initiate withdrawals to active bank accounts immediately as soon as a milestone is approved and released by the client.' },
             { q: 'How payments work?', a: 'Payments are protected dynamically inside milestone compartments. The client pays to fund a milestone, the freelancer delivers the work, and the client releases the fund upon review.' }
           ].map((faq, i) => (
-            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 18, cursor: 'pointer' }} onClick={() => toggleFaq(i)}>
+            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 18, cursor: 'pointer', transition: 'all 0.3s ease' }} onClick={() => toggleFaq(i)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: 14.5 }}>
                 <span>{faq.q}</span>
-                <span>{activeFaq === i ? '−' : '+'}</span>
+                <span style={{ color: '#10B981', fontSize: 16 }}>{activeFaq === i ? '−' : '+'}</span>
               </div>
-              {activeFaq === i && (
+              <div style={{ maxHeight: activeFaq === i ? '200px' : '0px', overflow: 'hidden', transition: 'max-height 0.3s ease-in-out' }}>
                 <p style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5, marginTop: 12, marginBottom: 0 }}>{faq.a}</p>
-              )}
+              </div>
             </div>
           ))}
         </div>
@@ -565,6 +649,23 @@ const LandingPage = () => {
         .no-scrollbar {
           -ms-overflow-style: none !important;
           scrollbar-width: none !important;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.96); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+          100% { transform: translateY(0px); }
+        }
+
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+          100% { transform: scale(1); }
         }
       `}</style>
 
