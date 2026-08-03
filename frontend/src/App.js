@@ -23,6 +23,7 @@ import ProfilePage           from './pages/ProfilePage';
 import PaymentPage           from './pages/PaymentPage';
 import { getSocket }         from './utils/socket';
 import { tokenStorage }      from './utils/tokenStorage';
+import LandingPage           from './pages/LandingPage';
 
 const playRingtone = (type) => {
   try {
@@ -256,8 +257,8 @@ const App = () => (
         <Route path="/admin/*" element={<RoleRoute roles={['admin']}><AdminDashboard /></RoleRoute>} />
 
         {/* ── Default ── */}
-        <Route path="/"  element={<Navigate to="/login" replace />} />
-        <Route path="*"  element={<Navigate to="/login" replace />} />
+        <Route path="/"  element={<LandingPage />} />
+        <Route path="*"  element={<Navigate to="/" replace />} />
       </Routes>
 
       <Toaster position="top-right" toastOptions={{
