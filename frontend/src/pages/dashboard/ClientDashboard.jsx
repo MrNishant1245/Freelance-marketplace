@@ -1253,6 +1253,7 @@ const ClientDashboard = () => {
   const [userSubTier, setUserSubTier] = useState(localStorage.getItem('client_sub_tier') || 'free');
   const [showUpgradePaymentModal, setShowUpgradePaymentModal] = useState(false);
   const [upgradeTargetPlan, setUpgradeTargetPlan] = useState(null);
+  const [showContractHealthModal, setShowContractHealthModal] = useState(false);
 
   // Escrow funding & tip modal states
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -5489,7 +5490,7 @@ const ClientDashboard = () => {
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981' }}>Excellent</div>
                       <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 1.3 }}>Most of your contracts are active and up to date.</div>
-                      <span onClick={() => toast('Contract health detailed audit log loaded.')} style={{ display: 'inline-block', fontSize: 12, color: '#10b981', fontWeight: 700, marginTop: 8, cursor: 'pointer' }}>View details →</span>
+                      <span onClick={() => setShowContractHealthModal(true)} style={{ display: 'inline-block', fontSize: 12, color: '#10b981', fontWeight: 700, marginTop: 8, cursor: 'pointer' }}>View details →</span>
                     </div>
                   </div>
                 </div>
@@ -8964,6 +8965,85 @@ const ClientDashboard = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Contract Health Details Modal ── */}
+      {showContractHealthModal && (
+        <div className="fd-quiz-overlay" onClick={() => setShowContractHealthModal(false)}>
+          <div className="fd-quiz-modal" onClick={(e) => e.stopPropagation()} style={{ width: 620, background: isDarkMode ? '#111625' : '#fff', border: `1px solid ${isDarkMode ? '#1d2433' : '#e2e8f0'}`, borderRadius: 16, padding: 24, color: isDarkMode ? '#fff' : '#0f172a', fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 24 }}>💚</span>
+                <span style={{ fontSize: 18, fontWeight: 800 }}>Contract Health Detailed Audit</span>
+              </div>
+              <button onClick={() => setShowContractHealthModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 18 }}>✕</button>
+            </div>
+
+            {/* Health Score Overview */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, background: isDarkMode ? 'rgba(255,255,255,0.02)' : '#f8fafc', padding: 18, borderRadius: 12, border: `1px solid ${isDarkMode ? '#1d2433' : '#e2e8f0'}`, marginBottom: 20 }}>
+              <div style={{ width: 80, height: 80, position: 'relative', flexShrink: 0 }}>
+                <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%' }}>
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(16, 185, 129, 0.08)" strokeWidth="3.5" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" strokeWidth="3.5" strokeDasharray="85, 100" strokeLinecap="round" />
+                </svg>
+                <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', fontSize: 17, fontWeight: 800 }}>85%</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#10b981' }}>Excellent Standing</div>
+                <div style={{ fontSize: 13, color: isDarkMode ? '#cbd5e1' : '#475569', marginTop: 4, lineHeight: 1.4 }}>Your active contracts are performing with zero disputes, healthy delivery cadences, and fully funded milestone escrows.</div>
+              </div>
+            </div>
+
+            {/* Checklist of Health Factors */}
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ fontSize: 13, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, margin: '0 0 12px' }}>Audit Checkpoints</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {[
+                  { text: 'Milestone Escrow Funded', status: 'pass', desc: '100% of current milestones funded' },
+                  { text: 'Active Communication', status: 'pass', desc: 'Recent chats within 48 hours' },
+                  { text: 'Payment Schedule', status: 'pass', desc: 'No overdue invoice payments' },
+                  { text: 'Delivery Cadence', status: 'warning', desc: '1 milestone pending review' }
+                ].map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: 10, background: isDarkMode ? '#161c2c' : '#f8fafc', padding: 12, borderRadius: 10, border: `1px solid ${isDarkMode ? '#1d2433' : '#e2e8f0'}` }}>
+                    <span style={{ fontSize: 16 }}>{item.status === 'pass' ? '✅' : '⚠️'}</span>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700 }}>{item.text}</div>
+                      <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* List of Active Hired Contracts */}
+            <div>
+              <h4 style={{ fontSize: 13, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, margin: '0 0 12px' }}>Active Hired Contracts</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 180, overflowY: 'auto', paddingRight: 4 }} className="no-scrollbar">
+                {jobs.filter(j => j.hiredFreelancer).length === 0 ? (
+                  <div style={{ fontSize: 12.5, color: '#64748b', fontStyle: 'italic', textAlign: 'center', padding: 12 }}>No active hired contracts currently.</div>
+                ) : (
+                  jobs.filter(j => j.hiredFreelancer).map((j, idx) => {
+                    const freelancerName = `${j.hiredFreelancer.firstName || ''} ${j.hiredFreelancer.lastName || ''}`.trim() || 'Freelancer';
+                    return (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: `1px solid ${isDarkMode ? '#1d2433' : '#e2e8f0'}`, borderRadius: 8, background: isDarkMode ? '#161c2c' : '#fff' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700 }}>{j.title}</div>
+                          <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>Hired: <strong>{freelancerName}</strong></div>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '3px 8px', borderRadius: 6, textTransform: 'uppercase' }}>Healthy</span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Audit Advisory */}
+            <div style={{ marginTop: 20, fontSize: 12, color: '#64748b', background: 'rgba(16, 185, 129, 0.04)', padding: 12, borderRadius: 8, border: '1px solid rgba(16, 185, 129, 0.2)', lineHeight: 1.4 }}>
+              <strong>Health Tip:</strong> Keep your milestones clearly defined and funded ahead of start dates. Frequent check-ins protect payment transparency and foster top freelancer delivery rates.
             </div>
           </div>
         </div>
