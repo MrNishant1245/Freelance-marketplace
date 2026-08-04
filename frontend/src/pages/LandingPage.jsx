@@ -312,7 +312,7 @@ const LandingPage = () => {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
           {categories.map((cat, i) => (
-            <div key={i} className="category-card" style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = cat.color; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
+            <div key={i} className="category-card" onClick={() => handleSearch(cat.title)} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = cat.color; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
               <span style={{ fontSize: 28, display: 'inline-block', marginBottom: 16, background: cat.bg, padding: 8, borderRadius: 10 }}>{cat.icon}</span>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{cat.title}</div>
               <div style={{ fontSize: 12.5, color: '#94A3B8', marginBottom: 4 }}>{cat.count}</div>
