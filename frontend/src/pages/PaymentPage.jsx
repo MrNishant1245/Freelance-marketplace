@@ -43,8 +43,17 @@ const PaymentPage = () => {
     payBtn: { ...s.payBtn, background: isDarkMode ? '#10b981' : s.payBtn?.background },
   };
 
+  const query = new URLSearchParams(useLocation().search);
+  const isPremiumSub = query.get('type') === 'premium';
+
   // Mock job data — in production, comes from props/API
-  const job = {
+  const job = isPremiumSub ? {
+    title: 'Premium Subscription Plan Upgrade',
+    freelancer: 'FreelanceMarket AI Assistant',
+    amount: 4999,
+    platformFee: 0,
+    total: 4999,
+  } : {
     title: 'React Dashboard UI',
     freelancer: 'Arjun Sharma',
     amount: 15000,

@@ -177,6 +177,42 @@ const LandingPage = () => {
     }
   };
 
+  const handleClientPlanClick = () => {
+    if (isAuthenticated) {
+      if (user?.role === 'client') {
+        toast.success('You are already on the Client Plan!');
+      } else {
+        toast.error('You are logged in as a Freelancer. Please register a Client account to use this plan.');
+      }
+    } else {
+      navigate('/register?role=client');
+    }
+  };
+
+  const handleFreelancerPlanClick = () => {
+    if (isAuthenticated) {
+      if (user?.role === 'freelancer') {
+        toast.success('You are already on the Freelancer Plan!');
+      } else {
+        toast.error('You are logged in as a Client. Please register a Freelancer account to use this plan.');
+      }
+    } else {
+      navigate('/register?role=freelancer');
+    }
+  };
+
+  const handlePremiumPlanClick = () => {
+    if (isAuthenticated) {
+      if (user?.role === 'client') {
+        navigate('/payment?type=premium');
+      } else {
+        toast.error('Premium Subscription upgrades are only available for Client accounts.');
+      }
+    } else {
+      navigate('/register?role=client&plan=premium');
+    }
+  };
+
   const categories = [
     { title: 'Web Development', count: '3,450 Freelancers', price: 'Avg. ₹1,200/hr', icon: '💻', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
     { title: 'App Development', count: '2,120 Freelancers', price: 'Avg. ₹1,500/hr', icon: '📱', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
@@ -620,7 +656,18 @@ const LandingPage = () => {
                   ))}
                 </div>
               </div>
-              <button onClick={() => navigate('/register')} style={{ width: '100%', padding: '12px 0', background: '#10B981', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, marginTop: 32, cursor: 'pointer' }}>Get Started</button>
+              <button 
+                onClick={
+                  plan.title === 'Client Plan' 
+                    ? handleClientPlanClick 
+                    : plan.title === 'Freelancer Plan' 
+                    ? handleFreelancerPlanClick 
+                    : handlePremiumPlanClick
+                } 
+                style={{ width: '100%', padding: '12px 0', background: '#10B981', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, marginTop: 32, cursor: 'pointer' }}
+              >
+                Get Started
+              </button>
             </div>
           ))}
         </div>
