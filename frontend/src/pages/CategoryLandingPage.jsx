@@ -36,12 +36,125 @@ const getAccentBg = (slug) => {
   return mapping[slug] || 'rgba(16, 185, 129, 0.08)';
 };
 
+const getServiceDetails = (serviceName) => {
+  const defaults = {
+    budget: '₹35,000 - ₹75,000',
+    timeline: '7 - 14 Days',
+    tech: 'React, Node.js, Express',
+    desc: 'Custom engineered software solutions tailored to match high scalability requirements and performance standards.'
+  };
+
+  const details = {
+    // Web Development
+    'Website Development': {
+      budget: '₹40,000 - ₹90,000',
+      timeline: '10 - 20 Days',
+      tech: 'React, Next.js, Node.js',
+      desc: 'Complete full-stack website designed with modern standards, fully responsive layouts, SEO optimizations, and analytics integration.'
+    },
+    'Landing Pages': {
+      budget: '₹15,000 - ₹30,000',
+      timeline: '3 - 7 Days',
+      tech: 'HTML5, TailwindCSS, Javascript',
+      desc: 'High-converting single page websites designed to capture leads, showcase product features, and drive user registration.'
+    },
+    'Portfolio Website': {
+      budget: '₹12,000 - ₹25,000',
+      timeline: '4 - 8 Days',
+      tech: 'React, Vanilla CSS, Framer Motion',
+      desc: 'Stunning personal and professional portfolios to highlight project galleries, resumes, credentials, and testimonials.'
+    },
+    'E-Commerce Website': {
+      budget: '₹60,000 - ₹1,50,000',
+      timeline: '15 - 30 Days',
+      tech: 'Next.js, Stripe, MongoDB',
+      desc: 'Fully featured shopping portals with secure checkout channels, shopping carts, product management backends, and admin dashboards.'
+    },
+    'Business Website': {
+      budget: '₹30,000 - ₹60,000',
+      timeline: '7 - 14 Days',
+      tech: 'WordPress, PHP, MySQL',
+      desc: 'Corporate sites optimized to represent company profiles, client services, testimonials, and career forms.'
+    },
+    'SaaS Dashboard': {
+      budget: '₹80,000 - ₹2,00,000',
+      timeline: '20 - 45 Days',
+      tech: 'React, Redux, PostgreSQL',
+      desc: 'Analytical administrative user interfaces with interactive charts, security logging, role-based controls, and API integrations.'
+    },
+    'CMS Website': {
+      budget: '₹25,000 - ₹50,000',
+      timeline: '7 - 12 Days',
+      tech: 'WordPress, Strapi, GraphQL',
+      desc: 'Content management solutions allowing non-technical teams to instantly update blogs, case studies, and resources.'
+    },
+    'API Development': {
+      budget: '₹30,000 - ₹70,000',
+      timeline: '6 - 12 Days',
+      tech: 'Node.js, Express, Swagger',
+      desc: 'Secure, high-throughput REST and GraphQL backend interfaces with detailed documentation and validation layers.'
+    },
+
+    // App Development
+    'Android Apps': {
+      budget: '₹70,000 - ₹1,50,000',
+      timeline: '15 - 35 Days',
+      tech: 'Kotlin, Jetpack Compose',
+      desc: 'Native Android applications compiled with modern architectural guidelines, responsive controls, and play store readiness.'
+    },
+    'iOS Apps': {
+      budget: '₹80,000 - ₹1,80,000',
+      timeline: '20 - 40 Days',
+      tech: 'Swift, SwiftUI, Combine',
+      desc: 'Premium native iOS layouts adhering to Apple human interface guidelines, secure keychains, and push notifications.'
+    },
+    'Flutter Development': {
+      budget: '₹60,000 - ₹1,30,000',
+      timeline: '15 - 30 Days',
+      tech: 'Flutter, Dart, Provider',
+      desc: 'High-performance cross-platform apps sharing a single codebase for fast time-to-market across iOS and Android systems.'
+    },
+    'React Native Apps': {
+      budget: '₹65,000 - ₹1,40,000',
+      timeline: '18 - 32 Days',
+      tech: 'React Native, Redux, Expo',
+      desc: 'Dynamic hybrid applications built using React syntax, enabling rapid feature parity and native performance modules.'
+    },
+
+    // AI & ML
+    'Chatbots': {
+      budget: '₹40,000 - ₹90,000',
+      timeline: '8 - 18 Days',
+      tech: 'OpenAI API, LangChain, Node.js',
+      desc: 'Interactive conversation agents trained on your business datasets to handle automated customer support.'
+    },
+    'Recommendation Systems': {
+      budget: '₹80,000 - ₹2,00,000',
+      timeline: '20 - 45 Days',
+      tech: 'Python, PyTorch, Pinecone',
+      desc: 'Collaborative filtering and content-based recommendation algorithms to drive e-commerce sales conversions.'
+    },
+    'LLM Apps': {
+      budget: '₹50,000 - ₹1,20,000',
+      timeline: '10 - 22 Days',
+      tech: 'LangChain, GPT-4, VectorDB',
+      desc: 'Retrieval Augmented Generation (RAG) pipelines enabling semantic lookups across enterprise knowledge bases.'
+    }
+  };
+
+  return details[serviceName] || {
+    ...defaults,
+    desc: `Professional quality ${serviceName} solutions custom-tailored to fit high scalability needs.`
+  };
+};
+
 const CategoryLandingPage = () => {
   const { categorySlug } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   
   const [activeFaq, setActiveFaq] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
   
   const data = categoryData[categorySlug];
   if (!data) {
@@ -240,7 +353,7 @@ const CategoryLandingPage = () => {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
           {data.services.map((service, i) => (
-            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, transition: 'border-color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.borderColor = accent} onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'}>
+            <div key={i} onClick={() => setSelectedService(service)} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
               <div style={{ fontSize: 24, marginBottom: 14 }}>✔</div>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>{service}</h3>
             </div>
@@ -442,6 +555,60 @@ const CategoryLandingPage = () => {
           © {new Date().getFullYear()} FreelanceMarket. All rights reserved.
         </div>
       </footer>
+
+      {selectedService && (() => {
+        const details = getServiceDetails(selectedService);
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 32, width: '90%', maxWidth: 500, position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+              <button onClick={() => setSelectedService(null)} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', color: '#64748B', fontSize: 18, cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = '#64748B'}>✕</button>
+              <div style={{ display: 'inline-flex', background: accentBg, border: `1px solid ${accent}33`, color: accent, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', marginBottom: 16 }}>Service Overview</div>
+              <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16, color: '#fff' }}>{selectedService}</h3>
+              <p style={{ fontSize: 13.5, color: '#94A3B8', lineHeight: 1.6, margin: '0 0 24px' }}>{details.desc}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, borderY: '1px solid rgba(255,255,255,0.04)', paddingY: 16, marginBottom: 24 }}>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: 4 }}>Est. Budget Range</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#10B981' }}>{details.budget}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: 4 }}>Est. Timeline</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{details.timeline}</span>
+                </div>
+              </div>
+              <div style={{ marginBottom: 28 }}>
+                <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: 8 }}>Technologies</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {details.tech.split(', ').map((t, idx) => (
+                    <span key={idx} style={{ fontSize: 11.5, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6, padding: '4px 10px', color: '#94A3B8' }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => {
+                  setSelectedService(null);
+                  if (isAuthenticated) {
+                    if (user?.role === 'client') {
+                      navigate('/post-job', {
+                        state: {
+                          templateData: {
+                            title: `Looking for ${selectedService} Specialist`,
+                            description: `We are seeking an expert to build a ${selectedService} custom platform.\n\nProject Scope:\n- Timeline: ${details.timeline}\n- Key Tech: ${details.tech}\n\nPlease share your portfolio.`
+                          }
+                        }
+                      });
+                    } else {
+                      toast.error('Only Client accounts can post project briefs.');
+                    }
+                  } else {
+                    navigate(`/register?role=client&service=${encodeURIComponent(selectedService)}`);
+                  }
+                }} style={{ flex: 1, padding: '12px 0', background: accent, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Post Project</button>
+                <button onClick={() => setSelectedService(null)} style={{ padding: '12px 20px', background: 'transparent', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
