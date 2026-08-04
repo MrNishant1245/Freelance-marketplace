@@ -76,6 +76,43 @@ const LandingPage = () => {
     }
   };
 
+  const handleHireFreelancer = () => {
+    if (isAuthenticated) {
+      if (user?.role === 'client') {
+        navigate('/post-job');
+      } else {
+        navigate('/freelancer/dashboard');
+      }
+    } else {
+      navigate('/register?role=client');
+    }
+  };
+
+  const handleBecomeFreelancer = () => {
+    if (isAuthenticated) {
+      if (user?.role === 'freelancer') {
+        navigate('/freelancer/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    } else {
+      navigate('/register?role=freelancer');
+    }
+  };
+
+  const handleSearch = (term) => {
+    if (!term) return;
+    if (isAuthenticated) {
+      if (user?.role === 'freelancer') {
+        navigate(`/freelancer/dashboard?search=${encodeURIComponent(term)}`);
+      } else {
+        navigate(`/dashboard?search=${encodeURIComponent(term)}`);
+      }
+    } else {
+      navigate(`/login?search=${encodeURIComponent(term)}`);
+    }
+  };
+
   const categories = [
     { title: 'Web Development', count: '3,450 Freelancers', price: 'Avg. ₹1,200/hr', icon: '💻', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
     { title: 'App Development', count: '2,120 Freelancers', price: 'Avg. ₹1,500/hr', icon: '📱', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
@@ -158,7 +195,7 @@ const LandingPage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ flex: 1, background: 'none', border: 'none', padding: '0 18px', color: '#fff', fontSize: 15, outline: 'none' }}
               />
-              <button onClick={() => navigate(`/login?search=${searchQuery}`)} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 24px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => handleSearch(searchQuery)} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 24px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 🔍 Search
               </button>
             </div>
@@ -169,7 +206,7 @@ const LandingPage = () => {
               {['React', 'UI/UX', 'Python', 'AI', 'Flutter', 'Video Editing', 'Logo Design'].map((tag, i) => (
                 <span 
                   key={i} 
-                  onClick={() => navigate(`/login?search=${tag}`)}
+                  onClick={() => handleSearch(tag)}
                   style={{ fontSize: 12.5, color: '#CBD5E1', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: 8, cursor: 'pointer', transition: 'background 0.2s' }}
                   onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.08)'}
                   onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.04)'}
@@ -181,10 +218,10 @@ const LandingPage = () => {
 
             {/* CTA Buttons */}
             <div style={{ display: 'flex', gap: 16, marginTop: 40 }}>
-              <button onClick={() => navigate('/register')} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 22px -5px rgba(16, 185, 129, 0.4)' }}>
+              <button onClick={handleHireFreelancer} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 22px -5px rgba(16, 185, 129, 0.4)' }}>
                 Hire Freelancer
               </button>
-              <button onClick={() => navigate('/register')} style={{ background: 'transparent', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', transition: 'border-color 0.2s' }} onMouseEnter={(e) => e.target.style.borderColor = '#10B981'} onMouseLeave={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}>
+              <button onClick={handleBecomeFreelancer} style={{ background: 'transparent', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', transition: 'border-color 0.2s' }} onMouseEnter={(e) => e.target.style.borderColor = '#10B981'} onMouseLeave={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}>
                 Become Freelancer
               </button>
             </div>
@@ -556,10 +593,10 @@ const LandingPage = () => {
         <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-0.02em' }}>Ready to build your next project?</h2>
         <p style={{ fontSize: 16, color: '#94A3B8', marginBottom: 32 }}>Start hiring in less than 5 minutes.</p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-          <button onClick={() => navigate('/register')} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 22px -5px rgba(16, 185, 129, 0.4)' }}>
+          <button onClick={handleHireFreelancer} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 22px -5px rgba(16, 185, 129, 0.4)' }}>
             Hire Freelancer
           </button>
-          <button onClick={() => navigate('/register')} style={{ background: 'transparent', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={handleBecomeFreelancer} style={{ background: 'transparent', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
             Become Freelancer
           </button>
         </div>

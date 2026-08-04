@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -34,7 +34,11 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
+
+  const query = new URLSearchParams(window.location.search);
+  const defaultRole = query.get('role') || '';
+
+  const [selectedRole, setSelectedRole] = useState(defaultRole);
   const [passwordValue, setPasswordValue] = useState('');
 
   const {
@@ -43,7 +47,13 @@ const RegisterPage = () => {
     setValue,
     watch,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(schema), mode: 'onSubmit' });
+  } = useForm({ resolver: yupResolver(schema), mode: 'onSubmit', defaultValues: { role: defaultRole } });
+
+  useEffect(() => {
+    if (defaultRole) {
+      setValue('role', defaultRole, { shouldValidate: true });
+    }
+  }, [defaultRole, setValue]);
 
   const handleRoleChange = (role) => {
     setSelectedRole(role);
