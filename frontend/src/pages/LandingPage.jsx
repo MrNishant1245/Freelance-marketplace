@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -110,6 +111,25 @@ const LandingPage = () => {
       }
     } else {
       navigate(`/login?search=${encodeURIComponent(term)}`);
+    }
+  };
+
+  const handleHireNow = (freelancerName) => {
+    if (isAuthenticated) {
+      if (user?.role === 'client') {
+        navigate('/post-job', {
+          state: {
+            templateData: {
+              title: `Specialized Project Proposal for ${freelancerName}`,
+              description: `Hi ${freelancerName},\n\nWe love your profile and would like to invite you to propose on our upcoming project.\n\nPlease share your availability and feedback.\n\nBest,\n${user?.firstName || 'Client'}`
+            }
+          }
+        });
+      } else {
+        toast.error('You are signed in as a Freelancer. Only clients can invite freelancers to projects.');
+      }
+    } else {
+      navigate(`/register?role=client&invite=${encodeURIComponent(freelancerName)}`);
     }
   };
 
@@ -390,7 +410,7 @@ const LandingPage = () => {
                 <div style={{ fontSize: 13.5, color: '#94A3B8', marginBottom: 4 }}>{free.role}</div>
                 <div style={{ fontSize: 14.5, fontWeight: 700, color: '#10B981', marginBottom: 6 }}>{free.rate}</div>
                 <div style={{ fontSize: 12.5, color: '#64748B', marginBottom: 20 }}>{free.success}</div>
-                <button onClick={() => navigate('/login')} style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.04)'}>Hire Now</button>
+                <button onClick={() => handleHireNow(free.name)} style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.04)'}>Hire Now</button>
               </div>
             ))}
           </div>
