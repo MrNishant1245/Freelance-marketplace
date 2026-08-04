@@ -2150,39 +2150,11 @@ const FreelancerDashboard = () => {
               </div>
 
               {/* Date selector dropdown */}
-              <div className="fd-date-selector-pill" style={{ display: 'flex', alignItems: 'center', gap: 8, background: isDarkMode ? '#071422' : '#fff', border: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', borderRadius: 99, padding: '8px 16px', fontSize: 12.5, fontWeight: 600, color: isDarkMode ? '#dbeafe' : '#475569', boxShadow: isDarkMode ? 'none' : '0 1px 3px rgba(0,0,0,0.02)', cursor: 'pointer' }} onClick={() => toast.success('Date filter toggled!')}>
+              <div className="fd-date-selector-pill" style={{ display: 'flex', alignItems: 'center', gap: 8, background: isDarkMode ? '#071422' : '#fff', border: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, color: isDarkMode ? '#fff' : '#1e293b', boxShadow: isDarkMode ? 'none' : '0 1px 3px rgba(0,0,0,0.02)', cursor: 'pointer' }} onClick={() => toast.success('Date filter toggled!')}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: '#94a3b8' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      color: isDarkMode ? "#fff" : "#1e293b",
-                    }}
-                  >
-                    {now.toLocaleDateString("en-US", {
-                      weekday: "long",
-                    })}
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#94a3b8",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {now.toLocaleDateString("en-GB")} •{" "}
-                    {now.toLocaleTimeString("en-US")}
-                  </span>
-                </div>
-                
+                <span>
+                  {now.toLocaleDateString("en-US", { weekday: "long" })}, {now.toLocaleDateString("en-GB")} • {now.toLocaleTimeString("en-US")}
+                </span>
               </div>
             </div>
 
