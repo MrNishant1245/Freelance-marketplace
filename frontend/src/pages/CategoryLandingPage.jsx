@@ -148,6 +148,91 @@ const getServiceDetails = (serviceName) => {
   };
 };
 
+const getServiceIcon = (name, accent) => {
+  const svgStyle = { width: 22, height: 22, stroke: accent, fill: 'none', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  
+  switch (name) {
+    case 'Website Development':
+    case 'Android Apps':
+    case 'Chatbots':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </svg>
+      );
+    case 'Landing Pages':
+    case 'iOS Apps':
+    case 'Recommendation Systems':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <line x1="3" y1="9" x2="21" y2="9" />
+          <line x1="9" y1="21" x2="9" y2="9" />
+        </svg>
+      );
+    case 'Portfolio Website':
+    case 'Flutter Development':
+    case 'LLM Apps':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      );
+    case 'E-Commerce Website':
+    case 'React Native Apps':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+      );
+    case 'Business Website':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+        </svg>
+      );
+    case 'SaaS Dashboard':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      );
+    case 'CMS Website':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+      );
+    case 'API Development':
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+          <line x1="6" y1="10" x2="6" y2="14" />
+          <line x1="18" y1="10" x2="18" y2="14" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...svgStyle} viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      );
+  }
+};
+
 const CategoryLandingPage = () => {
   const { categorySlug } = useParams();
   const navigate = useNavigate();
@@ -354,7 +439,9 @@ const CategoryLandingPage = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
           {data.services.map((service, i) => (
             <div key={i} onClick={() => setSelectedService(service)} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
-              <div style={{ fontSize: 24, marginBottom: 14 }}>✔</div>
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18, border: `1px solid ${accent}1b`, boxShadow: `0 4px 12px ${accent}15` }}>
+                {getServiceIcon(service, accent)}
+              </div>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>{service}</h3>
             </div>
           ))}
