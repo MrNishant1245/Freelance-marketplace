@@ -234,16 +234,16 @@ const LandingPage = () => {
   };
 
   const categories = [
-    { title: 'Web Development', count: '3,450 Freelancers', price: 'Avg. ₹1,200/hr', icon: '💻', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
-    { title: 'App Development', count: '2,120 Freelancers', price: 'Avg. ₹1,500/hr', icon: '📱', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
-    { title: 'AI & ML', count: '1,280 Freelancers', price: 'Avg. ₹2,500/hr', icon: '🤖', bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
-    { title: 'Graphic Design', count: '1,890 Freelancers', price: 'Avg. ₹900/hr', icon: '🎨', bg: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' },
-    { title: 'Content Writing', count: '1,450 Freelancers', price: 'Avg. ₹700/hr', icon: '✍️', bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
-    { title: 'Video Editing', count: '1,150 Freelancers', price: 'Avg. ₹1,100/hr', icon: '🎬', bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' },
-    { title: 'Digital Marketing', count: '1,560 Freelancers', price: 'Avg. ₹800/hr', icon: '📊', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
-    { title: 'UI UX', count: '1,980 Freelancers', price: 'Avg. ₹1,300/hr', icon: '📐', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
-    { title: 'Cloud', count: '940 Freelancers', price: 'Avg. ₹2,000/hr', icon: '☁️', bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
-    { title: 'Cyber Security', count: '820 Freelancers', price: 'Avg. ₹2,200/hr', icon: '🔒', bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }
+    { title: 'Web Development', slug: 'web-development', count: '3,450 Freelancers', price: 'Avg. ₹1,200/hr', icon: '💻', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
+    { title: 'App Development', slug: 'app-development', count: '2,120 Freelancers', price: 'Avg. ₹1,500/hr', icon: '📱', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
+    { title: 'AI & ML', slug: 'ai-ml', count: '1,280 Freelancers', price: 'Avg. ₹2,500/hr', icon: '🤖', bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
+    { title: 'Graphic Design', slug: 'graphic-design', count: '1,890 Freelancers', price: 'Avg. ₹900/hr', icon: '🎨', bg: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' },
+    { title: 'Content Writing', slug: 'content-writing', count: '1,450 Freelancers', price: 'Avg. ₹700/hr', icon: '✍️', bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
+    { title: 'Video Editing', slug: 'video-editing', count: '1,150 Freelancers', price: 'Avg. ₹1,100/hr', icon: '🎬', bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' },
+    { title: 'Digital Marketing', slug: 'digital-marketing', count: '1,560 Freelancers', price: 'Avg. ₹800/hr', icon: '📊', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
+    { title: 'UI UX', slug: 'ui-ux', count: '1,980 Freelancers', price: 'Avg. ₹1,300/hr', icon: '📐', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
+    { title: 'Cloud', slug: 'cloud', count: '940 Freelancers', price: 'Avg. ₹2,000/hr', icon: '☁️', bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
+    { title: 'Cyber Security', slug: 'cyber-security', count: '820 Freelancers', price: 'Avg. ₹2,200/hr', icon: '🔒', bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }
   ];
 
   const freelancersList = [
@@ -432,7 +432,7 @@ const LandingPage = () => {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
           {categories.map((cat, i) => (
-            <div key={i} className="category-card" onClick={() => handleSearch(cat.title)} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = cat.color; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
+            <div key={i} className="category-card" onClick={() => navigate(`/categories/${cat.slug}`)} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = cat.color; e.currentTarget.style.transform = 'translateY(-4px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
               <span style={{ fontSize: 28, display: 'inline-block', marginBottom: 16, background: cat.bg, padding: 8, borderRadius: 10 }}>{cat.icon}</span>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{cat.title}</div>
               <div style={{ fontSize: 12.5, color: '#94A3B8', marginBottom: 4 }}>{cat.count}</div>

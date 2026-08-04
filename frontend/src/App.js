@@ -24,6 +24,7 @@ import PaymentPage           from './pages/PaymentPage';
 import { getSocket }         from './utils/socket';
 import { tokenStorage }      from './utils/tokenStorage';
 import LandingPage           from './pages/LandingPage';
+import CategoryLandingPage   from './pages/CategoryLandingPage';
 
 const playRingtone = (type) => {
   try {
@@ -224,6 +225,7 @@ const App = () => (
         {/* ── Public ── */}
         <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         <Route path="/resend-verification" element={<ResendVerificationPage />} />
+        <Route path="/categories/:categorySlug" element={<CategoryLandingPage />} />
 
         {/* ── Client Routes ── */}
         <Route path="/dashboard" element={
