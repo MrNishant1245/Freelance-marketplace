@@ -133,6 +133,50 @@ const LandingPage = () => {
     }
   };
 
+  const handleFeatureClick = (featureName) => {
+    if (isAuthenticated) {
+      const isClient = user?.role === 'client';
+      switch (featureName) {
+        case 'Live Chat':
+          navigate(isClient ? '/messages' : '/freelancer/messages');
+          break;
+        case 'Contracts':
+          navigate(isClient ? '/dashboard?tab=contracts' : '/freelancer/dashboard?tab=contracts');
+          break;
+        case 'Escrow Safety':
+          navigate(isClient ? '/payment' : '/freelancer/dashboard');
+          break;
+        case 'Milestones':
+          navigate(isClient ? '/dashboard?tab=milestones' : '/freelancer/dashboard?tab=milestones');
+          break;
+        case 'AI Ranking':
+          navigate(isClient ? '/dashboard?tab=proposals' : '/freelancer/dashboard');
+          break;
+        case 'Invoices':
+          navigate(isClient ? '/dashboard?tab=invoices' : '/freelancer/dashboard?tab=invoices');
+          break;
+        case 'Reports':
+        case 'Analytics':
+          navigate(isClient ? '/dashboard?tab=reports' : '/freelancer/dashboard?tab=reports');
+          break;
+        default:
+          navigate(isClient ? '/dashboard' : '/freelancer/dashboard');
+      }
+    } else {
+      toast((t) => (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span>🔒 Please sign in to access <strong>{featureName}</strong></span>
+          <button 
+            onClick={() => { toast.dismiss(t.id); navigate('/login'); }} 
+            style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+          >
+            Login
+          </button>
+        </span>
+      ), { duration: 4000 });
+    }
+  };
+
   const categories = [
     { title: 'Web Development', count: '3,450 Freelancers', price: 'Avg. ₹1,200/hr', icon: '💻', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
     { title: 'App Development', count: '2,120 Freelancers', price: 'Avg. ₹1,500/hr', icon: '📱', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
@@ -546,7 +590,7 @@ const LandingPage = () => {
             { name: 'Reports', desc: 'Work tracking charts.' },
             { name: 'Analytics', desc: 'Financial summaries.' }
           ].map((feat, i) => (
-            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 20 }}>
+            <div key={i} onClick={() => handleFeatureClick(feat.name)} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 12, padding: 20, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#10B981'; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
               <div style={{ fontSize: 14.5, fontWeight: 700, color: '#10B981', marginBottom: 6 }}>✔ {feat.name}</div>
               <div style={{ fontSize: 12.5, color: '#94A3B8' }}>{feat.desc}</div>
             </div>
