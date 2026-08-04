@@ -11,6 +11,31 @@ const LandingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState(0);
 
+  // Contact Support States
+  const [supportName, setSupportName] = useState('');
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportCategory, setSupportCategory] = useState('General Inquiry');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+
+  const handleSupportSubmit = (e) => {
+    e.preventDefault();
+    if (!supportName || !supportEmail || !supportMessage) {
+      toast.error('Please fill in all support ticket fields.');
+      return;
+    }
+    setIsSubmittingSupport(true);
+    setTimeout(() => {
+      const ticketId = `FM-${Math.floor(1000 + Math.random() * 9000)}`;
+      toast.success(`Support Ticket Created! ID: ${ticketId}. We will email you shortly.`, { icon: '🎫', duration: 5000 });
+      setSupportName('');
+      setSupportEmail('');
+      setSupportCategory('General Inquiry');
+      setSupportMessage('');
+      setIsSubmittingSupport(false);
+    }, 1200);
+  };
+
   // Stats Counters
   const [freelancers, setFreelancers] = useState(0);
   const [projects, setProjects] = useState(0);
@@ -730,6 +755,70 @@ const LandingPage = () => {
           <button onClick={handleBecomeFreelancer} style={{ background: 'transparent', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
             Become Freelancer
           </button>
+        </div>
+      </section>
+
+      {/* ─── CONTACT SUPPORT SECTION ─── */}
+      <section id="support" style={{ padding: '80px 8%', background: '#0F172A', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: 48, maxWidth: 1100, margin: '0 auto' }}>
+          {/* Left Column: Support Info */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ display: 'inline-flex', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10B981', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 20, alignSelf: 'flex-start' }}>Help Desk</div>
+            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 16px', color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>Contact Support System</h2>
+            <p style={{ color: '#94A3B8', fontSize: 15.5, lineHeight: 1.6, marginBottom: 32 }}>
+              Have questions about contracts, milestone release, profile verification, or billing invoice? Submit a ticket and our support team will respond within 2 hours.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🟢</div>
+                <div>
+                  <span style={{ fontSize: 13, color: '#64748B', display: 'block' }}>Live Status</span>
+                  <span style={{ fontSize: 14.5, fontWeight: 700, color: '#fff' }}>Operational (Average Response: 18m)</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✉️</div>
+                <div>
+                  <span style={{ fontSize: 13, color: '#64748B', display: 'block' }}>Official Email Help Desk</span>
+                  <span style={{ fontSize: 14.5, fontWeight: 700, color: '#10B981' }}>support@freelancemarket.com</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Interactive Ticket Form */}
+          <div style={{ background: 'rgba(17, 24, 39, 0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 36, boxShadow: '0 20px 40px -15px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 24px' }}>Submit Support Ticket</h3>
+            <form onSubmit={handleSupportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Your Name</label>
+                  <input type="text" value={supportName} onChange={(e) => setSupportName(e.target.value)} placeholder="John Doe" required style={{ width: '100%', padding: '12px 16px', background: '#0F172A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#fff', fontSize: 14, outline: 'none', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#10B981'} onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Email Address</label>
+                  <input type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} placeholder="john@example.com" required style={{ width: '100%', padding: '12px 16px', background: '#0F172A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#fff', fontSize: 14, outline: 'none', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#10B981'} onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Category</label>
+                <select value={supportCategory} onChange={(e) => setSupportCategory(e.target.value)} style={{ width: '100%', padding: '12px 16px', background: '#0F172A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#fff', fontSize: 14, outline: 'none', cursor: 'pointer' }}>
+                  <option value="General Inquiry">General Inquiry</option>
+                  <option value="Billing & Invoice">Billing & Invoice</option>
+                  <option value="Client Contracts">Client Contracts</option>
+                  <option value="Freelancer Profile">Freelancer Profile</option>
+                  <option value="Technical Bug">Technical Bug</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Explain the Issue</label>
+                <textarea rows="4" value={supportMessage} onChange={(e) => setSupportMessage(e.target.value)} placeholder="Describe what you need help with..." required style={{ width: '100%', padding: '12px 16px', background: '#0F172A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#fff', fontSize: 14, outline: 'none', resize: 'none', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#10B981'} onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+              </div>
+              <button type="submit" disabled={isSubmittingSupport} style={{ padding: '14px 0', background: '#10B981', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 8px 20px -6px rgba(16, 185, 129, 0.4)', transition: 'opacity 0.2s' }}>
+                {isSubmittingSupport ? 'Generating Ticket...' : 'Submit Support Ticket'}
+              </button>
+            </form>
+          </div>
         </div>
       </section>
 
