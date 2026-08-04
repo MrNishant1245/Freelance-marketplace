@@ -49,6 +49,17 @@ const LandingPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const toggleFaq = (idx) => {
+    setActiveFaq(activeFaq === idx ? null : idx);
+  };
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleJoinNow = () => {
     if (isAuthenticated) {
       navigate(user?.role === 'freelancer' ? '/freelancer/dashboard' : '/dashboard');
@@ -104,12 +115,12 @@ const LandingPage = () => {
           <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>FreelanceMarket</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }} className="nav-links">
-          <span className="nav-item" onClick={() => navigate('/login')}>Explore</span>
-          <span className="nav-item" onClick={() => navigate('/login')}>Find Freelancers</span>
-          <span className="nav-item" onClick={() => navigate('/login')}>Find Jobs</span>
-          <span className="nav-item" onClick={() => navigate('/login')}>Pricing</span>
-          <span className="nav-item" onClick={() => navigate('/login')}>About</span>
-          <span className="nav-item" onClick={() => navigate('/login')}>Contact</span>
+          <span className="nav-item" onClick={() => scrollToSection('categories')}>Explore</span>
+          <span className="nav-item" onClick={() => scrollToSection('freelancers')}>Find Freelancers</span>
+          <span className="nav-item" onClick={() => scrollToSection('projects')}>Find Jobs</span>
+          <span className="nav-item" onClick={() => scrollToSection('pricing')}>Pricing</span>
+          <span className="nav-item" onClick={() => scrollToSection('about')}>About</span>
+          <span className="nav-item" onClick={() => scrollToSection('contact')}>Contact</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <button onClick={handleSignIn} style={{ background: 'none', border: 'none', color: '#94A3B8', fontWeight: 600, fontSize: 14.5, cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = '#94A3B8'}>Sign In</button>
@@ -257,7 +268,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 4: POPULAR CATEGORIES ─── */}
-      <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
+      <section id="categories" style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Popular Categories</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Explore talent across major technology domains</p>
@@ -275,7 +286,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 5: WHY CHOOSE US ─── */}
-      <section style={{ padding: '80px 8%', background: '#0F172A' }}>
+      <section id="about" style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Why Choose Us</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Designed for complete transparency and efficiency</p>
@@ -323,7 +334,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 7: FEATURED FREELANCERS (Carousel) ─── */}
-      <section style={{ padding: '80px 8%', background: '#0F172A' }}>
+      <section id="freelancers" style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Featured Freelancers</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Top developers ready to build</p>
@@ -353,7 +364,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 8: FEATURED PROJECTS ─── */}
-      <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
+      <section id="projects" style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Featured Projects</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Recent requests from clients</p>
@@ -487,7 +498,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 12: PRICING ─── */}
-      <section style={{ padding: '80px 8%', background: '#0B0F19' }}>
+      <section id="pricing" style={{ padding: '80px 8%', background: '#0B0F19' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Pricing Plans</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Choose a plan that fits your business scale</p>
@@ -555,7 +566,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 15: FOOTER ─── */}
-      <footer style={{ padding: '60px 8% 40px', background: '#0B0F19', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+      <footer id="contact" style={{ padding: '60px 8% 40px', background: '#0B0F19', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32, marginBottom: 40 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -567,7 +578,7 @@ const LandingPage = () => {
           <div>
             <h4 style={{ fontSize: 13, textTransform: 'uppercase', color: '#64748B', fontWeight: 700, marginBottom: 16 }}>Company</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#94A3B8' }}>
-              <span style={{ cursor: 'pointer' }}>About Us</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => scrollToSection('about')}>About Us</span>
               <span style={{ cursor: 'pointer' }}>Careers</span>
               <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
               <span style={{ cursor: 'pointer' }}>Terms of Service</span>
@@ -577,7 +588,7 @@ const LandingPage = () => {
             <h4 style={{ fontSize: 13, textTransform: 'uppercase', color: '#64748B', fontWeight: 700, marginBottom: 16 }}>Resources</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#94A3B8' }}>
               <span style={{ cursor: 'pointer' }}>Blog</span>
-              <span style={{ cursor: 'pointer' }}>Contact Support</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => scrollToSection('contact')}>Contact Support</span>
               <span style={{ cursor: 'pointer' }}>System Status</span>
             </div>
           </div>
