@@ -7,6 +7,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const [activeFaq, setActiveFaq] = useState(null);
+  const [activeDocModal, setActiveDocModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState(0);
 
@@ -717,7 +718,7 @@ const LandingPage = () => {
       <footer id="contact" style={{ padding: '60px 8% 40px', background: '#0B0F19', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32, marginBottom: 40 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <div style={{ width: 28, height: 28, borderRadius: 8, background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>FM</div>
               <span style={{ fontSize: 16, fontWeight: 800 }}>FreelanceMarket</span>
             </div>
@@ -727,24 +728,24 @@ const LandingPage = () => {
             <h4 style={{ fontSize: 13, textTransform: 'uppercase', color: '#64748B', fontWeight: 700, marginBottom: 16 }}>Company</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#94A3B8' }}>
               <span style={{ cursor: 'pointer' }} onClick={() => scrollToSection('about')}>About Us</span>
-              <span style={{ cursor: 'pointer' }}>Careers</span>
-              <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
-              <span style={{ cursor: 'pointer' }}>Terms of Service</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => toast.success('Join our remote-first team! Email your CV to careers@freelancemarket.com', { icon: '💼' })}>Careers</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => setActiveDocModal('privacy')}>Privacy Policy</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => setActiveDocModal('terms')}>Terms of Service</span>
             </div>
           </div>
           <div>
             <h4 style={{ fontSize: 13, textTransform: 'uppercase', color: '#64748B', fontWeight: 700, marginBottom: 16 }}>Resources</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#94A3B8' }}>
-              <span style={{ cursor: 'pointer' }}>Blog</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => toast('Our engineering & design blog is coming soon!', { icon: '✍️' })}>Blog</span>
               <span style={{ cursor: 'pointer' }} onClick={() => scrollToSection('contact')}>Contact Support</span>
-              <span style={{ cursor: 'pointer' }}>System Status</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => toast.success('All systems fully operational. (Uptime: 100%)', { icon: '🟢' })}>System Status</span>
             </div>
           </div>
           <div>
             <h4 style={{ fontSize: 13, textTransform: 'uppercase', color: '#64748B', fontWeight: 700, marginBottom: 16 }}>Contact</h4>
             <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.6 }}>
-              support@freelancemarket.com <br />
-              New Delhi, India
+              <a href="mailto:support@freelancemarket.com" style={{ color: 'inherit', textDecoration: 'none' }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = 'inherit'}>support@freelancemarket.com</a> <br />
+              <a href="https://maps.google.com/?q=New+Delhi,+India" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = 'inherit'}>New Delhi, India</a>
             </div>
           </div>
         </div>
@@ -752,6 +753,24 @@ const LandingPage = () => {
           © {new Date().getFullYear()} FreelanceMarket. All rights reserved.
         </div>
       </footer>
+
+      {activeDocModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 32, width: '90%', maxWidth: 500, position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            <button onClick={() => setActiveDocModal(null)} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', color: '#64748B', fontSize: 18, cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = '#64748B'}>✕</button>
+            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16, color: '#fff' }}>
+              {activeDocModal === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
+            </h3>
+            <p style={{ fontSize: 13.5, color: '#94A3B8', lineHeight: 1.6, whiteSpace: 'pre-line', margin: '0 0 24px' }}>
+              {activeDocModal === 'privacy' 
+                ? 'We value your trust. All personal details, project details, and communication files are fully SSL encrypted.\n\nPayment tokens and transactional balances are managed directly by secure, PCI-compliant payment gateways (Razorpay and Stripe) without caching raw card info on our local servers.'
+                : 'By registering on FreelanceMarket, you agree to: \n\n• Maintain clean and professional communication.\n• Secure all client-freelancer contracts using our built-in Escrow Milestone payments system.\n• Avoid payment circumvention outside the platform logs.'
+              }
+            </p>
+            <button onClick={() => setActiveDocModal(null)} style={{ width: '100%', padding: '12px 0', background: '#10B981', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Close</button>
+          </div>
+        </div>
+      )}
 
       {/* Local Hover & Transition Styles */}
       <style>{`
