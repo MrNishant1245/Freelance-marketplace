@@ -214,6 +214,25 @@ const LandingPage = () => {
     }
   };
 
+  const handleWhyChooseClick = (title) => {
+    switch (title) {
+      case 'AI Matching':
+        scrollToSection('ai-assistant');
+        break;
+      case 'Escrow Payments':
+        scrollToSection('pricing');
+        break;
+      case 'Verified Professionals':
+        scrollToSection('freelancers');
+        break;
+      case 'Secure Contracts':
+        scrollToSection('platform-features');
+        break;
+      default:
+        break;
+    }
+  };
+
   const categories = [
     { title: 'Web Development', count: '3,450 Freelancers', price: 'Avg. ₹1,200/hr', icon: '💻', bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
     { title: 'App Development', count: '2,120 Freelancers', price: 'Avg. ₹1,500/hr', icon: '📱', bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' },
@@ -436,7 +455,7 @@ const LandingPage = () => {
             { title: 'Verified Professionals', desc: 'Background verified freelancers with portfolio verification audits.', icon: '✅' },
             { title: 'Secure Contracts', desc: 'Digital agreements signed dynamically for every project milestone.', icon: '📜' }
           ].map((item, i) => (
-            <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24 }}>
+            <div key={i} onClick={() => handleWhyChooseClick(item.title)} style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: 24, cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#10B981'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'none'; }}>
               <span style={{ fontSize: 28, display: 'block', marginBottom: 16 }}>{item.icon}</span>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>{item.title}</div>
               <p style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
@@ -533,7 +552,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 9: AI FEATURES (USP) ─── */}
-      <section style={{ padding: '80px 8%', background: '#0F172A', position: 'relative' }}>
+      <section id="ai-assistant" style={{ padding: '80px 8%', background: '#0F172A', position: 'relative' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 60, alignItems: 'center' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 20 }}>Our Unique Selling Proposition</div>
@@ -611,7 +630,7 @@ const LandingPage = () => {
       </section>
 
       {/* ─── SECTION 11: PLATFORM FEATURES ─── */}
-      <section style={{ padding: '80px 8%', background: '#0F172A' }}>
+      <section id="platform-features" style={{ padding: '80px 8%', background: '#0F172A' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>Platform Features</h2>
           <p style={{ color: '#94A3B8', fontSize: 15 }}>Everything you need for remote development collaboration</p>
