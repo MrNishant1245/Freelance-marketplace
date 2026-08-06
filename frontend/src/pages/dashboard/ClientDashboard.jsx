@@ -2757,40 +2757,7 @@ const ClientDashboard = () => {
           })}
         </nav>
         <div className="fd-sidebar-bottom" style={{ ...s.sidebarBottom, padding: sidebarCollapsed ? '20px 8px 0' : '20px 16px 0', borderTop: '1px solid #1d2433' }}>
-          {/* Mockup Contact Support Card */}
-          {!sidebarCollapsed && (
-            <div style={{
-              background: 'rgba(30, 41, 59, 0.3)',
-              border: '1px solid rgba(255,255,255,0.05)',
-              borderRadius: 12,
-              padding: 12,
-              marginBottom: 16,
-              textAlign: 'left'
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#f8fafc', marginBottom: 4 }}>Need Help?</div>
-              <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.4, marginBottom: 12 }}>Our support team is here to help you 24/7.</div>
-              <button 
-                onClick={() => setHelpModalOpen(true)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: 'none',
-                  borderRadius: 8,
-                  color: '#fff',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6
-                }}
-              >
-                <span>🎧</span> Contact Support
-              </button>
-            </div>
-          )}
+
 
           <button type="button" onClick={() => { navigate('/profile'); if (isMobile) setSidebarCollapsed(true); }} className="fd-user-chip" style={{ ...s.userChip, padding: sidebarCollapsed ? '8px 0' : '0', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
             <div className="fd-avatar" style={{ ...s.avatar, background: '#7c3aed', width: 32, height: 32, borderRadius: '50%', fontSize: 12.5 }}>{firstName[0]?.toUpperCase()}</div>
