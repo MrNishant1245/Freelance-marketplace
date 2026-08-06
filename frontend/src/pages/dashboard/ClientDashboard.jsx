@@ -2662,9 +2662,6 @@ const ClientDashboard = () => {
   const shellStyle = isMobile ? { ...s.shell, flexDirection: 'column' } : s.shell;
   const sidebarStyle = isMobile ? {
     ...s.sidebar,
-    position: 'fixed',
-    top: 0,
-    left: 0,
     zIndex: 1000,
     transform: sidebarCollapsed ? 'translateX(-100%)' : 'translateX(0)',
     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -9084,7 +9081,7 @@ const ClientDashboard = () => {
 
 const s = {
   shell:        { display: 'flex', minHeight: '100vh', background: '#090d16', fontFamily: "'DM Sans', sans-serif" },
-  sidebar:      { width: 260, background: '#111625', borderRight: '1px solid #1d2433', display: 'flex', flexDirection: 'column', padding: '24px 0', position: 'sticky', top: 0, height: '100vh' },
+  sidebar:      { width: 260, background: '#111625', borderRight: '1px solid #1d2433', display: 'flex', flexDirection: 'column', padding: '24px 0', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
   logo:         { display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px 28px', justifyContent: 'space-between', position: 'relative' },
   logoMark:     { width: 36, height: 52, borderRadius: 20, background: 'linear-gradient(180deg, #10b981 0%, #0fbd81 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, boxShadow: '0 6px 18px rgba(16, 185, 129, .18)' },
   logoText:     { fontWeight: 700, fontSize: 16, color: '#f8fafc', whiteSpace: 'nowrap' },
