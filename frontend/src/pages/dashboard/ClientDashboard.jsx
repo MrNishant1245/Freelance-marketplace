@@ -2800,7 +2800,7 @@ const ClientDashboard = () => {
 
       <main className="fd-main" style={mainStyle}>
         <header className="fd-header" style={isMobile ? { position: 'relative', paddingTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, paddingBottom: 16 } : s.header}>
-          <div className="fd-header-title-block" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="fd-header-title-block" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: isMobile ? 'none' : 1 }}>
             {isMobile && (
               <button 
                 onClick={() => setSidebarCollapsed(false)}
@@ -2826,7 +2826,7 @@ const ClientDashboard = () => {
           
           {(activeTab === 'overview' || activeTab === 'jobs' || activeTab === 'proposals') && (
             <>
-              <div className="fd-header-center">
+              <div className="fd-header-center" style={isMobile ? {} : { display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
                 <div className="fd-search-container">
                   <Icon name="search" size={16} />
                   <input
@@ -2842,7 +2842,7 @@ const ClientDashboard = () => {
                 </div>
               </div>
 
-              <div className="fd-header-right" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+              <div className="fd-header-right" style={isMobile ? { display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', flexWrap: 'nowrap' } : { display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', flexWrap: 'nowrap', flex: 1 }}>
                 <select
                   value={selectedCurrency}
                   onChange={(e) => {

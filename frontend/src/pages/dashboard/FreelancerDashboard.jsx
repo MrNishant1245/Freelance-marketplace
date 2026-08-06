@@ -1975,7 +1975,7 @@ const FreelancerDashboard = () => {
       <main className="fd-main">
         {/* Header */}
         <header className="fd-header">
-          <div className="fd-header-title-block" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="fd-header-title-block" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
             <button 
               className="fd-mobile-menu-toggle" 
               onClick={() => setSidebarCollapsed(false)} 
@@ -1988,7 +1988,7 @@ const FreelancerDashboard = () => {
             </div>
           </div>
 
-          <div className="fd-header-center">
+          <div className="fd-header-center" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
             {(activeTab === 'overview' || activeTab === 'jobs' || activeTab === 'proposals' || activeTab === 'mywork' || activeTab === 'saved' || activeTab === 'payments' || activeTab === 'analytics') && (
               <div className="fd-search-container">
                 <Icon name="search" size={16} />
@@ -2011,7 +2011,7 @@ const FreelancerDashboard = () => {
             )}
           </div>
 
-          <div className="fd-header-right">
+          <div className="fd-header-right" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             {(activeTab === 'overview' || activeTab === 'jobs' || activeTab === 'proposals' || activeTab === 'mywork' || activeTab === 'saved' || activeTab === 'payments' || activeTab === 'analytics' || activeTab === 'subscriptions' || activeTab === 'referrals') && (
               <div className="fd-header-actions">
                 <select
