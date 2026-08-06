@@ -45,9 +45,9 @@
 }
 
 .fd-logo-mark {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+  width: 36px;
+  height: 52px;
+  border-radius: 20px;
   background: linear-gradient(180deg, #10b981 0%, #0fbd81 100%);
   color: #fff;
   display: flex;
@@ -60,9 +60,9 @@
 
 /* Open Sidebar Only */
 .fd-sidebar:not(.collapsed) .fd-logo-mark {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 36px;
+  height: 52px;
+  border-radius: 20px;
   font-size: 16px;
 }
 
@@ -201,9 +201,9 @@
 }
 
 .fd-sidebar.collapsed .fd-logo-mark {
-  border-radius: 14px;
-  width: 46px;
-  height: 46px;
+  border-radius: 20px;
+  width: 36px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;

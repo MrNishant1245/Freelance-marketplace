@@ -2666,28 +2666,27 @@ const ClientDashboard = () => {
     top: 0,
     left: 0,
     zIndex: 1000,
-    height: '100vh',
-    width: 260,
     transform: sidebarCollapsed ? 'translateX(-100%)' : 'translateX(0)',
     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     boxShadow: sidebarCollapsed ? 'none' : '4px 0 25px rgba(0, 0, 0, 0.15)',
   } : {
     ...s.sidebar,
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    zIndex: 1000,
-    height: '100vh',
-    width: 260,
+    width: sidebarCollapsed ? 70 : 260,
+    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   };
-  const mainStyle = isMobile ? { ...s.main, padding: '20px', width: '100%', marginLeft: 0 } : { marginLeft: 260, width: 'calc(100% - 260px)' };
+  const mainStyle = isMobile ? { ...s.main, padding: '20px', width: '100%', marginLeft: 0 } : { 
+    ...s.main,
+    marginLeft: sidebarCollapsed ? 70 : 260, 
+    width: sidebarCollapsed ? 'calc(100% - 70px)' : 'calc(100% - 260px)',
+    transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
   const statsGridStyle = isMobile ? { ...s.statsGrid, gridTemplateColumns: '1fr' } : s.statsGrid;
   const dashboardGridStyle = isMobile ? { ...s.dashboardGrid, gridTemplateColumns: '1fr' } : s.dashboardGrid;
   const bottomGridStyle = isMobile ? { ...s.bottomGrid, gridTemplateColumns: '1fr' } : s.bottomGrid;
   const twoColStyle = isMobile ? { ...s.twoCol, gridTemplateColumns: '1fr' } : s.twoCol;
 
   return (
-    <div className={`fd-shell ${isDarkMode ? 'dark-theme' : ''}`} style={shellStyle}>
+    <div className={`fd-shell ${sidebarCollapsed ? 'collapsed' : ''} ${isDarkMode ? 'dark-theme' : ''}`} style={shellStyle}>
       {isMobile && !sidebarCollapsed && (
         <div 
           onClick={() => setSidebarCollapsed(true)}
@@ -2700,12 +2699,17 @@ const ClientDashboard = () => {
           }}
         />
       )}
-      <aside className="fd-sidebar" style={sidebarStyle}>
-        <div className="fd-logo" style={s.logo}>
-          <div className="fd-logo-mark" style={s.logoMark}>FM</div>
-          <span className="fd-logo-text" style={s.logoText}>FreelanceMarket</span>
+      <aside className={`fd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} style={sidebarStyle}>
+        <div className="fd-logo" style={{ ...s.logo, padding: sidebarCollapsed ? '0 0 28px' : '0 20px 28px', justifyContent: sidebarCollapsed ? 'center' : 'space-between' }}>
+          <div className="fd-logo-mark" onClick={() => sidebarCollapsed && setSidebarCollapsed(false)} style={{ ...s.logoMark, cursor: sidebarCollapsed ? 'pointer' : 'default' }}>FM</div>
+          {!sidebarCollapsed && <span className="fd-logo-text" style={s.logoText}>FreelanceMarket</span>}
+          {!sidebarCollapsed && (
+            <button className="fd-collapse-btn" onClick={() => setSidebarCollapsed(true)} title="Collapse sidebar" style={{ background: 'none', border: 'none', color: isDarkMode ? '#cbd5e1' : '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginLeft: 'auto' }}>
+              <Icon name="chevronCircle" size={26} />
+            </button>
+          )}
         </div>
-        <nav style={{ ...s.nav, gap: 1 }}>
+        <nav style={{ ...s.nav, gap: 1, padding: sidebarCollapsed ? '0 8px' : '0 12px' }}>
           {[
             { id: 'overview',     label: 'Dashboard',      icon: 'star' },
             { id: 'projects',     label: 'Projects',       icon: 'briefcase' },
@@ -2737,63 +2741,68 @@ const ClientDashboard = () => {
                 className={`fd-nav-btn ${isActive ? 'active' : ''}`}
                 style={{ 
                   ...s.navBtn, 
+                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                   background: isActive ? 'rgba(16, 185, 129, 0.12)' : 'none',
                   color: isActive ? '#10b981' : '#94a3b8',
-                  borderLeft: isActive ? '3px solid #10b981' : 'none',
-                  borderRadius: isActive ? '0 8px 8px 0' : '8px',
-                  paddingLeft: isActive ? '9px' : '12px',
+                  borderLeft: isActive && !sidebarCollapsed ? '3px solid #10b981' : 'none',
+                  borderRadius: isActive && !sidebarCollapsed ? '0 8px 8px 0' : '8px',
+                  paddingLeft: isActive && !sidebarCollapsed ? '9px' : '12px',
                   fontWeight: isActive ? 600 : 500,
                   marginBottom: 1
                 }}
               >
                 <Icon name={item.icon} />
-                <span style={{ fontSize: 13 }}>{item.label}</span>
-                {item.id === 'messages' && messageAlerts > 0 && <span style={s.badge}>{messageAlerts}</span>}
-                {item.id === 'projects' && submittedCount > 0 && <span style={s.badge}>{submittedCount}</span>}
+                {!sidebarCollapsed && <span style={{ fontSize: 13 }}>{item.label}</span>}
+                {!sidebarCollapsed && item.id === 'messages' && messageAlerts > 0 && <span style={s.badge}>{messageAlerts}</span>}
+                {!sidebarCollapsed && item.id === 'projects' && submittedCount > 0 && <span style={s.badge}>{submittedCount}</span>}
               </button>
             );
           })}
         </nav>
-        <div className="fd-sidebar-bottom" style={{ ...s.sidebarBottom, borderTop: '1px solid #1d2433' }}>
+        <div className="fd-sidebar-bottom" style={{ ...s.sidebarBottom, padding: sidebarCollapsed ? '20px 8px 0' : '20px 16px 0', borderTop: '1px solid #1d2433' }}>
           {/* Mockup Contact Support Card */}
-          <div style={{
-            background: 'rgba(30, 41, 59, 0.3)',
-            border: '1px solid rgba(255,255,255,0.05)',
-            borderRadius: 12,
-            padding: 12,
-            marginBottom: 16,
-            textAlign: 'left'
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#f8fafc', marginBottom: 4 }}>Need Help?</div>
-            <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.4, marginBottom: 12 }}>Our support team is here to help you 24/7.</div>
-            <button 
-              onClick={() => setHelpModalOpen(true)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: 'none',
-                borderRadius: 8,
-                color: '#fff',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6
-              }}
-            >
-              <span>🎧</span> Contact Support
-            </button>
-          </div>
-
-          <button type="button" onClick={() => { navigate('/profile'); if (isMobile) setSidebarCollapsed(true); }} className="fd-user-chip" style={s.userChip}>
-            <div className="fd-avatar" style={{ ...s.avatar, background: '#7c3aed' }}>{firstName[0]?.toUpperCase()}</div>
-            <div className="fd-user-info">
-              <div className="fd-user-name" style={{ ...s.userName, color: '#f8fafc' }}>{firstName}</div>
-              <div className="fd-user-role" style={s.userRole}>Client</div>
+          {!sidebarCollapsed && (
+            <div style={{
+              background: 'rgba(30, 41, 59, 0.3)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 16,
+              textAlign: 'left'
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#f8fafc', marginBottom: 4 }}>Need Help?</div>
+              <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.4, marginBottom: 12 }}>Our support team is here to help you 24/7.</div>
+              <button 
+                onClick={() => setHelpModalOpen(true)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
+                  borderRadius: 8,
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
+                }}
+              >
+                <span>🎧</span> Contact Support
+              </button>
             </div>
+          )}
+
+          <button type="button" onClick={() => { navigate('/profile'); if (isMobile) setSidebarCollapsed(true); }} className="fd-user-chip" style={{ ...s.userChip, padding: sidebarCollapsed ? '8px 0' : '0', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
+            <div className="fd-avatar" style={{ ...s.avatar, background: '#7c3aed', width: 32, height: 32, borderRadius: '50%', fontSize: 12.5 }}>{firstName[0]?.toUpperCase()}</div>
+            {!sidebarCollapsed && (
+              <div className="fd-user-info">
+                <div className="fd-user-name" style={{ ...s.userName, color: '#f8fafc' }}>{firstName}</div>
+                <div className="fd-user-role" style={s.userRole}>Client</div>
+              </div>
+            )}
           </button>
         </div>
       </aside>
@@ -9076,9 +9085,9 @@ const ClientDashboard = () => {
 const s = {
   shell:        { display: 'flex', minHeight: '100vh', background: '#090d16', fontFamily: "'DM Sans', sans-serif" },
   sidebar:      { width: 260, background: '#111625', borderRight: '1px solid #1d2433', display: 'flex', flexDirection: 'column', padding: '24px 0', position: 'sticky', top: 0, height: '100vh' },
-  logo:         { display: 'flex', alignItems: 'center', gap: 10, padding: '0 20px 28px' },
-  logoMark:     { width: 32, height: 32, borderRadius: 8, background: '#16a34a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 },
-  logoText:     { fontWeight: 600, fontSize: 14, color: '#f8fafc' },
+  logo:         { display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px 28px', justifyContent: 'space-between', position: 'relative' },
+  logoMark:     { width: 36, height: 52, borderRadius: 20, background: 'linear-gradient(180deg, #10b981 0%, #0fbd81 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, boxShadow: '0 6px 18px rgba(16, 185, 129, .18)' },
+  logoText:     { fontWeight: 700, fontSize: 16, color: '#f8fafc', whiteSpace: 'nowrap' },
   nav:          { flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 },
   navBtn:       { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', background: 'none', color: '#737373', fontSize: 13.5, fontWeight: 500, width: '100%', textAlign: 'left' },
   navBtnActive: { background: '#f0fdf4', color: '#16a34a' },
