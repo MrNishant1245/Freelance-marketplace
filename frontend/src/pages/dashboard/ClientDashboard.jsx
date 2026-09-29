@@ -1503,13 +1503,13 @@ const ClientDashboard = () => {
     }, 1800);
   };
 
-  // ── Sleek Dark Theme Tokens ──
-  const themeBg = '#090d16';
-  const themeCard = '#111625';
-  const themeText = '#f8fafc';
-  const themeTextMuted = '#94a3b8';
-  const themeBorder = '#1e293b';
-  const themeActiveNav = '#4f46e5';
+  // ── Sleek Light Blue & White Theme Tokens ──
+  const themeBg = isDarkMode ? '#090d16' : '#f8fafc';
+  const themeCard = isDarkMode ? '#111625' : '#ffffff';
+  const themeText = isDarkMode ? '#f8fafc' : '#0f172a';
+  const themeTextMuted = isDarkMode ? '#94a3b8' : '#64748b';
+  const themeBorder = isDarkMode ? '#1e293b' : '#e2e8f0';
+  const themeActiveNav = isDarkMode ? '#3b82f6' : '#2563eb';
   const [selectedFeature, setSelectedFeature] = useState(null);
 
   const exportCSV = () => {
@@ -2663,15 +2663,23 @@ const ClientDashboard = () => {
     .filter((job) => ['in_progress', 'submitted'].includes(normalizeStatus(job.status)))
     .slice(0, 2);
 
-  const shellStyle = isMobile ? { ...s.shell, flexDirection: 'column' } : s.shell;
+  const shellStyle = isMobile 
+    ? { ...s.shell, background: themeBg, color: themeText, flexDirection: 'column' } 
+    : { ...s.shell, background: themeBg, color: themeText };
+
   const sidebarStyle = isMobile ? {
     ...s.sidebar,
+    background: isDarkMode ? '#111625' : '#ffffff',
+    borderRight: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0',
     zIndex: 1000,
     transform: sidebarCollapsed ? 'translateX(-100%)' : 'translateX(0)',
     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     boxShadow: sidebarCollapsed ? 'none' : '4px 0 25px rgba(0, 0, 0, 0.15)',
   } : {
     ...s.sidebar,
+    background: isDarkMode ? '#111625' : '#ffffff',
+    borderRight: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0',
+    boxShadow: isDarkMode ? 'none' : '2px 0 12px rgba(0, 0, 0, 0.02)',
     width: sidebarCollapsed ? 70 : 260,
     transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   };
@@ -2703,7 +2711,7 @@ const ClientDashboard = () => {
       <aside className={`fd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} style={sidebarStyle}>
         <div className="fd-logo" style={{ ...s.logo, padding: sidebarCollapsed ? '0 0 28px' : '0 20px 28px', justifyContent: sidebarCollapsed ? 'center' : 'space-between' }}>
           <div className="fd-logo-mark" onClick={() => sidebarCollapsed && setSidebarCollapsed(false)} style={{ ...s.logoMark, cursor: sidebarCollapsed ? 'pointer' : 'default' }}>FM</div>
-          {!sidebarCollapsed && <span className="fd-logo-text" style={s.logoText}>FreelanceMarket</span>}
+          {!sidebarCollapsed && <span className="fd-logo-text" style={{ ...s.logoText, color: isDarkMode ? '#f8fafc' : '#0f172a' }}>FreelanceMarket</span>}
           {!sidebarCollapsed && (
             <button className="fd-collapse-btn" onClick={() => setSidebarCollapsed(true)} title="Collapse sidebar" style={{ background: 'none', border: 'none', color: isDarkMode ? '#cbd5e1' : '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginLeft: 'auto' }}>
               <Icon name="chevronCircle" size={26} />
@@ -2743,9 +2751,9 @@ const ClientDashboard = () => {
                 style={{ 
                   ...s.navBtn, 
                   justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-                  background: isActive ? 'rgba(16, 185, 129, 0.12)' : 'none',
-                  color: isActive ? '#10b981' : '#94a3b8',
-                  borderLeft: isActive && !sidebarCollapsed ? '3px solid #10b981' : 'none',
+                  background: isActive ? (isDarkMode ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff') : 'none',
+                  color: isActive ? (isDarkMode ? '#60a5fa' : '#2563eb') : (isDarkMode ? '#94a3b8' : '#64748b'),
+                  borderLeft: isActive && !sidebarCollapsed ? '3px solid #2563eb' : 'none',
                   borderRadius: isActive && !sidebarCollapsed ? '0 8px 8px 0' : '8px',
                   paddingLeft: isActive && !sidebarCollapsed ? '9px' : '12px',
                   fontWeight: isActive ? 600 : 500,
@@ -2760,15 +2768,14 @@ const ClientDashboard = () => {
             );
           })}
         </nav>
-        <div className="fd-sidebar-bottom" style={{ ...s.sidebarBottom, padding: sidebarCollapsed ? '20px 8px 0' : '20px 16px 0', borderTop: '1px solid #1d2433' }}>
-
+        <div className="fd-sidebar-bottom" style={{ ...s.sidebarBottom, padding: sidebarCollapsed ? '20px 8px 0' : '20px 16px 0', borderTop: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0' }}>
 
           <button type="button" onClick={() => { navigate('/profile'); if (isMobile) setSidebarCollapsed(true); }} className="fd-user-chip" style={{ ...s.userChip, padding: sidebarCollapsed ? '8px 0' : '0', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
-            <div className="fd-avatar" style={{ ...s.avatar, background: '#7c3aed', width: 32, height: 32, borderRadius: '50%', fontSize: 12.5 }}>{firstName[0]?.toUpperCase()}</div>
+            <div className="fd-avatar" style={{ ...s.avatar, background: '#2563eb', width: 32, height: 32, borderRadius: '50%', fontSize: 12.5 }}>{firstName[0]?.toUpperCase()}</div>
             {!sidebarCollapsed && (
               <div className="fd-user-info">
-                <div className="fd-user-name" style={{ ...s.userName, color: '#f8fafc' }}>{firstName}</div>
-                <div className="fd-user-role" style={s.userRole}>Client</div>
+                <div className="fd-user-name" style={{ ...s.userName, color: isDarkMode ? '#f8fafc' : '#0f172a' }}>{firstName}</div>
+                <div className="fd-user-role" style={{ ...s.userRole, color: isDarkMode ? '#94a3b8' : '#64748b' }}>Client</div>
               </div>
             )}
           </button>
@@ -2993,7 +3000,7 @@ const ClientDashboard = () => {
               gap: 6,
               padding: '0 16px',
               height: 34,
-              background: '#16a34a',
+              background: '#2563eb',
               color: '#fff',
               border: 'none',
               borderRadius: 8,
@@ -3023,7 +3030,7 @@ const ClientDashboard = () => {
               </div>
 
               {/* Date selector dropdown */}
-              <div className="fd-date-selector-pill" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 600, color: '#f8fafc', cursor: 'pointer' }} onClick={() => toast.success('Date filter toggled!')}>
+              <div className="fd-date-selector-pill" style={{ display: 'flex', alignItems: 'center', gap: 8, background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 600, color: isDarkMode ? '#f8fafc' : '#0f172a', cursor: 'pointer', boxShadow: isDarkMode ? 'none' : '0 2px 6px rgba(0,0,0,0.03)' }} onClick={() => toast.success('Date filter toggled!')}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: '#64748b' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
                 <span>14 Jul, 2026 - 20 Jul, 2026</span>
               </div>
@@ -3031,50 +3038,50 @@ const ClientDashboard = () => {
 
             {/* Real Stats Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: 16 }}>
-              {/* Card 1: Total Spent */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 18, position: 'relative' }}>
+              {/* Card 1: Total Spent (Featured Light Blue Card) */}
+              <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', border: 'none', borderRadius: 16, padding: 18, position: 'relative', boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.3)', color: '#fff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div style={{ fontSize: 12.5, color: '#94a3b8', fontWeight: 500 }}>Total Spent</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 6 }}>₹{totalSpentVal.toLocaleString('en-IN')}</div>
-                    <div style={{ fontSize: 11, color: '#10b981', fontWeight: 700, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>Total Spent</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', marginTop: 6 }}>₹{totalSpentVal.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: 11, color: '#ffffff', fontWeight: 700, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.18)', padding: '3px 8px', borderRadius: 6 }}>
                       <span>📈</span> Active Escrow & Payments
                     </div>
                   </div>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(79, 70, 229, 0.1)', color: '#6366f1', display: 'grid', placeItems: 'center', fontSize: 18 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(255, 255, 255, 0.2)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 18 }}>
                     📊
                   </div>
                 </div>
                 {/* Micro sparkline */}
                 <div style={{ height: 32, marginTop: 10 }}>
                   <svg viewBox="0 0 100 30" width="100%" height="100%" preserveAspectRatio="none">
-                    <path d="M0 25 C 20 20, 40 10, 60 18 C 80 25, 90 5, 100 8" fill="none" stroke="#6366f1" strokeWidth="2" />
+                    <path d="M0 25 C 20 20, 40 10, 60 18 C 80 25, 90 5, 100 8" fill="none" stroke="#ffffff" strokeWidth="2.5" />
                   </svg>
                 </div>
               </div>
 
               {/* Card 2: Active Projects */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 18 }}>
+              <div style={{ background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 16, padding: 18, boxShadow: isDarkMode ? 'none' : '0 4px 20px -2px rgba(0, 0, 0, 0.03)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div style={{ fontSize: 12.5, color: '#94a3b8', fontWeight: 500 }}>Active Projects</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 6 }}>{activeProjectsCount}</div>
-                    <div style={{ fontSize: 11.5, color: '#3b82f6', fontWeight: 600, marginTop: 8 }}>
+                    <div style={{ fontSize: 12.5, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 500 }}>Active Projects</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', marginTop: 6 }}>{activeProjectsCount}</div>
+                    <div style={{ fontSize: 11.5, color: '#2563eb', fontWeight: 600, marginTop: 8 }}>
                       {inProgressCount} in progress
                     </div>
                   </div>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'grid', placeItems: 'center', fontSize: 18 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'grid', placeItems: 'center', fontSize: 18 }}>
                     💼
                   </div>
                 </div>
               </div>
 
               {/* Card 3: Completed Projects */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 18 }}>
+              <div style={{ background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 16, padding: 18, boxShadow: isDarkMode ? 'none' : '0 4px 20px -2px rgba(0, 0, 0, 0.03)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div style={{ fontSize: 12.5, color: '#94a3b8', fontWeight: 500 }}>Completed Projects</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 6 }}>{completedProjectsCount}</div>
+                    <div style={{ fontSize: 12.5, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 500 }}>Completed Projects</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', marginTop: 6 }}>{completedProjectsCount}</div>
                     <div style={{ fontSize: 11.5, color: '#10b981', fontWeight: 600, marginTop: 8 }}>
                       Verified completions
                     </div>
@@ -3086,11 +3093,11 @@ const ClientDashboard = () => {
               </div>
 
               {/* Card 4: Total Freelancers */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 18 }}>
+              <div style={{ background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 16, padding: 18, boxShadow: isDarkMode ? 'none' : '0 4px 20px -2px rgba(0, 0, 0, 0.03)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div style={{ fontSize: 12.5, color: '#94a3b8', fontWeight: 500 }}>Total Freelancers</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 6 }}>{uniqueFreelancersCount}</div>
+                    <div style={{ fontSize: 12.5, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 500 }}>Total Freelancers</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', marginTop: 6 }}>{uniqueFreelancersCount}</div>
                     <div style={{ fontSize: 11.5, color: '#f59e0b', fontWeight: 600, marginTop: 8 }}>
                       Working with you
                     </div>
@@ -3105,43 +3112,43 @@ const ClientDashboard = () => {
             {/* Middle Grid Row */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.35fr 1fr 1fr', gap: 16 }}>
               {/* Spending Overview chart */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+              <div style={{ background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 16, padding: 20, boxShadow: isDarkMode ? 'none' : '0 4px 20px -2px rgba(0, 0, 0, 0.03)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>Spending Overview</h3>
-                  <select style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', margin: 0 }}>Spending Overview</h3>
+                  <select style={{ background: 'transparent', border: 'none', color: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
                     <option>This Month</option>
                   </select>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                  <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>₹{totalSpentVal.toLocaleString('en-IN')}</span>
-                  <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '2px 6px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>Live</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: isDarkMode ? '#fff' : '#0f172a' }}>₹{totalSpentVal.toLocaleString('en-IN')}</span>
+                  <span style={{ background: 'rgba(37,99,235,0.12)', color: '#2563eb', padding: '2px 6px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>Live</span>
                 </div>
-                <SpendingChart isDarkMode={true} expenses={expensesListState} />
+                <SpendingChart isDarkMode={isDarkMode} expenses={expensesListState} />
               </div>
 
               {/* Project Status Donut chart */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+              <div style={{ background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 16, padding: 20, boxShadow: isDarkMode ? 'none' : '0 4px 20px -2px rgba(0, 0, 0, 0.03)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>Project Status</h3>
-                  <button onClick={() => setActiveTab('jobs')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View all</button>
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', margin: 0 }}>Project Status</h3>
+                  <button onClick={() => setActiveTab('jobs')} style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View all</button>
                 </div>
                 <DonutChart jobs={jobs} />
               </div>
 
               {/* Recent Activity */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+              <div style={{ background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 16, padding: 20, boxShadow: isDarkMode ? 'none' : '0 4px 20px -2px rgba(0, 0, 0, 0.03)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>Recent Activity</h3>
-                  <button onClick={() => toast.success('Activity feed updated!')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Refresh</button>
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', margin: 0 }}>Recent Activity</h3>
+                  <button onClick={() => toast.success('Activity feed updated!')} style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Refresh</button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {sortedActivities.length > 0 ? (
                     sortedActivities.map((act, idx) => (
                       <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'grid', placeItems: 'center', fontSize: 13, flexShrink: 0 }}>{act.icon}</div>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9', display: 'grid', placeItems: 'center', fontSize: 13, flexShrink: 0 }}>{act.icon}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{act.title}</div>
-                          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{act.project}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{act.title}</div>
+                          <div style={{ fontSize: 11, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 2 }}>{act.project}</div>
                         </div>
                         <span style={{ fontSize: 10.5, color: '#64748b' }}>{act.timeStr}</span>
                       </div>
@@ -3156,10 +3163,10 @@ const ClientDashboard = () => {
             {/* Bottom Row Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.35fr 1fr', gap: 16 }}>
               {/* Active Projects Table */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+              <div style={{ background: isDarkMode ? '#111625' : '#ffffff', border: isDarkMode ? '1px solid #1d2433' : '1px solid #e2e8f0', borderRadius: 16, padding: 20, boxShadow: isDarkMode ? 'none' : '0 4px 20px -2px rgba(0, 0, 0, 0.03)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>Active Projects</h3>
-                  <button onClick={() => setActiveTab('jobs')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View all</button>
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', margin: 0 }}>Active Projects</h3>
+                  <button onClick={() => setActiveTab('jobs')} style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View all</button>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'left', minWidth: 480 }}>
@@ -9105,29 +9112,29 @@ const ClientDashboard = () => {
 };
 
 const s = {
-  shell:        { display: 'flex', minHeight: '100vh', background: '#090d16', fontFamily: "'DM Sans', sans-serif" },
-  sidebar:      { width: 260, background: '#111625', borderRight: '1px solid #1d2433', display: 'flex', flexDirection: 'column', padding: '24px 0', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
+  shell:        { display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'DM Sans', system-ui, sans-serif" },
+  sidebar:      { width: 260, background: '#ffffff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', padding: '24px 0', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 },
   logo:         { display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px 28px', justifyContent: 'space-between', position: 'relative' },
-  logoMark:     { width: 36, height: 52, borderRadius: 20, background: 'linear-gradient(180deg, #10b981 0%, #0fbd81 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, boxShadow: '0 6px 18px rgba(16, 185, 129, .18)' },
-  logoText:     { fontWeight: 700, fontSize: 16, color: '#f8fafc', whiteSpace: 'nowrap' },
+  logoMark:     { width: 36, height: 52, borderRadius: 20, background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, boxShadow: '0 6px 18px rgba(37, 99, 235, .25)' },
+  logoText:     { fontWeight: 700, fontSize: 16, color: '#0f172a', whiteSpace: 'nowrap' },
   nav:          { flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 },
-  navBtn:       { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', background: 'none', color: '#737373', fontSize: 13.5, fontWeight: 500, width: '100%', textAlign: 'left' },
-  navBtnActive: { background: '#f0fdf4', color: '#16a34a' },
-  badge:        { marginLeft: 'auto', background: '#16a34a', color: '#fff', borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '1px 6px' },
-  sidebarBottom:{ padding: '20px 16px 0', borderTop: '1px solid #f0f0f0', marginTop: 'auto' },
+  navBtn:       { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', background: 'none', color: '#64748b', fontSize: 13.5, fontWeight: 500, width: '100%', textAlign: 'left' },
+  navBtnActive: { background: '#eff6ff', color: '#2563eb' },
+  badge:        { marginLeft: 'auto', background: '#2563eb', color: '#fff', borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '1px 6px' },
+  sidebarBottom:{ padding: '20px 16px 0', borderTop: '1px solid #e2e8f0', marginTop: 'auto' },
   userChip:     { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, width: '100%', border: 'none', background: 'transparent', padding: 0, textAlign: 'left', borderRadius: 8 },
-  avatar:       { width: 34, height: 34, borderRadius: '50%', background: '#16a34a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 },
-  userName:     { fontSize: 13, fontWeight: 600, color: '#111' },
-  userRole:     { fontSize: 11, color: '#a3a3a3' },
+  avatar:       { width: 34, height: 34, borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 },
+  userName:     { fontSize: 13, fontWeight: 600, color: '#0f172a' },
+  userRole:     { fontSize: 11, color: '#64748b' },
   logoutBtn:    { display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', border: 'none', background: 'none', color: '#dc2626', fontSize: 13, borderRadius: 8, fontWeight: 500 },
   main:         { flex: 1, padding: '26px 28px' },
   header:       { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
-  greeting:     { fontSize: 22, fontWeight: 600, color: '#111', margin: 0, marginBottom: 4 },
-  subGreeting:  { fontSize: 13.5, color: '#a3a3a3', margin: 0 },
-  postBtn:      { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 600, flexShrink: 0 },
+  greeting:     { fontSize: 22, fontWeight: 600, color: '#0f172a', margin: 0, marginBottom: 4 },
+  subGreeting:  { fontSize: 13.5, color: '#64748b', margin: 0 },
+  postBtn:      { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 600, flexShrink: 0 },
   headerActions: { display: 'flex', gap: 10, alignItems: 'center' },
   iconAction:   { width: 32, height: 32, border: 'none', background: 'transparent', color: '#525252', display: 'grid', placeItems: 'center', borderRadius: 8, flexShrink: 0 },
-  topAvatar:    { width: 32, height: 32, borderRadius: '50%', background: '#111827', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 },
+  topAvatar:    { width: 32, height: 32, borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 },
   notificationsWrapper: { position: 'relative', flexShrink: 0 },
   notificationBtn: { width: 32, height: 32, borderRadius: 999, border: '1px solid #e5e7eb', background: '#fff', color: '#111', display: 'grid', placeItems: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0 },
   notificationBadge: { position: 'absolute', top: 4, right: 4, background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 10, fontWeight: 700, padding: '2px 6px' },
@@ -9136,32 +9143,32 @@ const s = {
   notificationItem: { width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'none', color: '#111', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f3f4f6' },
   notificationEmpty: { padding: '14px 16px', fontSize: 13, color: '#6b7280' },
   statsGrid:    { display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 14, marginBottom: 18 },
-  statCard:     { background: '#fff', borderRadius: 8, padding: '18px', border: '1px solid #f0f0f0', minHeight: 114 },
-  statCardFeatured: { background: '#16a34a', color: '#fff', borderColor: '#16a34a' },
+  statCard:     { background: '#fff', borderRadius: 16, padding: '18px', border: '1px solid #e2e8f0', minHeight: 114, boxShadow: '0 4px 20px -2px rgba(0,0,0,0.03)' },
+  statCardFeatured: { background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#fff', borderColor: '#2563eb', borderRadius: 16, boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.3)' },
   statIcon:     { width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   statValue:    { fontSize: 24, fontWeight: 700, color: 'inherit', marginBottom: 2 },
-  statLabel:    { fontSize: 12.5, color: '#a3a3a3', fontWeight: 500 },
+  statLabel:    { fontSize: 12.5, color: '#64748b', fontWeight: 500 },
   statNote:     { fontSize: 11.5, marginTop: 6, fontWeight: 600 },
   twoCol:       { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
   dashboardGrid:{ display: 'grid', gridTemplateColumns: '1.35fr 1fr 1fr', gap: 14, marginBottom: 14 },
   bottomGrid:   { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 },
-  card:         { background: '#fff', borderRadius: 8, padding: '18px', border: '1px solid #f0f0f0', marginBottom: 16 },
+  card:         { background: '#fff', borderRadius: 16, padding: '18px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.03)', marginBottom: 16 },
   cardHeader:   { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  cardTitle:    { fontSize: 15, fontWeight: 600, color: '#111', margin: 0 },
-  seeAll:       { fontSize: 12.5, color: '#16a34a', background: 'none', border: 'none', fontWeight: 600, padding: 0 },
+  cardTitle:    { fontSize: 15, fontWeight: 600, color: '#0f172a', margin: 0 },
+  seeAll:       { fontSize: 12.5, color: '#2563eb', background: 'none', border: 'none', fontWeight: 600, padding: 0 },
   filterPill:   { fontSize: 12, color: '#525252', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 7, padding: '6px 10px', fontWeight: 600 },
   chartWrap:    { position: 'relative', height: 190, paddingTop: 8 },
   chartLabel:   { position: 'absolute', top: 38, left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 700, color: '#111', zIndex: 1 },
   lineChart:    { width: '100%', height: '100%' },
   pipelineList: { display: 'flex', flexDirection: 'column', gap: 15, paddingTop: 2 },
   pipelineTop:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, color: '#525252', marginBottom: 7 },
-  progressTrack:{ height: 6, borderRadius: 999, background: '#edf2ef', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 999, background: '#16a34a' },
+  progressTrack:{ height: 6, borderRadius: 999, background: '#eff6ff', overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 999, background: '#2563eb' },
   activityRow:  { display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: '1px solid #f5f5f5' },
   activityIcon: { width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0 },
   activityTime: { fontSize: 11.5, color: '#a3a3a3', whiteSpace: 'nowrap' },
-  recBadge:     { width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#e0f2fe', color: '#0284c7', fontWeight: 700, fontSize: 12, flexShrink: 0 },
-  applyNowBtn:  { padding: '7px 12px', border: 'none', borderRadius: 7, background: '#16a34a', color: '#fff', fontSize: 11.5, fontWeight: 700 },
+  recBadge:     { width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#eff6ff', color: '#2563eb', fontWeight: 700, fontSize: 12, flexShrink: 0 },
+  applyNowBtn:  { padding: '7px 12px', border: 'none', borderRadius: 7, background: '#2563eb', color: '#fff', fontSize: 11.5, fontWeight: 700 },
   reputationHead: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 },
   companyMark:  { width: 42, height: 42, borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#eff6ff', color: '#2563eb', fontSize: 18, fontWeight: 800 },
   ratingLine:   { fontSize: 12, color: '#d97706', fontWeight: 700 },
@@ -9182,13 +9189,13 @@ const s = {
   jobCardRow:   { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, padding: '16px 4px', borderBottom: '1px solid #f5f5f5' },
   submissionNote: { fontSize: 12.5, color: '#525252', marginTop: 8, padding: '8px 12px', background: '#fefce8', borderRadius: 8, lineHeight: 1.5 },
   filePill:     { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: '#eff6ff', color: '#1d4ed8', borderRadius: 99, fontSize: 11.5, textDecoration: 'none', fontWeight: 500 },
-  approveBtn:   { display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 },
+  approveBtn:   { display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 },
   messageBtn:   { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 },
 
   proposalRow:  { display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 0', borderBottom: '1px solid #f5f5f5' },
   pAvatar:      { width: 38, height: 38, borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 13, flexShrink: 0 },
   coverLetter:  { fontSize: 12.5, color: '#525252', marginTop: 6, fontStyle: 'italic', lineHeight: 1.5 },
-  acceptBtn:    { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 7, fontSize: 12.5, fontWeight: 500 },
+  acceptBtn:    { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 7, fontSize: 12.5, fontWeight: 500 },
   rejectBtn:    { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 7, fontSize: 12.5, fontWeight: 500 },
   emptyState:   { textAlign: 'center', padding: '32px 0' },
   emptyIcon:    { fontSize: 28, marginBottom: 8 },
