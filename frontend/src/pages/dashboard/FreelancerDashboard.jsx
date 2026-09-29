@@ -887,6 +887,13 @@ const getJobIcon = (title = '') => {
 const FreelancerDashboard = () => {
   const { user, updateUser, logout, isDarkMode, toggleDarkMode } = useAuth();
   const [now, setNow] = useState(new Date());
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1000);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 1000);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Advanced Payments & Currency States
   const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem('selectedCurrency') || 'INR');
