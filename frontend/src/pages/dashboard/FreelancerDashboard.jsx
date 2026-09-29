@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import { jobAPI, profileAPI, messageAPI } from '../../api';
+import { jobAPI, profileAPI, messageAPI, vouchAPI, disputeAPI } from '../../api';
+import BuildLogTimeline from '../../components/common/BuildLogTimeline';
+import GuidedDisputeModal from '../../components/common/GuidedDisputeModal';
+import SubHireModal from '../../components/common/SubHireModal';
+import PeerVouchModal from '../../components/common/PeerVouchModal';
 import '../../styles/FreelancerDashboard.css';
 
 // ── Icons Helper Component using clean SVGs ─────────────────────────────────
@@ -596,6 +600,115 @@ const ProposalModal = ({ job, onClose, onSubmit, submitting }) => {
             </div>
           );
         })()}
+        {/* 🤖 Real-Time Proposal Coach AI Widget (Freelancer-side AI) */}
+        {(() => {
+          const text = form.coverLetter || '';
+          const numBid = Number(form.bidAmount) || 0;
+          const days = Number(form.estimatedDays) || 0;
+          const targetBudget = job.budget || 15000;
+
+          const warnings = [];
+          const strengths = [];
+          const quickFixes = [];
+          let score = 70;
+
+          const lower = text.toLowerCase();
+          const timelineKeywords = ['day', 'days', 'week', 'weeks', 'deadline', 'delivery', 'timeline', 'schedule', 'milestone'];
+          const hasTimeline = timelineKeywords.some(k => lower.includes(k)) || days > 0;
+
+          if (!hasTimeline || text.length < 25) {
+            warnings.push({
+              title: '⚠️ Deadline mention nahi kiya',
+              msg: 'Cover letter lacks delivery timeline/milestone commitments. Adding a delivery date boosts client trust.',
+            });
+            score -= 15;
+            quickFixes.push({
+              label: '⚡ Add Delivery Commitment',
+              action: () => setForm(f => ({ ...f, coverLetter: (f.coverLetter + `\n\nI will deliver the completed project within ${days || 7} days with regular milestone updates.`).trim() }))
+            });
+          } else {
+            strengths.push('✅ Delivery Timeline Specified');
+            score += 10;
+          }
+
+          if (numBid > 0 && numBid < targetBudget * 0.6) {
+            const diffPct = Math.round(((targetBudget - numBid) / targetBudget) * 100);
+            warnings.push({
+              title: `💰 Price similar accepted proposals se ${diffPct}% kam hai`,
+              msg: `Your bid (₹${numBid.toLocaleString()}) is ${diffPct}% below the job budget (₹${targetBudget.toLocaleString()}). Undervalued bids may look suspicious.`,
+            });
+            score -= 15;
+            quickFixes.push({
+              label: `💡 Align Price to Market (₹${Math.round(targetBudget * 0.9).toLocaleString()})`,
+              action: () => setForm(f => ({ ...f, bidAmount: Math.round(targetBudget * 0.9).toString() }))
+            });
+          } else if (numBid > 0) {
+            strengths.push('✅ Market Competitive Pricing');
+            score += 10;
+          }
+
+          const jobSkills = job.skills || [];
+          const missingSkills = jobSkills.filter(s => !lower.includes(s.toLowerCase()));
+          if (missingSkills.length > 0 && jobSkills.length > 0) {
+            warnings.push({
+              title: `🛠️ Mention Required Skills (${missingSkills.slice(0, 2).join(', ')})`,
+              msg: `Missing explicit mention of required skills: ${missingSkills.join(', ')}.`,
+            });
+            quickFixes.push({
+              label: `✨ Inject Required Skills (${missingSkills.slice(0, 2).join(', ')})`,
+              action: () => setForm(f => ({ ...f, coverLetter: (f.coverLetter + `\n\nI have extensive experience working with ${missingSkills.join(', ')}.`).trim() }))
+            });
+          }
+
+          const finalScore = Math.min(100, Math.max(20, score));
+
+          return (
+            <div style={{ background: isDarkMode ? '#071622' : '#f8fafc', border: '1px solid #10b981', padding: 12, borderRadius: 10, marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#059669' }}>🤖 Proposal Coach (Real-Time AI)</span>
+                  <span style={{ fontSize: 10, background: '#ecfdf5', color: '#059669', padding: '1px 6px', borderRadius: 99, fontWeight: 700, border: '1px solid #a7f3d0' }}>Live Feedback</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: finalScore >= 80 ? '#10b981' : finalScore >= 60 ? '#d97706' : '#ef4444' }}>
+                    {finalScore}% {finalScore >= 80 ? 'Strong 🚀' : finalScore >= 60 ? 'Moderate 👍' : 'Needs Fix ⚠️'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Warnings */}
+              {warnings.map((w, idx) => (
+                <div key={idx} style={{ background: '#fff1f2', border: '1px solid #fecdd3', padding: '6px 10px', borderRadius: 6, marginBottom: 6, fontSize: 11.5, color: '#9f1239' }}>
+                  <strong>{w.title}:</strong> {w.msg}
+                </div>
+              ))}
+
+              {/* Strengths */}
+              {strengths.map((s, idx) => (
+                <div key={idx} style={{ fontSize: 11.5, color: '#047857', fontWeight: 600, marginBottom: 4 }}>
+                  {s}
+                </div>
+              ))}
+
+              {/* 1-Click Quick Fixes */}
+              {quickFixes.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  {quickFixes.map((qf, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={qf.action}
+                      style={{ padding: '4px 10px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      {qf.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: '#475569', textTransform: 'uppercase', margin: 0 }}>Cover Letter</label>
@@ -1974,158 +2087,157 @@ const FreelancerDashboard = () => {
       {/* ── Main Panel ── */}
       <main className="fd-main">
         {/* Header */}
-        <header className="fd-header">
-          <div className="fd-header-title-block" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button 
-              className="fd-mobile-menu-toggle" 
-              onClick={() => setSidebarCollapsed(false)} 
-              title="Open Menu"
-            >
-              <Icon name="menu" size={20} />
-            </button>
-            <div className="fd-header-title-main">
+        <header className="fd-header" style={isMobile ? { position: 'relative', paddingTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, paddingBottom: 16 } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16, width: '100%', flexWrap: 'nowrap' }}>
+          <div className="fd-header-title-block" style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            {isMobile && (
+              <button 
+                className="fd-mobile-menu-toggle" 
+                onClick={() => setSidebarCollapsed(false)} 
+                title="Open Menu"
+              >
+                <Icon name="menu" size={20} />
+              </button>
+            )}
+            <div className="fd-header-title-main" style={{ whiteSpace: 'nowrap' }}>
               {TRANSLATIONS[lang][activeTab] || activeTab}
             </div>
           </div>
 
-          <div className="fd-header-center" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-            {(activeTab === 'overview' || activeTab === 'jobs' || activeTab === 'proposals' || activeTab === 'mywork' || activeTab === 'saved' || activeTab === 'payments' || activeTab === 'analytics') && (
-              <div className="fd-search-container">
-                <Icon name="search" size={16} />
-                <input
-                  placeholder={
-                    activeTab === 'jobs' ? 'Search jobs by title, skills, or keywords...' :
-                      activeTab === 'proposals' ? 'Search proposals, clients, or status...' :
-                        activeTab === 'mywork' ? 'Search active work, contracts, or clients...' :
-                          activeTab === 'saved' ? 'Search saved jobs by title or client...' :
-                            activeTab === 'payments' ? 'Search transaction details or status...' :
-                              activeTab === 'analytics' ? 'Search analytics details...' :
-                                'Search for jobs, tasks, users...'
-                  }
-                  className="fd-search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-                />
-              </div>
-            )}
+          <div className="fd-header-center" style={isMobile ? {} : { display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, maxWidth: 460, minWidth: 200, margin: '0 12px' }}>
+            <div className="fd-search-container" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 420 }}>
+              <Icon name="search" size={16} />
+              <input
+                placeholder={
+                  activeTab === 'jobs' ? 'Search jobs by title, skills, or keywords...' :
+                    activeTab === 'proposals' ? 'Search proposals, clients, or status...' :
+                      activeTab === 'mywork' ? 'Search active work, contracts, or clients...' :
+                        activeTab === 'saved' ? 'Search saved jobs by title or client...' :
+                          activeTab === 'payments' ? 'Search transaction details or status...' :
+                            activeTab === 'analytics' ? 'Search analytics details...' :
+                              'Search jobs, proposals, clients...'
+                }
+                className="fd-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+                style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 13.5 }}
+              />
+            </div>
           </div>
 
-          <div className="fd-header-right" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            {(activeTab === 'overview' || activeTab === 'jobs' || activeTab === 'proposals' || activeTab === 'mywork' || activeTab === 'saved' || activeTab === 'payments' || activeTab === 'analytics' || activeTab === 'subscriptions' || activeTab === 'referrals') && (
-              <div className="fd-header-actions">
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => {
-                    setSelectedCurrency(e.target.value);
-                    localStorage.setItem('selectedCurrency', e.target.value);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    background: isDarkMode ? '#0f172a' : '#ffffff',
-                    border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-                    color: isDarkMode ? '#cbd5e1' : '#475569',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    height: 32,
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
-                  <option value="INR">₹ INR</option>
-                  <option value="USD">$ USD</option>
-                  <option value="EUR">€ EUR</option>
-                  <option value="GBP">£ GBP</option>
-                </select>
+          <div className="fd-header-right" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, flexWrap: 'nowrap', flexShrink: 0 }}>
+            <div className="fd-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap' }}>
+              <select
+                value={selectedCurrency}
+                onChange={(e) => {
+                  setSelectedCurrency(e.target.value);
+                  localStorage.setItem('selectedCurrency', e.target.value);
+                }}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: 8,
+                  background: isDarkMode ? '#0f172a' : '#ffffff',
+                  border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                  color: isDarkMode ? '#cbd5e1' : '#475569',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  outline: 'none',
+                  height: 34,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <option value="INR">₹ INR</option>
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="GBP">£ GBP</option>
+              </select>
 
-                <button className="fd-icon-btn" onClick={() => toggleDarkMode()} title="Switch Theme">
-                  <Icon name={isDarkMode ? 'sun' : 'moon'} />
+              <button className="fd-icon-btn" onClick={() => toggleDarkMode()} title="Switch Theme">
+                <Icon name={isDarkMode ? 'sun' : 'moon'} />
+              </button>
+
+              <div style={{ position: 'relative' }}>
+                <button className="fd-icon-btn" onClick={() => setNotificationsOpen(!notificationsOpen)} title="Notifications">
+                  <Icon name="bell" />
+                  <span className="fd-icon-badge" style={{ background: '#ef4444', color: '#fff' }}>3</span>
                 </button>
-
-                <div style={{ position: 'relative' }}>
-                  <button className="fd-icon-btn" onClick={() => setNotificationsOpen(!notificationsOpen)}>
-                    <Icon name="bell" />
-                    <span className="fd-icon-badge" style={{ background: '#ef4444', color: '#fff' }}>3</span>
-                  </button>
-                  {notificationsOpen && (
-                    <div className="fd-noti-dropdown">
-                      <div className="fd-noti-header">Notifications</div>
-                      <div className="fd-noti-list">
-                        <div className="fd-noti-item" style={{ padding: '8px 12px', fontSize: 12.5, color: '#475569' }}>Milestone 2 payment approved by client.</div>
-                        <div className="fd-noti-item" style={{ padding: '8px 12px', fontSize: 12.5, color: '#475569' }}>New job posting match: React Specialist.</div>
-                        <div className="fd-noti-item" style={{ padding: '8px 12px', fontSize: 12.5, color: '#475569' }}>Your proposal for Tech Solutions was viewed.</div>
-                      </div>
+                {notificationsOpen && (
+                  <div className="fd-noti-dropdown">
+                    <div className="fd-noti-header">Notifications</div>
+                    <div className="fd-noti-list">
+                      <div className="fd-noti-item" style={{ padding: '8px 12px', fontSize: 12.5, color: isDarkMode ? '#cbd5e1' : '#475569' }}>Milestone 2 payment approved by client.</div>
+                      <div className="fd-noti-item" style={{ padding: '8px 12px', fontSize: 12.5, color: isDarkMode ? '#cbd5e1' : '#475569' }}>New job posting match: React Specialist.</div>
+                      <div className="fd-noti-item" style={{ padding: '8px 12px', fontSize: 12.5, color: isDarkMode ? '#cbd5e1' : '#475569' }}>Your proposal for Tech Solutions was viewed.</div>
                     </div>
-                  )}
-                </div>
-
-                <button className="fd-icon-btn" onClick={() => navigate('/freelancer/messages')} style={{ position: 'relative' }}>
-                  <Icon name="mail" />
-                  {unreadMessagesCount > 0 && <span className="fd-icon-badge">{unreadMessagesCount}</span>}
-                </button>
-
-                <div style={{ position: 'relative' }}>
-                  <div
-                    className="fd-header-user-avatar"
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    style={{ cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', background: '#7c3aed', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 'bold', fontSize: 13.5, boxShadow: '0 2px 6px rgba(124, 58, 237, 0.2)' }}
-                  >
-                    {firstName[0]?.toUpperCase()}
                   </div>
-                  {userMenuOpen && (
-                    <div className="fd-user-menu-dropdown" style={{ position: 'absolute', top: '52px', right: '0', background: isDarkMode ? '#071422' : '#fff', borderRadius: '12px', boxShadow: isDarkMode ? 'none' : '0 10px 25px rgba(0, 0, 0, 0.08)', border: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', width: '220px', zIndex: 100, padding: '8px 0', display: 'flex', flexDirection: 'column' }}>
-                      <div className="fd-user-menu-arrow" style={{ position: 'absolute', top: -6, right: 15, width: 12, height: 12, background: isDarkMode ? '#071422' : '#fff', borderLeft: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', transform: 'rotate(45deg)' }} />
-
-                      <button onClick={() => { setUserMenuOpen(false); navigate('/profile'); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s ease' }}>
-                        <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="user" size={16} /></span>
-                        View Profile
-                      </button>
-                      <button onClick={() => { setUserMenuOpen(false); navigate('/profile', { state: { edit: true } }); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s ease' }}>
-                        <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="edit" size={16} /></span>
-                        Edit Profile
-                      </button>
-                      <button onClick={() => { setUserMenuOpen(false); setActiveTab('settings'); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s ease' }}>
-                        <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="settings" size={16} /></span>
-                        Account Settings
-                      </button>
-
-                      <div className="fd-user-menu-divider" style={{ height: '1px', background: '#f1f5f9', margin: '6px 0' }} />
-
-                      <button onClick={async () => {
-                        setUserMenuOpen(false);
-                        try {
-                          const res = await profileAPI.updateProfile({ role: 'client' });
-                          if (res.data?.success || res.data?.user) {
-                            updateUser({ ...user, role: 'client' });
-                            toast.success('Switched to Client Mode! 💼');
-                            navigate('/dashboard');
-                          }
-                        } catch (err) {
-                          toast.error('Failed to switch mode');
-                        }
-                      }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#7c3aed', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s ease' }}>
-                        <span style={{ marginRight: '12px', color: '#7c3aed', display: 'inline-flex', alignItems: 'center' }}><Icon name="switch" size={16} /></span>
-                        Switch to Client
-                      </button>
-
-                      <div className="fd-user-menu-divider" style={{ height: '1px', background: '#f1f5f9', margin: '6px 0' }} />
-
-                      <button onClick={() => { setUserMenuOpen(false); setHelpModalOpen(true); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s ease' }}>
-                        <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="help" size={16} /></span>
-                        Help & Support
-                      </button>
-                      <button onClick={() => { setUserMenuOpen(false); handleLogout(); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#dc2626', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s ease' }}>
-                        <span style={{ marginRight: '12px', color: '#ef4444', display: 'inline-flex', alignItems: 'center' }}><Icon name="logout" size={16} /></span>
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
-            )}
+
+              <button className="fd-icon-btn" onClick={() => navigate('/freelancer/messages')} style={{ position: 'relative' }} title="Messages">
+                <Icon name="mail" />
+                {unreadMessagesCount > 0 && <span className="fd-icon-badge">{unreadMessagesCount}</span>}
+              </button>
+
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div
+                  className="fd-header-user-avatar"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  style={{ cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', background: '#7c3aed', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 'bold', fontSize: 13.5, boxShadow: '0 2px 6px rgba(124, 58, 237, 0.2)', flexShrink: 0 }}
+                >
+                  {firstName[0]?.toUpperCase()}
+                </div>
+                {userMenuOpen && (
+                  <div className="fd-user-menu-dropdown" style={{ position: 'absolute', top: '48px', right: '0', background: isDarkMode ? '#071422' : '#fff', borderRadius: '12px', boxShadow: isDarkMode ? 'none' : '0 10px 25px rgba(0, 0, 0, 0.08)', border: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', width: '220px', zIndex: 100, padding: '8px 0', display: 'flex', flexDirection: 'column' }}>
+                    <div className="fd-user-menu-arrow" style={{ position: 'absolute', top: -6, right: 15, width: 12, height: 12, background: isDarkMode ? '#071422' : '#fff', borderLeft: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e2e8f0', transform: 'rotate(45deg)' }} />
+
+                    <button onClick={() => { setUserMenuOpen(false); navigate('/profile'); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: isDarkMode ? '#cbd5e1' : '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="user" size={16} /></span>
+                      View Profile
+                    </button>
+                    <button onClick={() => { setUserMenuOpen(false); navigate('/profile', { state: { edit: true } }); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: isDarkMode ? '#cbd5e1' : '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="edit" size={16} /></span>
+                      Edit Profile
+                    </button>
+                    <button onClick={() => { setUserMenuOpen(false); setActiveTab('settings'); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: isDarkMode ? '#cbd5e1' : '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="settings" size={16} /></span>
+                      Account Settings
+                    </button>
+
+                    <div className="fd-user-menu-divider" style={{ height: '1px', background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9', margin: '6px 0' }} />
+
+                    <button onClick={async () => {
+                      setUserMenuOpen(false);
+                      try {
+                        const res = await profileAPI.updateProfile({ role: 'client' });
+                        if (res.data?.success || res.data?.user) {
+                          updateUser({ ...user, role: 'client' });
+                          toast.success('Switched to Client Mode! 💼');
+                          navigate('/dashboard');
+                        }
+                      } catch (err) {
+                        toast.error('Failed to switch mode');
+                      }
+                    }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#7c3aed', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <span style={{ marginRight: '12px', color: '#7c3aed', display: 'inline-flex', alignItems: 'center' }}><Icon name="switch" size={16} /></span>
+                      Switch to Client
+                    </button>
+
+                    <div className="fd-user-menu-divider" style={{ height: '1px', background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9', margin: '6px 0' }} />
+
+                    <button onClick={() => { setUserMenuOpen(false); setHelpModalOpen(true); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: isDarkMode ? '#cbd5e1' : '#334155', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <span style={{ marginRight: '12px', color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><Icon name="help" size={16} /></span>
+                      Help & Support
+                    </button>
+                    <button onClick={() => { setUserMenuOpen(false); handleLogout(); }} className="fd-user-menu-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 16px', background: 'none', border: 'none', fontSize: '13.5px', color: '#dc2626', fontWeight: '500', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <span style={{ marginRight: '12px', color: '#ef4444', display: 'inline-flex', alignItems: 'center' }}><Icon name="logout" size={16} /></span>
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </header>
 

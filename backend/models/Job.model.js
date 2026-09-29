@@ -58,6 +58,53 @@ const milestoneSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// ─── Build Log sub-schema (Work-In-Progress timeline entries) ─────────────
+const buildLogSchema = new mongoose.Schema(
+  {
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    note: { type: String, required: true, trim: true, maxlength: 2000 },
+    attachments: [
+      {
+        url: { type: String, required: true },
+        name: { type: String, default: 'screenshot' },
+        fileType: { type: String, default: 'image' },
+      },
+    ],
+    checklist: [
+      {
+        task: { type: String, required: true, trim: true },
+        completed: { type: Boolean, default: false },
+      },
+    ],
+    progressPercentage: { type: Number, min: 0, max: 100, default: 0 },
+  },
+  { timestamps: true }
+);
+
+// ─── Sub-Hire sub-schema (Informal Team Splits) ───────────────────────────
+const subHireSchema = new mongoose.Schema(
+  {
+    freelancer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    role: { type: String, required: true, trim: true },
+    splitPercentage: { type: Number, required: true, min: 1, max: 99 },
+    status: {
+      type: String,
+      enum: ['pending', 'accepted', 'declined'],
+      default: 'pending',
+    },
+    invitedAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
 // ─── Main Job schema ───────────────────────────────────────────────────────────
 const jobSchema = new mongoose.Schema(
   {
@@ -119,6 +166,26 @@ const jobSchema = new mongoose.Schema(
     },
     proposals: [proposalSchema],
     milestones: [milestoneSchema],
+    buildLogs: [buildLogSchema],
+    subHires: [subHireSchema],
+
+    // ── Anti-Ghosting & Fair-Queue Settings ──
+    noGhostDeposit: {
+      amount: { type: Number, default: 500 },
+      status: {
+        type: String,
+        enum: ['locked', 'claimed', 'released'],
+        default: 'locked',
+      },
+      claimedAt: { type: Date, default: null },
+    },
+    lastClientActivityAt: { type: Date, default: Date.now },
+    fairQueue: {
+      enabled: { type: Boolean, default: true },
+      windowHours: { type: Number, default: 2 },
+      revealsAt: { type: Date },
+      isRevealed: { type: Boolean, default: false },
+    },
 
     // ── Work submission (freelancer's final delivered files) ──
     submissionFiles: [

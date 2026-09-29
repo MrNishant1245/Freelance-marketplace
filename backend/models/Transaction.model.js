@@ -40,7 +40,7 @@ const transactionSchema = new mongoose.Schema(
     // Status flow: pending → paid → released / refunded
     status: {
       type: String,
-      enum: ['pending', 'paid', 'in_escrow', 'released', 'refunded', 'failed'],
+      enum: ['pending', 'paid', 'in_escrow', 'released', 'refunded', 'failed', 'ghost_claimed', 'sub_split'],
       default: 'pending',
       index: true,
     },

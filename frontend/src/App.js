@@ -23,8 +23,16 @@ import ProfilePage           from './pages/ProfilePage';
 import PaymentPage           from './pages/PaymentPage';
 import { getSocket }         from './utils/socket';
 import { tokenStorage }      from './utils/tokenStorage';
-import LandingPage           from './pages/LandingPage';
 import CategoryLandingPage   from './pages/CategoryLandingPage';
+
+const RootRedirect = () => {
+  const { isAuthenticated, user, loading } = useAuth();
+  if (loading) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role === 'freelancer') return <Navigate to="/freelancer/dashboard" replace />;
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+  return <Navigate to="/dashboard" replace />;
+};
 
 const playRingtone = (type) => {
   try {
@@ -259,7 +267,7 @@ const App = () => (
         <Route path="/admin/*" element={<RoleRoute roles={['admin']}><AdminDashboard /></RoleRoute>} />
 
         {/* ── Default ── */}
-        <Route path="/"  element={<LandingPage />} />
+        <Route path="/"  element={<RootRedirect />} />
         <Route path="*"  element={<Navigate to="/" replace />} />
       </Routes>
 

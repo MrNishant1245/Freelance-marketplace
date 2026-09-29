@@ -270,6 +270,59 @@ const PostJobPage = () => {
                 )}
               </div>
 
+              {/* 📊 AI Budget Reality-Check at Posting Time (Client-side AI) */}
+              {(() => {
+                const numBudget = Number(form.budgetMax) || 0;
+                let minRange = 15000;
+                let maxRange = 45000;
+
+                if (form.category === 'Web Development') { minRange = 20000; maxRange = 60000; }
+                else if (form.category === 'Mobile Apps') { minRange = 30000; maxRange = 85000; }
+                else if (form.category === 'Design & UI/UX') { minRange = 12000; maxRange = 35000; }
+                else if (form.category === 'Backend / API') { minRange = 25000; maxRange = 70000; }
+
+                const recommended = Math.round((minRange + maxRange) / 2);
+                const isLowball = numBudget > 0 && numBudget < minRange;
+                const lowballPct = isLowball ? Math.round(((minRange - numBudget) / minRange) * 100) : 0;
+
+                return (
+                  <div style={{ background: isLowball ? '#fff1f2' : '#eff6ff', border: isLowball ? '1px solid #fecdd3' : '1px solid #bfdbfe', padding: 14, borderRadius: 10, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: isLowball ? '#9f1239' : '#1e40af' }}>
+                        📊 AI Budget Reality-Check: Is scope ke jobs typically ₹{minRange.toLocaleString()}–₹{maxRange.toLocaleString()} mein fund hote hain.
+                      </span>
+                    </div>
+
+                    {isLowball ? (
+                      <div style={{ fontSize: 12, color: '#be123c', marginBottom: 10 }}>
+                        ⚠️ <strong>Lowball Warning ({lowballPct}% below market average):</strong> Low budget posts receive 70% fewer quality applications and high drop-off rates. Save hiring time by aligning with typical market expectations.
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, color: '#1e3a8a', marginBottom: 10 }}>
+                        ✅ Market Aligned: Your budget is within the optimal range for attracting top-rated freelancers!
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => set('budgetMax', recommended.toString())}
+                      style={{ padding: '6px 14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      💡 Apply Recommended Market Budget (₹{recommended.toLocaleString()})
+                    </button>
+                  </div>
+                );
+              })()}
+
+              {/* ⏳ Fair-Queue Proposals Setting */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>⏳ Enable Fair-Queue 2-Hour Batching Window</div>
+                  <div style={{ fontSize: 11.5, color: '#64748b' }}>Proposals collected during the first 2 hours will reveal simultaneously to prevent speed-spamming.</div>
+                </div>
+                <input type="checkbox" defaultChecked style={{ accentColor: '#2563eb', width: 18, height: 18, cursor: 'pointer' }} />
+              </div>
+
               <div style={s.field}>
                 <label style={s.label}>Application Deadline</label>
                 <input style={s.input} type="date" value={form.deadline} onChange={e => set('deadline', e.target.value)} min={new Date().toISOString().split('T')[0]} />

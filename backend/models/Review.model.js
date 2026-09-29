@@ -38,6 +38,11 @@ const reviewSchema = new mongoose.Schema(
       trim: true,
       maxlength: 1000,
     },
+    // Right of Reply / Rebuttal (one-time public response from reviewee)
+    reply: {
+      text: { type: String, trim: true, maxlength: 1000, default: null },
+      repliedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true }
 );

@@ -6,6 +6,7 @@ const {
   getUserReviews,
   getMyWrittenReviews,
   getReviewStatusForJob,
+  replyToReview,
 } = require('../controllers/review.controller');
 
 // ── Specific routes BEFORE dynamic :userId — same pattern as job.routes.js ──
@@ -14,6 +15,7 @@ router.get('/job/:jobId/status', protect, getReviewStatusForJob);
 
 // ── Submit a review (client or freelancer, on a completed job) ──────────────
 router.post('/', protect, submitReview);
+router.post('/:reviewId/reply', protect, replyToReview);
 
 // ── Public: all reviews received by a user (shown on their profile) ─────────
 router.get('/user/:userId', getUserReviews);

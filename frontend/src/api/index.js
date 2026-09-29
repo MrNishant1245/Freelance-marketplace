@@ -125,6 +125,15 @@ export const jobAPI = {
   fundMilestone:        (jobId, milestoneId) => api.post(`/jobs/${jobId}/milestones/${milestoneId}/fund`),
   releaseMilestone:     (jobId, milestoneId) => api.post(`/jobs/${jobId}/milestones/${milestoneId}/release`),
   raiseMilestoneDispute: (jobId, milestoneId, reason) => api.post(`/jobs/${jobId}/milestones/${milestoneId}/dispute`, { reason }),
+  // ── New 10-Feature API Functions ──
+  getProposalCoachFeedback: (jobId, data) => api.post(`/jobs/${jobId}/proposal-coach`, data),
+  getBudgetRealityCheck:    (data)        => api.post('/jobs/budget-check', data),
+  addBuildLog:              (jobId, data) => api.post(`/jobs/${jobId}/build-logs`, data),
+  toggleBuildLogChecklist:  (jobId, logId, itemIndex) => api.put(`/jobs/${jobId}/build-logs/checklist`, { logId, itemIndex }),
+  claimNoGhostDeposit:      (jobId)       => api.post(`/jobs/${jobId}/claim-no-ghost`),
+  inviteSubHire:            (jobId, data) => api.post(`/jobs/${jobId}/sub-hire`, data),
+  respondSubHire:           (jobId, data) => api.post(`/jobs/${jobId}/sub-hire/respond`, data),
+  getFairQueueStatus:       (jobId)       => api.get(`/jobs/${jobId}/fair-queue`),
 };
 
 // ─── Message API ✅ NEW ───────────────────────────────────────────────────────
@@ -150,10 +159,29 @@ export const paymentAPI = {
 
 // ─── Review API ───────────────────────────────────────────────────────────────
 export const reviewAPI = {
-  submitReview:          (data)   => api.post('/reviews', data),
-  getUserReviews:        (userId) => api.get(`/reviews/user/${userId}`),
-  getMyWrittenReviews:   ()       => api.get('/reviews/my-written'),
-  getReviewStatusForJob: (jobId)  => api.get(`/reviews/job/${jobId}/status`),
+  submitReview:          (data)           => api.post('/reviews', data),
+  getUserReviews:        (userId)         => api.get(`/reviews/user/${userId}`),
+  getMyWrittenReviews:   ()               => api.get('/reviews/my-written'),
+  getReviewStatusForJob: (jobId)          => api.get(`/reviews/job/${jobId}/status`),
+  replyToReview:         (reviewId, text) => api.post(`/reviews/${reviewId}/reply`, { text }),
+};
+
+// ─── Peer Skill Vouch API ─────────────────────────────────────────────────────
+export const vouchAPI = {
+  requestSkillVouch: (data)               => api.post('/vouches/request', data),
+  getPendingVouches: ()                   => api.get('/vouches/pending'),
+  respondSkillVouch:(vouchId, data)       => api.post(`/vouches/${vouchId}/respond`, data),
+  getUserVouches:   (userId)              => api.get(`/vouches/user/${userId}`),
+};
+
+// ─── Guided Dispute Mediation API ─────────────────────────────────────────────
+export const disputeAPI = {
+  createDispute:              (data)          => api.post('/disputes', data),
+  getJobDispute:              (jobId)         => api.get(`/disputes/job/${jobId}`),
+  submitDisputeStatement:     (disputeId, d)  => api.post(`/disputes/${disputeId}/statement`, d),
+  generateAIDisputeMediation: (disputeId)     => api.post(`/disputes/${disputeId}/generate-ai`),
+  acceptAIDisputeSettlement:  (disputeId)     => api.post(`/disputes/${disputeId}/accept-ai`),
+  adminResolveDispute:        (disputeId, d)  => api.post(`/disputes/${disputeId}/admin-resolve`, d),
 };
 
 // ─── Admin API ────────────────────────────────────────────────────────────────

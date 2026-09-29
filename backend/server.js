@@ -20,6 +20,8 @@ const paymentRoutes = require('./routes/payment.routes');
 const jobRoutes     = require('./routes/job.routes');
 const reviewRoutes  = require('./routes/review.routes');
 const messageRoutes = require('./routes/message.routes'); // ✅ NEW
+const vouchRoutes   = require('./routes/vouch.routes');
+const disputeRoutes = require('./routes/dispute.routes');
 const { errorHandler, notFound } = require('./middlewares/error.middleware');
 const { verifyAccessToken }      = require('./utils/jwt.utils'); // ✅ NEW
 
@@ -145,6 +147,8 @@ app.use('/api/payment',  paymentRoutes);
 app.use('/api/jobs',     jobRoutes);
 app.use('/api/reviews',  reviewRoutes);
 app.use('/api/messages', messageRoutes); // ✅ NEW
+app.use('/api/vouches',  vouchRoutes);
+app.use('/api/disputes', disputeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

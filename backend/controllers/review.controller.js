@@ -128,9 +128,44 @@ const getReviewStatusForJob = async (req, res) => {
   }
 };
 
+// ─── Right of Reply / Rebuttal (One-time official response from reviewee) ────
+const replyToReview = async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ success: false, message: 'Reply text is required.' });
+    }
+
+    const review = await Review.findById(req.params.reviewId);
+    if (!review) return res.status(404).json({ success: false, message: 'Review not found.' });
+
+    // Ensure only the reviewee (person rated) can reply
+    if (review.reviewee.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Only the review recipient can post a public response.' });
+    }
+
+    // Ensure one-time non-editable submission
+    if (review.reply && review.reply.text) {
+      return res.status(400).json({ success: false, message: 'You have already posted a public response to this review.' });
+    }
+
+    review.reply = {
+      text: text.trim(),
+      repliedAt: new Date(),
+    };
+
+    await review.save();
+    res.json({ success: true, message: 'Public response submitted successfully.', data: review });
+  } catch (error) {
+    console.error('Reply to review error:', error);
+    res.status(500).json({ success: false, message: 'Failed to post reply to review.' });
+  }
+};
+
 module.exports = {
   submitReview,
   getUserReviews,
   getMyWrittenReviews,
   getReviewStatusForJob,
+  replyToReview,
 };

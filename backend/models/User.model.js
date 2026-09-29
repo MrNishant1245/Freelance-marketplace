@@ -73,6 +73,14 @@ const freelancerProfileSchema = new mongoose.Schema({
   completedJobs: { type: Number, default: 0 },
   rating: { type: Number, default: 0, min: 0, max: 5 },
   reviewCount: { type: Number, default: 0 },
+  vouchedSkills: [
+    {
+      skill: { type: String, required: true },
+      count: { type: Number, default: 0 },
+      vouchedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      verifiedAt: { type: Date, default: Date.now },
+    },
+  ],
 }, { _id: false });
 
 // ─── Client-specific sub-schema ──────────────────────────────────────────────
@@ -151,6 +159,9 @@ const userSchema = new mongoose.Schema(
 
     // Saved / bookmarked jobs (freelancer feature)
     savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
+
+    // Platform Wallet Balance (for payouts, no-ghost claims & split payments)
+    walletBalance: { type: Number, default: 0 },
 
     // Auth & verification
     isEmailVerified: { type: Boolean, default: false },
