@@ -1089,19 +1089,19 @@ const DonutChart = ({ jobs = [] }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, fontSize: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#94a3b8' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} /> In Progress</span>
-          <strong style={{ color: '#fff' }}>{inProgress} ({pctInProgress.toFixed(1)}%)</strong>
+          <strong style={{ color: themeText }}>{inProgress} ({pctInProgress.toFixed(1)}%)</strong>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#94a3b8' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706' }} /> In Review</span>
-          <strong style={{ color: '#fff' }}>{inReview} ({pctInReview.toFixed(1)}%)</strong>
+          <strong style={{ color: themeText }}>{inReview} ({pctInReview.toFixed(1)}%)</strong>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#94a3b8' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#8b5cf6' }} /> Pending</span>
-          <strong style={{ color: '#fff' }}>{pending} ({pctPending.toFixed(1)}%)</strong>
+          <strong style={{ color: themeText }}>{pending} ({pctPending.toFixed(1)}%)</strong>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#94a3b8' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} /> Completed</span>
-          <strong style={{ color: '#fff' }}>{completed} ({pctCompleted.toFixed(1)}%)</strong>
+          <strong style={{ color: themeText }}>{completed} ({pctCompleted.toFixed(1)}%)</strong>
         </div>
       </div>
     </div>
@@ -1510,6 +1510,8 @@ const ClientDashboard = () => {
   const themeTextMuted = isDarkMode ? '#94a3b8' : '#64748b';
   const themeBorder = isDarkMode ? '#1e293b' : '#e2e8f0';
   const themeActiveNav = isDarkMode ? '#3b82f6' : '#2563eb';
+  const themeInputBg = isDarkMode ? '#0e1320' : '#ffffff';
+  const themeInnerCard = isDarkMode ? '#161c2c' : '#f8fafc';
   const [selectedFeature, setSelectedFeature] = useState(null);
 
   const exportCSV = () => {
@@ -3171,7 +3173,7 @@ const ClientDashboard = () => {
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'left', minWidth: 480 }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b', fontWeight: 600 }}>
+                      <tr style={{ borderBottom: `1px solid ${themeBorder}`, color: '#64748b', fontWeight: 600 }}>
                         <th style={{ paddingBottom: 10 }}>Project</th>
                         <th style={{ paddingBottom: 10 }}>Freelancer</th>
                         <th style={{ paddingBottom: 10 }}>Status</th>
@@ -3240,7 +3242,7 @@ const ClientDashboard = () => {
               </div>
 
               {/* Recent Invoices */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>Recent Invoices</h3>
                   <button onClick={() => setSelectedFeature('invoices')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View all</button>
@@ -3248,7 +3250,7 @@ const ClientDashboard = () => {
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'left', minWidth: 320 }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b', fontWeight: 600 }}>
+                      <tr style={{ borderBottom: `1px solid ${themeBorder}`, color: '#64748b', fontWeight: 600 }}>
                         <th style={{ paddingBottom: 10 }}>Invoice</th>
                         <th style={{ paddingBottom: 10 }}>Amount</th>
                         <th style={{ paddingBottom: 10 }}>Status</th>
@@ -3296,7 +3298,7 @@ const ClientDashboard = () => {
                 <h4 style={{ color: '#fff', fontSize: 14, fontWeight: 700, margin: 0 }}>🛡️ Quick Operations & Feature Exploration Hub</h4>
                 <button 
                   onClick={() => setSelectedFeature(selectedFeature ? null : 'escrow')}
-                  style={{ background: 'none', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 12px', color: '#94a3b8', fontSize: 12, cursor: 'pointer' }}
+                  style={{ background: 'none', border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '6px 12px', color: '#94a3b8', fontSize: 12, cursor: 'pointer' }}
                 >
                   {selectedFeature ? 'Hide Operations Hub ▲' : 'Show Operations Hub ▼'}
                 </button>
@@ -3354,7 +3356,7 @@ const ClientDashboard = () => {
                   const statusInfo = statusColors[job.status] || statusColors.open;
 
                   return (
-                    <div key={job._id} style={{ ...s.proposalRow, background: isDarkMode ? '#111625' : '#ffffff', border: '1px solid #1d2433', borderRadius: 12, padding: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                    <div key={job._id} style={{ ...s.proposalRow, background: isDarkMode ? '#111625' : '#ffffff', border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
                       <div style={{ flex: 1, minWidth: 260 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
                           <span style={{ fontSize: 15, fontWeight: 800, color: isDarkMode ? '#fff' : '#0f172a' }}>{job.title}</span>
@@ -3448,7 +3450,7 @@ const ClientDashboard = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 20, color: '#3b82f6' }}>🛡️</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Payouts & Escrow Milestones</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: themeText }}>Payouts & Escrow Milestones</span>
               </div>
               <span style={{ fontSize: 13, color: '#64748b' }}>Secure platform escrow released on work approval</span>
             </div>
@@ -3456,7 +3458,7 @@ const ClientDashboard = () => {
             {/* Top Row: Milestone Escrow Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 16 }}>
               {/* Card 1: Released */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Released</div>
                   <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>{formatBudget(totalReleased)}</div>
@@ -3468,7 +3470,7 @@ const ClientDashboard = () => {
               </div>
 
               {/* Card 2: In Escrow */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>In Escrow</div>
                   <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>{formatBudget(totalFunded)}</div>
@@ -3480,7 +3482,7 @@ const ClientDashboard = () => {
               </div>
 
               {/* Card 3: Crafted */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Crafted</div>
                   <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginTop: 6 }}>{formatBudget(totalReleased + totalFunded + totalDraft)}</div>
@@ -3496,13 +3498,13 @@ const ClientDashboard = () => {
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.3fr 1.2fr 1.1fr', gap: 16 }}>
               
               {/* Box 1: Payment Overview Chart */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Payment Overview</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Payment Overview</span>
                   <select 
                     value={paymentOverviewRange} 
                     onChange={(e) => { setPaymentOverviewRange(e.target.value); setActiveChartPoint(null); }}
-                    style={{ background: '#1e293b', border: '1px solid #1d2433', borderRadius: 6, color: '#fff', fontSize: 11.5, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
+                    style={{ background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 6, color: '#fff', fontSize: 11.5, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
                   >
                     <option value="month">This Month</option>
                     <option value="week">This Week</option>
@@ -3611,9 +3613,9 @@ const ClientDashboard = () => {
               </div>
 
               {/* Box 2: Recent Transactions */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Recent Transactions</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Recent Transactions</span>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: '#3b82f6', cursor: 'pointer' }} onClick={() => setActiveTab('reports')}>View all</span>
                 </div>
                 <div className="no-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto', maxHeight: 200, paddingRight: 2 }}>
@@ -3629,12 +3631,12 @@ const ClientDashboard = () => {
                             {tx.initials}
                           </div>
                           <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{tx.name}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: themeText }}>{tx.name}</div>
                             <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 1 }}>{tx.meta}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{tx.amount}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: themeText }}>{tx.amount}</div>
                           <div style={{ fontSize: 10.5, color: tx.tone, fontWeight: 600, marginTop: 1 }}>{tx.status}</div>
                         </div>
                       </div>
@@ -3644,9 +3646,9 @@ const ClientDashboard = () => {
               </div>
 
               {/* Box 3: Payment Methods */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Payment Methods</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Payment Methods</span>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: '#3b82f6', cursor: 'pointer' }} onClick={() => setShowManagePaymentsModal(true)}>Manage</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -3654,12 +3656,12 @@ const ClientDashboard = () => {
                     <div 
                       key={method.id}
                       onClick={() => toast(`${method.type} (${method.bankName}) authorized on ${method.date}.`)}
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid #1d2433', borderRadius: 10, background: '#161c2c', cursor: 'pointer' }}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: `1px solid ${themeBorder}`, borderRadius: 10, background: themeInnerCard, cursor: 'pointer' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ fontSize: 18 }}>{method.icon}</span>
                         <div>
-                          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: themeText }}>
                             {method.type} 
                             {method.primary && (
                               <span style={{ fontSize: 9.5, fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '1px 6px', borderRadius: 4, marginLeft: 6 }}>Primary</span>
@@ -3686,8 +3688,8 @@ const ClientDashboard = () => {
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1.3fr', gap: 16 }}>
               
               {/* Box 1: Escrow Milestone Status */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 16 }}>Escrow Milestone Status</span>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 16 }}>Escrow Milestone Status</span>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10 }}>
                   {(() => {
                     const totalMilestonesCount = hubMilestones.length;
@@ -3705,12 +3707,12 @@ const ClientDashboard = () => {
                       { label: 'In Progress', value: inProgressMilestonesCount, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', icon: '⏳', pct: inProgressPct },
                       { label: 'Pending Approval', value: pendingMilestonesCount, color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.12)', icon: '🛡️', pct: pendingPct }
                     ].map((status, idx) => (
-                      <div key={idx} style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div key={idx} style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: 16 }}>{status.icon}</span>
                           {status.pct && <span style={{ fontSize: 10, fontWeight: 700, color: '#64748b' }}>{status.pct}</span>}
                         </div>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 4 }}>{status.value}</div>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: themeText, marginTop: 4 }}>{status.value}</div>
                         <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>{status.label}</div>
                       </div>
                     ));
@@ -3719,8 +3721,8 @@ const ClientDashboard = () => {
               </div>
 
               {/* Box 2: Quick Actions */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 16 }}>Quick Actions</span>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 16 }}>Quick Actions</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                   {[
                     { label: 'Create Milestone', icon: '📝', bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', action: () => setShowCreateMilestoneModal(true) },
@@ -3751,13 +3753,13 @@ const ClientDashboard = () => {
                   🧾
                 </span>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Invoices & billing statements</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: themeText }}>Invoices & billing statements</div>
                   <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 3 }}>Track, download and manage all your invoices in one place.</div>
                 </div>
               </div>
               <button 
                 onClick={() => toast.success('Tax receipts and service statements download initiated!')}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
                 onMouseLeave={(e) => e.currentTarget.style.background = '#1e293b'}
               >
@@ -3768,68 +3770,68 @@ const ClientDashboard = () => {
             {/* Top Grid: Invoice Summary Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)', gap: 16 }}>
               {/* Box 1: Total Invoices */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(16, 185, 129, 0.12)', display: 'grid', placeItems: 'center', color: '#10b981', fontSize: 18 }}>
                   💵
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Invoices</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{totalInvoicesBilledCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{totalInvoicesBilledCount}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>All time</div>
                 </div>
               </div>
 
               {/* Box 2: Paid */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(59, 130, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#3b82f6', fontSize: 18 }}>
                   📘
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Paid</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{paidInvoicesCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{paidInvoicesCount}</div>
                   <div style={{ fontSize: 11, color: '#10b981', fontWeight: 700, marginTop: 1 }}>₹{paidInvoicesSum.toLocaleString('en-IN')}</div>
                 </div>
               </div>
 
               {/* Box 3: Pending */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(245, 158, 11, 0.12)', display: 'grid', placeItems: 'center', color: '#f59e0b', fontSize: 18 }}>
                   ⏳
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pending</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{pendingInvoicesCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{pendingInvoicesCount}</div>
                   <div style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, marginTop: 1 }}>₹{pendingInvoicesSum.toLocaleString('en-IN')}</div>
                 </div>
               </div>
 
               {/* Box 4: Overdue */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(167, 139, 250, 0.12)', display: 'grid', placeItems: 'center', color: '#a78bfa', fontSize: 18 }}>
                   ⚠
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Overdue</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{overdueInvoicesCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{overdueInvoicesCount}</div>
                   <div style={{ fontSize: 11, color: '#ef4444', fontWeight: 700, marginTop: 1 }}>₹{overdueInvoicesSum.toLocaleString('en-IN')}</div>
                 </div>
               </div>
 
               {/* Box 5: Total Billed */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(20, 184, 166, 0.12)', display: 'grid', placeItems: 'center', color: '#14b8a6', fontSize: 18 }}>
                   📈
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Billed</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>₹{totalInvoicesBilledSum.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>₹{totalInvoicesBilledSum.toLocaleString('en-IN')}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>All time</div>
                 </div>
               </div>
             </div>
 
             {/* Middle Row: Invoices Table List */}
-            <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
               
               {/* Controls bar */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
@@ -3837,13 +3839,13 @@ const ClientDashboard = () => {
                   value={invoicesSearchQuery}
                   onChange={(e) => { setInvoicesSearchQuery(e.target.value); setInvoicePage(1); }}
                   placeholder="Search Invoices by name, ID or amount..." 
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, padding: '7.5px 12px', color: '#fff', fontSize: 12, outline: 'none', width: isMobile ? '100%' : 260 }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '7.5px 12px', color: '#fff', fontSize: 12, outline: 'none', width: isMobile ? '100%' : 260 }}
                 />
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: isMobile ? '100%' : 'auto', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                   <select 
                     value={invoicesStatusFilter}
                     onChange={(e) => { setInvoicesStatusFilter(e.target.value); setInvoicePage(1); }}
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '7.5px 12px', outline: 'none' }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '7.5px 12px', outline: 'none' }}
                   >
                     <option value="all">All Status</option>
                     <option value="paid">Paid</option>
@@ -3852,19 +3854,19 @@ const ClientDashboard = () => {
                   </select>
                   <button 
                     onClick={() => setShowInvoiceDateRangeModal(true)}
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '7.5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '7.5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
                   >
                     📅 {invoiceStartDate || invoiceEndDate ? 'Active Date Filter' : 'Select Date Range'}
                   </button>
                   <div style={{ position: 'relative' }}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setShowInvoiceFilterPopover(!showInvoiceFilterPopover); }}
-                      style={{ background: 'transparent', border: '1px solid #1d2433', borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '7.5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                      style={{ background: 'transparent', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '7.5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
                     >
                       🔍 Filter
                     </button>
                     {showInvoiceFilterPopover && (
-                      <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: '#111625', border: '1px solid #1d2433', borderRadius: 10, padding: 12, zIndex: 100, width: 180, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, zIndex: 100, width: 180, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Invoice Amount</div>
                         {['All', 'Under ₹10,000', 'Over ₹10,000'].map((opt, oIdx) => (
                           <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, color: '#cbd5e1', cursor: 'pointer', marginTop: 6 }}>
@@ -3890,7 +3892,7 @@ const ClientDashboard = () => {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left', minWidth: 650 }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b' }}>
+                    <tr style={{ borderBottom: `1px solid ${themeBorder}`, color: '#64748b' }}>
                       <th style={{ padding: '10px 0', fontWeight: 600 }}>Invoice ID</th>
                       <th style={{ padding: '10px 0', fontWeight: 600 }}>Project / Description</th>
                       <th style={{ padding: '10px 0', fontWeight: 600 }}>Invoice Date</th>
@@ -3931,7 +3933,7 @@ const ClientDashboard = () => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
                             <button 
                               onClick={() => { setActiveReceipt({ id: inv.id, project: inv.title, amount: Number(inv.amount.replace(/[^0-9]/g, '')), date: inv.date, status: inv.status === 'PAID' ? 'Paid' : 'Unpaid' }); }}
-                              style={{ padding: '5px 10.5px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                              style={{ padding: '5px 10.5px', background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
                             >
                               👁️ View
                             </button>
@@ -3944,7 +3946,7 @@ const ClientDashboard = () => {
                                 •••
                               </span>
                               {activeInvoiceDropdown === inv.id && (
-                                <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 0', zIndex: 100, width: 160, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                                <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '6px 0', zIndex: 100, width: 160, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
                                   <div 
                                     onClick={() => {
                                       setActiveInvoiceDropdown(null);
@@ -4024,11 +4026,11 @@ const ClientDashboard = () => {
                 </span>
                 {totalInvoicePages > 1 && (
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setInvoicePage(prev => Math.max(prev - 1, 1))} style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>‹</button>
+                    <button onClick={() => setInvoicePage(prev => Math.max(prev - 1, 1))} style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>‹</button>
                     {Array.from({ length: totalInvoicePages }, (_, i) => i + 1).map(page => (
                       <button key={page} onClick={() => setInvoicePage(page)} style={{ width: 24, height: 24, borderRadius: 6, background: invoicePage === page ? '#10b981' : '#161c2c', border: invoicePage === page ? 'none' : '1px solid #1d2433', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11, fontWeight: invoicePage === page ? 700 : 500 }}>{page}</button>
                     ))}
-                    <button onClick={() => setInvoicePage(prev => Math.min(prev + 1, totalInvoicePages))} style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>›</button>
+                    <button onClick={() => setInvoicePage(prev => Math.min(prev + 1, totalInvoicePages))} style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>›</button>
                   </div>
                 )}
               </div>
@@ -4037,8 +4039,8 @@ const ClientDashboard = () => {
             {/* Bottom row: Summary donut chart (left) & Quick Actions (right) */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.6fr 1.4fr', gap: 16 }}>
               {/* Box 1: Invoice Summary */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 14 }}>Invoice Summary</span>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 14 }}>Invoice Summary</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
                   {/* Donut Chart */}
                   <div style={{ width: 90, height: 90, position: 'relative', flexShrink: 0 }}>
@@ -4075,8 +4077,8 @@ const ClientDashboard = () => {
               </div>
 
               {/* Box 2: Quick Actions */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 16 }}>Quick Actions</span>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 16 }}>Quick Actions</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                   {[
                     {
@@ -4148,7 +4150,7 @@ const ClientDashboard = () => {
                   📊
                 </span>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Spend Reports & Analytics</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: themeText }}>Spend Reports & Analytics</div>
                   <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 3 }}>Track your spending, analyze trends and make better business decisions.</div>
                 </div>
               </div>
@@ -4178,61 +4180,61 @@ const ClientDashboard = () => {
             {/* Top Grid: Reports Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)', gap: 16 }}>
               {/* Box 1: Total Spent */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(139, 92, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#a78bfa', fontSize: 18 }}>
                   👛
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Spent</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>₹{reportTotalSpentVal.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>₹{reportTotalSpentVal.toLocaleString('en-IN')}</div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: reportSpendDiffPct >= 0 ? '#10b981' : '#ef4444', marginTop: 2 }}>{reportSpendDiffPct >= 0 ? '↑' : '↓'} {Math.abs(reportSpendDiffPct).toFixed(1)}% <span style={{ color: '#64748b', fontWeight: 500 }}>vs last month</span></div>
                 </div>
               </div>
 
               {/* Box 2: Total Transactions */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(59, 130, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#3b82f6', fontSize: 18 }}>
                   📄
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Transactions</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{reportTotalTransactionsCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{reportTotalTransactionsCount}</div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: reportTxCountDiffPct >= 0 ? '#10b981' : '#ef4444', marginTop: 2 }}>{reportTxCountDiffPct >= 0 ? '↑' : '↓'} {Math.abs(reportTxCountDiffPct).toFixed(1)}% <span style={{ color: '#64748b', fontWeight: 500 }}>vs last month</span></div>
                 </div>
               </div>
 
               {/* Box 3: Average Order Value */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(16, 185, 129, 0.12)', display: 'grid', placeItems: 'center', color: '#10b981', fontSize: 18 }}>
                   💲
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Average Order Value</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>₹{Math.round(reportTotalAOV).toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>₹{Math.round(reportTotalAOV).toLocaleString('en-IN')}</div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: reportAovDiffPct >= 0 ? '#10b981' : '#ef4444', marginTop: 2 }}>{reportAovDiffPct >= 0 ? '↑' : '↓'} {Math.abs(reportAovDiffPct).toFixed(1)}% <span style={{ color: '#64748b', fontWeight: 500 }}>vs last month</span></div>
                 </div>
               </div>
 
               {/* Box 4: Top Category */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(245, 158, 11, 0.12)', display: 'grid', placeItems: 'center', color: '#f59e0b', fontSize: 18 }}>
                   📊
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Top Category</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 3 }}>{reportTopCategory}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: themeText, marginTop: 3 }}>{reportTopCategory}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>₹{reportTopCategoryAmt.toLocaleString('en-IN')} ({reportTopCategoryPct.toFixed(1)}%)</div>
                 </div>
               </div>
 
               {/* Box 5: This Month Spend */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(167, 139, 250, 0.12)', display: 'grid', placeItems: 'center', color: '#a78bfa', fontSize: 18 }}>
                   📅
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>This Month Spend</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>₹{reportThisMonthSpend.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>₹{reportThisMonthSpend.toLocaleString('en-IN')}</div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: reportSpendDiffPct >= 0 ? '#10b981' : '#ef4444', marginTop: 2 }}>{reportSpendDiffPct >= 0 ? '↑' : '↓'} {Math.abs(reportSpendDiffPct).toFixed(1)}% <span style={{ color: '#64748b', fontWeight: 500 }}>vs last month</span></div>
                 </div>
               </div>
@@ -4241,13 +4243,13 @@ const ClientDashboard = () => {
             {/* Middle Row: Spend Progression Curve Chart & Spending Category Donut */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1.3fr', gap: 16 }}>
               {/* Box 1: Spend Progression Over Time */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Spend Progression Over Time</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Spend Progression Over Time</span>
                   <select 
                     value={spendOverviewRange} 
                     onChange={(e) => { setSpendOverviewRange(e.target.value); setActiveSpendPoint(null); }}
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 6, color: '#cbd5e1', fontSize: 11.5, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 6, color: '#cbd5e1', fontSize: 11.5, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
                   >
                     <option value="month">This Month</option>
                     <option value="year">This Year</option>
@@ -4310,7 +4312,7 @@ const ClientDashboard = () => {
                     {/* Popover highlight on active node */}
                     {activeSpendPoint && (
                       <foreignObject x={activeSpendPoint.x - 50} y={activeSpendPoint.y - 42} width="100" height="38" style={{ pointerEvents: 'none' }}>
-                        <div style={{ background: '#0e1320', border: '1.5px solid #6366f1', borderRadius: 6, padding: '3px 6px', fontSize: 9.5, textAlign: 'center', color: '#fff', boxShadow: '0 4px 10px rgba(0,0,0,0.5)', position: 'relative' }}>
+                        <div style={{ background: themeInputBg, border: '1.5px solid #6366f1', borderRadius: 6, padding: '3px 6px', fontSize: 9.5, textAlign: 'center', color: '#fff', boxShadow: '0 4px 10px rgba(0,0,0,0.5)', position: 'relative' }}>
                           <div style={{ color: '#64748b', fontSize: 8 }}>{activeSpendPoint.label}</div>
                           <strong style={{ color: '#6366f1' }}>{activeSpendPoint.val}</strong>
                         </div>
@@ -4326,13 +4328,13 @@ const ClientDashboard = () => {
               </div>
 
               {/* Box 2: Spending by Category Donut */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Spending by Category</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Spending by Category</span>
                   <select 
                     value={spendingCategoryRange} 
                     onChange={(e) => setSpendingCategoryRange(e.target.value)}
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 6, color: '#cbd5e1', fontSize: 11.5, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 6, color: '#cbd5e1', fontSize: 11.5, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
                   >
                     <option value="all">All Time</option>
                     <option value="month">This Month</option>
@@ -4381,15 +4383,15 @@ const ClientDashboard = () => {
             {/* Third Row: Top Expenses Table & Monthly Comparison / Insights */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1.3fr', gap: 16 }}>
               {/* Left Column: Top Expenses Table */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Top Expenses</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Top Expenses</span>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }} onClick={() => setShowAllExpensesModal(true)}>View All ▼</span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left', minWidth: 500 }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b' }}>
+                      <tr style={{ borderBottom: `1px solid ${themeBorder}`, color: '#64748b' }}>
                         <th style={{ padding: '8px 0', width: 30 }}>#</th>
                         <th style={{ padding: '8px 0', fontWeight: 600 }}>Project / Description</th>
                         <th style={{ padding: '8px 0', fontWeight: 600 }}>Category</th>
@@ -4410,7 +4412,7 @@ const ClientDashboard = () => {
                               <div style={{ width: 24, height: 24, borderRadius: '50%', background: exp.bg, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700 }}>
                                 {exp.initial}
                               </div>
-                              <span style={{ color: '#fff' }}>{exp.name}</span>
+                              <span style={{ color: themeText }}>{exp.name}</span>
                             </div>
                           </td>
                           <td style={{ padding: '12px 0', fontWeight: 700, color: '#fff' }}>{exp.amt}</td>
@@ -4429,11 +4431,11 @@ const ClientDashboard = () => {
                   </span>
                   {totalReportPages > 1 && (
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => setReportsPage(prev => Math.max(prev - 1, 1))} style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>‹</button>
+                      <button onClick={() => setReportsPage(prev => Math.max(prev - 1, 1))} style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>‹</button>
                       {Array.from({ length: totalReportPages }, (_, i) => i + 1).map(page => (
                         <button key={page} onClick={() => setReportsPage(page)} style={{ width: 24, height: 24, borderRadius: 6, background: reportsPage === page ? '#10b981' : '#161c2c', border: reportsPage === page ? 'none' : '1px solid #1d2433', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11, fontWeight: reportsPage === page ? 700 : 500 }}>{page}</button>
                       ))}
-                      <button onClick={() => setReportsPage(prev => Math.min(prev + 1, totalReportPages))} style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>›</button>
+                      <button onClick={() => setReportsPage(prev => Math.min(prev + 1, totalReportPages))} style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>›</button>
                     </div>
                   )}
                 </div>
@@ -4443,13 +4445,13 @@ const ClientDashboard = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
                 {/* Panel 1: Monthly Comparison Bar Chart */}
-                <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+                <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Monthly Comparison</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Monthly Comparison</span>
                     <select 
                       value={monthlyComparisonRange} 
                       onChange={(e) => { setMonthlyComparisonRange(e.target.value); setActiveComparisonBarIdx(null); }}
-                      style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 6, color: '#cbd5e1', fontSize: 11, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
+                      style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 6, color: '#cbd5e1', fontSize: 11, padding: '4px 8px', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="6m">Last 6 Months</option>
                       <option value="3m">Last 3 Months</option>
@@ -4467,7 +4469,7 @@ const ClientDashboard = () => {
                           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, position: 'relative', cursor: 'pointer' }}
                         >
                           {isHighlighted && (
-                            <div style={{ position: 'absolute', top: -36, background: '#0e1320', border: '1.5px solid #6366f1', color: '#fff', fontSize: 9.5, padding: '3px 6px', borderRadius: 6, fontWeight: 700, zIndex: 10, whiteSpace: 'nowrap', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
+                            <div style={{ position: 'absolute', top: -36, background: themeInputBg, border: '1.5px solid #6366f1', color: '#fff', fontSize: 9.5, padding: '3px 6px', borderRadius: 6, fontWeight: 700, zIndex: 10, whiteSpace: 'nowrap', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
                               {bar.amt}
                             </div>
                           )}
@@ -4480,8 +4482,8 @@ const ClientDashboard = () => {
                 </div>
 
                 {/* Panel 2: Insights */}
-                <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 14 }}>Insights</span>
+                <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 14 }}>Insights</span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11.5, color: '#94a3b8', lineHeight: 1.4 }}>
                     <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#10b981' }}>✓</span> Your spending is {reportSpendDiffPct >= 0 ? 'up' : 'down'} by {Math.abs(reportSpendDiffPct).toFixed(1)}% compared to last month.</div>
                     <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#10b981' }}>✓</span> {reportTopCategory} category accounts for {reportTopCategoryPct.toFixed(1)}% of total spending.</div>
@@ -4494,8 +4496,8 @@ const ClientDashboard = () => {
             </div>
 
             {/* Bottom Row: Quick Actions */}
-            <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 16 }}>Quick Actions</span>
+            <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 16 }}>Quick Actions</span>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap: 12 }}>
                 {[
                   {
@@ -4571,7 +4573,7 @@ const ClientDashboard = () => {
                   <div 
                     key={idx} 
                     onClick={act.action}
-                    style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 10, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'border-color 0.2s' }}
+                    style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'border-color 0.2s' }}
                     onMouseEnter={(e) => e.currentTarget.style.borderColor = act.color}
                     onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1d2433'}
                   >
@@ -4594,7 +4596,7 @@ const ClientDashboard = () => {
                   👥
                 </span>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Starred Candidates & Claude AI Ranker</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: themeText }}>Starred Candidates & Claude AI Ranker</div>
                   <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 3 }}>Manage your shortlisted candidates and get AI-powered ranking & insights.</div>
                 </div>
               </div>
@@ -4612,61 +4614,61 @@ const ClientDashboard = () => {
             {/* Top Grid: Freelancer Summary Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)', gap: 16 }}>
               {/* Box 1: Total Shortlisted */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(16, 185, 129, 0.12)', display: 'grid', placeItems: 'center', color: '#10b981', fontSize: 18 }}>
                   👥
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Shortlisted</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{shortlistedCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{shortlistedCount}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Freelancers</div>
                 </div>
               </div>
 
               {/* Box 2: Top Match */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(139, 92, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#a78bfa', fontSize: 18 }}>
                   📈
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Top Match</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{topMatchScore}%</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{topMatchScore}%</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Best Match Score</div>
                 </div>
               </div>
 
               {/* Box 3: Avg. Match Score */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(59, 130, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#3b82f6', fontSize: 18 }}>
                   🛡️
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg. Match Score</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{avgMatchScore}%</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{avgMatchScore}%</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Across all shortlisted</div>
                 </div>
               </div>
 
               {/* Box 4: Responded */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(245, 158, 11, 0.12)', display: 'grid', placeItems: 'center', color: '#f59e0b', fontSize: 18 }}>
                   ⭐
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Responded</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{totalRespondedCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{totalRespondedCount}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Freelancers</div>
                 </div>
               </div>
 
               {/* Box 5: Invited */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(20, 184, 166, 0.12)', display: 'grid', placeItems: 'center', color: '#14b8a6', fontSize: 18 }}>
                   📨
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Invited to Project</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{totalPostedJobsCount}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{totalPostedJobsCount}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Jobs Posted</div>
                 </div>
               </div>
@@ -4675,15 +4677,15 @@ const ClientDashboard = () => {
             {/* Middle Row: Shortlisted Candidates & AI proposals match analysis */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.75fr 1.25fr', gap: 16 }}>
               {/* Left Column: Shortlisted Candidates */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Shortlisted Candidates</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Shortlisted Candidates</span>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <input 
                       value={freelancerSearchQuery}
                       onChange={(e) => setFreelancerSearchQuery(e.target.value)}
                       placeholder="Search freelancers..." 
-                      style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, outline: 'none', width: 140 }}
+                      style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, outline: 'none', width: 140 }}
                     />
                     <div style={{ position: 'relative' }}>
                       <button 
@@ -4708,8 +4710,8 @@ const ClientDashboard = () => {
                           position: 'absolute', 
                           top: 34, 
                           right: 0, 
-                          background: '#111625', 
-                          border: '1px solid #1d2433', 
+                          background: themeCard, 
+                          border: `1px solid ${themeBorder}`, 
                           borderRadius: 8, 
                           boxShadow: '0 10px 25px rgba(0,0,0,0.3)', 
                           zIndex: 100, 
@@ -4751,7 +4753,7 @@ const ClientDashboard = () => {
                       const matchesSkill = selectedSkillFilter === 'All' || cand.skills.includes(selectedSkillFilter);
                       return matchesSearch && matchesSkill;
                     }).slice((shortlistPage - 1) * 5, shortlistPage * 5).map((cand, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid rgba(255,255,255,0.02)', borderRadius: 10, background: '#161c2c', flexWrap: 'wrap', gap: 12 }}>
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid rgba(255,255,255,0.02)', borderRadius: 10, background: themeInnerCard, flexWrap: 'wrap', gap: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 200 }}>
                           <div style={{ width: 34, height: 34, borderRadius: '50%', background: cand.bg, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, position: 'relative' }}>
                             {cand.initial}
@@ -4793,18 +4795,18 @@ const ClientDashboard = () => {
                           <span style={{ fontSize: 10.5, color: '#64748b', display: 'block' }}>Skills</span>
                           <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
                             {cand.skills.map((sk, sIdx) => (
-                              <span key={sIdx} style={{ fontSize: 10, background: '#1e293b', border: '1px solid #1d2433', borderRadius: 4, padding: '2px 6px', color: '#cbd5e1' }}>{sk}</span>
+                              <span key={sIdx} style={{ fontSize: 10, background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 4, padding: '2px 6px', color: '#cbd5e1' }}>{sk}</span>
                             ))}
-                            <span style={{ fontSize: 10, background: '#1e293b', border: '1px solid #1d2433', borderRadius: 4, padding: '2px 6px', color: '#64748b' }}>+2</span>
+                            <span style={{ fontSize: 10, background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 4, padding: '2px 6px', color: '#64748b' }}>+2</span>
                           </div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginTop: 8 }}>{cand.rate}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: themeText, marginTop: 8 }}>{cand.rate}</div>
                         </div>
 
                         {/* Actions */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <button 
                             onClick={() => setActiveFreelancerProfile(cand)}
-                            style={{ padding: '6px 12px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                            style={{ padding: '6px 12px', background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
                           >
                             View Profile
                           </button>
@@ -4842,11 +4844,11 @@ const ClientDashboard = () => {
                         Showing {filteredCands.length === 0 ? 0 : ((displayPage - 1) * 5) + 1} to {Math.min(displayPage * 5, filteredCands.length)} of {filteredCands.length} candidates
                       </span>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => setShortlistPage(prev => Math.max(prev - 1, 1))} style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>‹</button>
+                        <button onClick={() => setShortlistPage(prev => Math.max(prev - 1, 1))} style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>‹</button>
                         {Array.from({ length: totalPages }, (_, pIdx) => pIdx + 1).map(page => (
                           <button key={page} onClick={() => setShortlistPage(page)} style={{ width: 24, height: 24, borderRadius: 6, background: shortlistPage === page ? '#2563eb' : '#161c2c', border: shortlistPage === page ? 'none' : '1px solid #1d2433', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11, fontWeight: shortlistPage === page ? 700 : 500 }}>{page}</button>
                         ))}
-                        <button onClick={() => setShortlistPage(prev => Math.min(prev + 1, totalPages))} style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>›</button>
+                        <button onClick={() => setShortlistPage(prev => Math.min(prev + 1, totalPages))} style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 11 }}>›</button>
                       </div>
                     </div>
                   );
@@ -4857,8 +4859,8 @@ const ClientDashboard = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
                 {/* Panel 1: Claude AI Proposals Match Analysis */}
-                <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 14 }}>✨ Claude AI Proposals Match Analysis</span>
+                <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 14 }}>✨ Claude AI Proposals Match Analysis</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                     {/* Ring match */}
                     <div style={{ width: 84, height: 84, position: 'relative', flexShrink: 0 }}>
@@ -4867,7 +4869,7 @@ const ClientDashboard = () => {
                         <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#2563eb" strokeWidth="3" strokeDasharray={`${avgMatchScore}, 100`} strokeLinecap="round" />
                       </svg>
                       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{avgMatchScore}%</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: themeText }}>{avgMatchScore}%</span>
                         <span style={{ fontSize: 7, color: '#64748b', textTransform: 'uppercase', marginTop: 2 }}>Overall Match</span>
                       </div>
                     </div>
@@ -4895,8 +4897,8 @@ const ClientDashboard = () => {
                   </div>
 
                   {/* AI Insights Box */}
-                  <div style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 10, padding: 14, marginTop: 16 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <div style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 14, marginTop: 16 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: themeText, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                       <span>💡</span> AI Insights
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11.5, color: '#94a3b8', lineHeight: 1.4 }}>
@@ -4909,7 +4911,7 @@ const ClientDashboard = () => {
 
                   <button 
                     onClick={() => setShowAnalysisReportModal(true)}
-                    style={{ width: '100%', background: 'transparent', border: '1px solid #1d2433', borderRadius: 8, padding: '8px 0', color: '#fff', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, cursor: 'pointer' }}
+                    style={{ width: '100%', background: 'transparent', border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '8px 0', color: '#fff', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, cursor: 'pointer' }}
                   >
                     📊 View Full Analysis Report
                   </button>
@@ -4921,8 +4923,8 @@ const ClientDashboard = () => {
             {/* Bottom Row: Candidate Activity & Quick Actions */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.75fr 1.25fr', gap: 16 }}>
               {/* Box 1: Candidate Activity */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 16 }}>Candidate Activity</span>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 16 }}>Candidate Activity</span>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)', gap: 10 }}>
                   {[
                     { label: 'Invited', value: totalPostedJobsCount, color: '#14b8a6', bg: 'rgba(20, 184, 166, 0.12)', icon: '📨' },
@@ -4931,9 +4933,9 @@ const ClientDashboard = () => {
                     { label: 'Submitted Proposal', value: totalRespondedCount, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', icon: '📋' },
                     { label: 'Hired', value: jobs.filter(j => j.hiredFreelancer).length, color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', icon: '✅' }
                   ].map((activity, idx) => (
-                    <div key={idx} style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div key={idx} style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span style={{ fontSize: 16 }}>{activity.icon}</span>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 4 }}>{activity.value}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: themeText, marginTop: 4 }}>{activity.value}</div>
                       <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>{activity.label}</div>
                     </div>
                   ))}
@@ -4941,8 +4943,8 @@ const ClientDashboard = () => {
               </div>
 
               {/* Box 2: Quick Actions */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 16 }}>Quick Actions</span>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 16 }}>Quick Actions</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                   {[
                     { label: 'Invite Freelancers', icon: '📨', bg: 'rgba(37, 99, 235, 0.12)', color: '#2563eb', action: () => setShowInviteModal(true) },
@@ -4979,7 +4981,7 @@ const ClientDashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
                   <button 
                     onClick={() => setActiveTab('settings')}
-                    style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 8, width: 34, height: 34, display: 'grid', placeItems: 'center', color: '#cbd5e1', cursor: 'pointer', transition: 'background 0.2s' }}
+                    style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 8, width: 34, height: 34, display: 'grid', placeItems: 'center', color: '#cbd5e1', cursor: 'pointer', transition: 'background 0.2s' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#1e293b'}
                     onMouseLeave={(e) => e.currentTarget.style.background = '#161c2c'}
                   >
@@ -4997,7 +4999,7 @@ const ClientDashboard = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 20, color: '#10b981' }}>📄</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Active Contracts & Work Agreements</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: themeText }}>Active Contracts & Work Agreements</span>
               </div>
               <button 
                 onClick={() => setShowNewContractModal(true)}
@@ -5012,49 +5014,49 @@ const ClientDashboard = () => {
             {/* Top Grid: Contract Summary Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16 }}>
               {/* Box 1: Active Contracts */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(16, 185, 129, 0.12)', display: 'grid', placeItems: 'center', color: '#10b981', fontSize: 20 }}>
                   📄
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Contracts</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 4 }}>{activeContractsCount}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: themeText, marginTop: 4 }}>{activeContractsCount}</div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', marginTop: 3 }}>↑ 9% <span style={{ color: '#64748b', fontWeight: 500 }}>vs last month</span></div>
                 </div>
               </div>
 
               {/* Box 2: Total Contract Value */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(59, 130, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#3b82f6', fontSize: 20 }}>
                   👥
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Contract Value</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 4 }}>₹{totalContractVal.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: themeText, marginTop: 4 }}>₹{totalContractVal.toLocaleString('en-IN')}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>All contracts</div>
                 </div>
               </div>
 
               {/* Box 3: Expiring Soon */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(167, 139, 250, 0.12)', display: 'grid', placeItems: 'center', color: '#a78bfa', fontSize: 20 }}>
                   📅
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expiring Soon</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 4 }}>{upcomingExpirationsCount}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: themeText, marginTop: 4 }}>{upcomingExpirationsCount}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>Next 30 days</div>
                 </div>
               </div>
 
               {/* Box 4: Completed */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(249, 115, 22, 0.12)', display: 'grid', placeItems: 'center', color: '#f97316', fontSize: 20 }}>
                   🛡️
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 4 }}>{completedContractsCount}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: themeText, marginTop: 4 }}>{completedContractsCount}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>All time</div>
                 </div>
               </div>
@@ -5062,12 +5064,12 @@ const ClientDashboard = () => {
 
             {/* Featured Active Service Agreement Card */}
             {featuredContract && (
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: featuredContract.bg || 'rgba(16, 185, 129, 0.12)', display: 'grid', placeItems: 'center', color: featuredContract.color || '#10b981', fontSize: 22, flexShrink: 0 }}>
                   📄
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{featuredContract.title}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: themeText }}>{featuredContract.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap', fontSize: 11.5 }}>
                     <span style={{ background: featuredContract.bg || 'rgba(16, 185, 129, 0.15)', color: featuredContract.color || '#10b981', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>{featuredContract.status}</span>
                     <span style={{ color: '#64748b' }}>Contract ID: {featuredContract.id}</span>
@@ -5075,25 +5077,25 @@ const ClientDashboard = () => {
                     <span style={{ color: '#64748b' }}>Signed on: {featuredContract.start}</span>
                   </div>
                   <p style={{ fontSize: 12.5, color: '#94a3b8', margin: '10px 0 0', lineHeight: 1.4 }}>
-                    Secure escrow budget is <strong style={{ color: '#fff' }}>{featuredContract.val}</strong>. All deliverables transfer fully to {featuredContract.partner.split(' / ')[0] || 'Client'} on work approval.
+                    Secure escrow budget is <strong style={{ color: themeText }}>{featuredContract.val}</strong>. All deliverables transfer fully to {featuredContract.partner.split(' / ')[0] || 'Client'} on work approval.
                   </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, alignSelf: isMobile ? 'flex-end' : 'center', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'flex-end' : 'flex-start' }}>
                   <button 
                     onClick={() => { setPreviewContractData(featuredContract); setShowContractPreviewModal(true); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                   >
                     👁️ View Contract
                   </button>
                   <div style={{ position: 'relative' }}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'featured-contract' ? null : 'featured-contract'); }}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #1d2433', background: 'transparent', color: '#64748b', fontSize: 14, cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${themeBorder}`, background: 'transparent', color: '#64748b', fontSize: 14, cursor: 'pointer', display: 'grid', placeItems: 'center' }}
                     >
                       ⋮
                     </button>
                     {activeDropdown === 'featured-contract' && (
-                      <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 0', zIndex: 100, width: 160, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                      <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '6px 0', zIndex: 100, width: 160, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
                         <div 
                           onClick={() => {
                             setActiveDropdown(null);
@@ -5151,15 +5153,15 @@ const ClientDashboard = () => {
             {/* Middle row: All Contracts (left) & Expirations, Quick Actions, Health (right) */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1.3fr', gap: 16 }}>
               {/* Left Column: All Contracts List Table */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>All Contracts</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>All Contracts</span>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <button 
                       onClick={() => setKanbanMode(!kanbanMode)}
                       style={{
                         background: 'transparent',
-                        border: '1px solid #1d2433',
+                        border: `1px solid ${themeBorder}`,
                         borderRadius: 8,
                         color: '#10b981',
                         fontSize: 12,
@@ -5174,17 +5176,17 @@ const ClientDashboard = () => {
                       value={contractsSearchQuery}
                       onChange={(e) => { setContractsSearchQuery(e.target.value); setContractsPage(1); }}
                       placeholder="Search contracts..." 
-                      style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, outline: 'none', width: 140 }}
+                      style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, outline: 'none', width: 140 }}
                     />
                     <div style={{ position: 'relative' }}>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setShowContractFilterPopover(!showContractFilterPopover); }}
-                        style={{ background: 'transparent', border: '1px solid #1d2433', borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '5.5px 10.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ background: 'transparent', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '5.5px 10.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                       >
                         🔍 Filter
                       </button>
                       {showContractFilterPopover && (
-                        <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: '#111625', border: '1px solid #1d2433', borderRadius: 10, padding: 12, zIndex: 100, width: 180, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, zIndex: 100, width: 180, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Contract Value</div>
                           {['All', 'Under ₹100,000', 'Over ₹100,000'].map((opt, oIdx) => (
                             <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, color: '#cbd5e1', cursor: 'pointer', marginTop: 6 }}>
@@ -5217,8 +5219,8 @@ const ClientDashboard = () => {
                     ].map(col => {
                       const tasks = kanbanTasks.filter(t => t.column === col.key && t.title.toLowerCase().includes(contractsSearchQuery.toLowerCase()));
                       return (
-                        <div key={col.key} style={{ background: '#0e1320', borderRadius: 10, padding: 12, border: '1px solid #1d2433', minHeight: 340, display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid #1d2433', paddingBottom: 6 }}>
+                        <div key={col.key} style={{ background: themeInputBg, borderRadius: 10, padding: 12, border: `1px solid ${themeBorder}`, minHeight: 340, display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: `1px solid ${themeBorder}`, paddingBottom: 6 }}>
                             <span style={{ fontSize: 12, fontWeight: 700, color: col.color }}>{col.name} ({tasks.length})</span>
                             <button 
                               onClick={() => {
@@ -5246,8 +5248,8 @@ const ClientDashboard = () => {
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, overflowY: 'auto' }}>
                             {tasks.map(t => (
-                              <div key={t.id} style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{t.title}</div>
+                              <div key={t.id} style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: themeText }}>{t.title}</div>
                                 <div style={{ fontSize: 10.5, color: '#94a3b8' }}>Assignee: {t.partner}</div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                                   <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>{t.val}</span>
@@ -5292,7 +5294,7 @@ const ClientDashboard = () => {
                   /* Standard Table View */
                   <>
                     {/* Filter Tabs */}
-                    <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid #1d2433', pb: 10, mb: 14, overflowX: 'auto', paddingBottom: 10 }}>
+                    <div style={{ display: 'flex', gap: 12, borderBottom: `1px solid ${themeBorder}`, pb: 10, mb: 14, overflowX: 'auto', paddingBottom: 10 }}>
                       {['All', 'Active', 'Pending', 'Completed', 'Cancelled'].map((tab, idx) => (
                         <span 
                           key={idx} 
@@ -5308,7 +5310,7 @@ const ClientDashboard = () => {
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left', minWidth: 500 }}>
                         <thead>
-                          <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b' }}>
+                          <tr style={{ borderBottom: `1px solid ${themeBorder}`, color: '#64748b' }}>
                             <th style={{ padding: '8px 0', fontWeight: 600 }}>Contract</th>
                             <th style={{ padding: '8px 0', fontWeight: 600 }}>Client / Freelancer</th>
                             <th style={{ padding: '8px 0', fontWeight: 600 }}>Value</th>
@@ -5347,7 +5349,7 @@ const ClientDashboard = () => {
                                   •••
                                 </span>
                                 {activeDropdown === `contract-${ctr.id}` && (
-                                  <div style={{ position: 'absolute', right: 0, top: '80%', background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '6px 0', zIndex: 100, width: 155, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                                  <div style={{ position: 'absolute', right: 0, top: '80%', background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '6px 0', zIndex: 100, width: 155, textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
                                     <div 
                                       onClick={() => { 
                                         setActiveDropdown(null); 
@@ -5414,14 +5416,14 @@ const ClientDashboard = () => {
                         <button 
                           onClick={() => setContractsPage(1)} 
                           disabled={currentContractsPage === 1}
-                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
                         >
                           «
                         </button>
                         <button 
                           onClick={() => setContractsPage(prev => Math.max(prev - 1, 1))} 
                           disabled={currentContractsPage === 1}
-                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: currentContractsPage === 1 ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === 1 ? 'not-allowed' : 'pointer', fontSize: 11 }}
                         >
                           ‹
                         </button>
@@ -5437,14 +5439,14 @@ const ClientDashboard = () => {
                         <button 
                           onClick={() => setContractsPage(prev => Math.min(prev + 1, totalContractPages))} 
                           disabled={currentContractsPage === totalContractPages}
-                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
                         >
                           ›
                         </button>
                         <button 
                           onClick={() => setContractsPage(totalContractPages)} 
                           disabled={currentContractsPage === totalContractPages}
-                          style={{ width: 24, height: 24, borderRadius: 6, background: '#161c2c', border: '1px solid #1d2433', color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
+                          style={{ width: 24, height: 24, borderRadius: 6, background: themeInnerCard, border: `1px solid ${themeBorder}`, color: currentContractsPage === totalContractPages ? '#475569' : '#64748b', display: 'grid', placeItems: 'center', cursor: currentContractsPage === totalContractPages ? 'not-allowed' : 'pointer', fontSize: 11 }}
                         >
                           »
                         </button>
@@ -5458,9 +5460,9 @@ const ClientDashboard = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
                 {/* Panel 1: Upcoming Expirations */}
-                <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+                <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Upcoming Expirations</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Upcoming Expirations</span>
                     <span style={{ fontSize: 11.5, fontWeight: 700, color: '#3b82f6', cursor: 'pointer' }} onClick={() => setShowAllExpirationsModal(true)}>View all</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -5475,7 +5477,7 @@ const ClientDashboard = () => {
                             {exp.initial}
                           </div>
                           <div>
-                            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{exp.title}</div>
+                            <div style={{ fontSize: 12.5, fontWeight: 700, color: themeText }}>{exp.title}</div>
                             <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>{exp.exp}</div>
                           </div>
                         </div>
@@ -5486,8 +5488,8 @@ const ClientDashboard = () => {
                 </div>
 
                 {/* Panel 2: Quick Actions */}
-                <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 14 }}>Quick Actions</span>
+                <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 14 }}>Quick Actions</span>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     {[
                       { title: 'Create New Contract', desc: 'templates & wizards', icon: '📄', bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', action: () => setShowNewContractModal(true) },
@@ -5498,13 +5500,13 @@ const ClientDashboard = () => {
                       <div 
                         key={idx} 
                         onClick={act.action}
-                        style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 10, padding: 12, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, transition: 'border-color 0.2s' }}
+                        style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, transition: 'border-color 0.2s' }}
                         onMouseEnter={(e) => e.currentTarget.style.borderColor = act.color}
                         onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1d2433'}
                       >
                         <span style={{ width: 28, height: 28, borderRadius: 6, background: act.bg, color: act.color, display: 'grid', placeItems: 'center', fontSize: 15 }}>{act.icon}</span>
                         <div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{act.title}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: themeText }}>{act.title}</div>
                         </div>
                       </div>
                     ))}
@@ -5512,8 +5514,8 @@ const ClientDashboard = () => {
                 </div>
 
                 {/* Panel 3: Contract Health */}
-                <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 14 }}>Contract Health</span>
+                <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 14 }}>Contract Health</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     {/* Circle Health Ring */}
                     <div style={{ width: 72, height: 72, position: 'relative', flexShrink: 0 }}>
@@ -5574,14 +5576,14 @@ const ClientDashboard = () => {
                       ⭐
                     </span>
                     <div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Starred Freelance Candidates</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: themeText }}>Starred Freelance Candidates</div>
                       <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 3 }}>Your saved and favorite candidates for quick access and future opportunities.</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button 
                       onClick={() => setShowInviteModal(true)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
                       onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
                       onMouseLeave={(e) => e.currentTarget.style.background = '#1e293b'}
                     >
@@ -5601,49 +5603,49 @@ const ClientDashboard = () => {
                 {/* Top Grid: Favorites Summary Metrics */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16 }}>
                   {/* Box 1: Total Favorites */}
-                  <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(139, 92, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#a78bfa', fontSize: 18 }}>
                       👥
                     </div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Favorites</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{totalFavoritesCount}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{totalFavoritesCount}</div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Candidates</div>
                     </div>
                   </div>
 
                   {/* Box 2: Available Now */}
-                  <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(59, 130, 246, 0.12)', display: 'grid', placeItems: 'center', color: '#3b82f6', fontSize: 18 }}>
                       💼
                     </div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Available Now</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{availableNowCount}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{availableNowCount}</div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Candidates</div>
                     </div>
                   </div>
 
                   {/* Box 3: Hired from Favorites */}
-                  <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(16, 185, 129, 0.12)', display: 'grid', placeItems: 'center', color: '#10b981', fontSize: 18 }}>
                       ✅
                     </div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hired from Favorites</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{hiredFromFavoritesCount}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{hiredFromFavoritesCount}</div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Candidates</div>
                     </div>
                   </div>
 
                   {/* Box 4: Avg. Rating */}
-                  <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(245, 158, 11, 0.12)', display: 'grid', placeItems: 'center', color: '#f59e0b', fontSize: 18 }}>
                       ⭐
                     </div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg. Rating</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 3 }}>{avgRatingVal} / 5</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: themeText, marginTop: 3 }}>{avgRatingVal} / 5</div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>Across all favorites</div>
                     </div>
                   </div>
@@ -5652,20 +5654,20 @@ const ClientDashboard = () => {
                 {/* Middle Row: Starred Candidates & Candidate Insights */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1.3fr', gap: 16 }}>
                   {/* Left Column: Your Starred Candidates */}
-                  <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Your Starred Candidates ({starredCandidatesList.length})</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Your Starred Candidates ({starredCandidatesList.length})</span>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <input 
                           placeholder="Search favorites..." 
                           value={favoritesSearchQuery}
                           onChange={(e) => { setFavoritesSearchQuery(e.target.value); setFavoritesPage(1); }}
-                          style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, outline: 'none', width: 140 }}
+                          style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, outline: 'none', width: 140 }}
                         />
                         <select 
                           value={favoritesSkillFilter} 
                           onChange={(e) => { setFavoritesSkillFilter(e.target.value); setFavoritesPage(1); }}
-                          style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#cbd5e1', fontSize: 11.5, padding: '5px 10px', outline: 'none', cursor: 'pointer' }}
+                          style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#cbd5e1', fontSize: 11.5, padding: '5px 10px', outline: 'none', cursor: 'pointer' }}
                         >
                           <option value="All">All Skills</option>
                           <option value="React">React</option>
@@ -5678,7 +5680,7 @@ const ClientDashboard = () => {
                         <select 
                           value={favoritesSortOption} 
                           onChange={(e) => { setFavoritesSortOption(e.target.value); setFavoritesPage(1); }}
-                          style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#cbd5e1', fontSize: 11.5, padding: '5px 10px', outline: 'none', cursor: 'pointer' }}
+                          style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#cbd5e1', fontSize: 11.5, padding: '5px 10px', outline: 'none', cursor: 'pointer' }}
                         >
                           <option value="recent">Recently Added</option>
                           <option value="rating">Highest Rated</option>
@@ -5690,7 +5692,7 @@ const ClientDashboard = () => {
                     {/* Starred Candidate Rows */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {paginatedCandidates.map((cand, idx) => (
-                        <div key={cand.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid rgba(255,255,255,0.02)', borderRadius: 10, background: '#161c2c', flexWrap: 'wrap', gap: 12 }}>
+                        <div key={cand.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid rgba(255,255,255,0.02)', borderRadius: 10, background: themeInnerCard, flexWrap: 'wrap', gap: 12 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 220 }}>
                             <div style={{ width: 34, height: 34, borderRadius: '50%', background: cand.bg, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, position: 'relative' }}>
                               {cand.initial}
@@ -5708,13 +5710,13 @@ const ClientDashboard = () => {
 
                           {/* Rates & Status */}
                           <div style={{ minWidth: 120 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{cand.rate}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: themeText }}>{cand.rate}</div>
                             <div style={{ fontSize: 11, color: cand.statusTone, fontWeight: 600, marginTop: 4 }}>{cand.status}</div>
                           </div>
 
                           {/* Ratings */}
                           <div style={{ minWidth: 80 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 700, color: themeText, display: 'flex', alignItems: 'center', gap: 4 }}>
                               <span>{cand.rating}</span>
                               <span style={{ color: '#f59e0b', fontSize: 12 }}>★</span>
                             </div>
@@ -5725,7 +5727,7 @@ const ClientDashboard = () => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
                             <button 
                               onClick={() => handleMessageFreelancer(cand.key)}
-                              style={{ padding: '6px 12px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                              style={{ padding: '6px 12px', background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
                             >
                               Message
                             </button>
@@ -5739,7 +5741,7 @@ const ClientDashboard = () => {
                             {/* Dropdown Menu */}
                             {activeFavoritesDotMenu === cand.key && (
                               <div 
-                                style={{ position: 'absolute', top: 32, right: 0, background: '#111625', border: '1px solid #1d2433', borderRadius: 8, padding: '4px 0', zIndex: 100, minWidth: 150, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
+                                style={{ position: 'absolute', top: 32, right: 0, background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '4px 0', zIndex: 100, minWidth: 150, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
                                 onClick={e => e.stopPropagation()}
                               >
                                 <button 
@@ -5777,9 +5779,9 @@ const ClientDashboard = () => {
                   {/* Right Column: Insights & Notes */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {/* Panel 1: Candidate Insights */}
-                    <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+                    <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Candidate Insights</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Candidate Insights</span>
                         <span style={{ fontSize: 11.5, fontWeight: 700, color: '#3b82f6', cursor: 'pointer' }} onClick={() => toast('Detailed candidate insights summary loaded.')}>View All Insights</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -5789,7 +5791,7 @@ const ClientDashboard = () => {
                           { label: 'Response Rate', value: `${responseRateReport}%`, meta: 'Very Responsive', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' },
                           { label: 'Avg. Response Time', value: `${avgResponseTimeReport}`, meta: 'Fast', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' }
                         ].map((ins, idx) => (
-                          <div key={idx} style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 10, padding: 12 }}>
+                          <div key={idx} style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12 }}>
                             <div style={{ fontSize: 11, color: '#64748b' }}>{ins.label}</div>
                             <div style={{ fontSize: 16, fontWeight: 800, color: ins.color, marginTop: 4 }}>{ins.value}</div>
                             <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>{ins.meta}</div>
@@ -5799,9 +5801,9 @@ const ClientDashboard = () => {
                     </div>
 
                     {/* Panel 2: Saved Notes */}
-                    <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
+                    <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Saved Notes</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: themeText }}>Saved Notes</span>
                         <span style={{ fontSize: 11.5, fontWeight: 700, color: '#3b82f6', cursor: 'pointer' }} onClick={() => setShowManageNotesModal(true)}>Manage Notes</span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -5809,9 +5811,9 @@ const ClientDashboard = () => {
                           <div style={{ fontSize: 11.5, color: '#64748b', textAlign: 'center', padding: '20px 0' }}>No notes saved. Click Manage Notes to add one.</div>
                         ) : (
                           starredNotesList.slice(0, 3).map((note) => (
-                            <div key={note.id} style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 10, padding: 12, position: 'relative' }}>
+                            <div key={note.id} style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, position: 'relative' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <strong style={{ fontSize: 12.5, color: '#fff' }}>{note.name}</strong>
+                                <strong style={{ fontSize: 12.5, color: themeText }}>{note.name}</strong>
                                 <span style={{ fontSize: 10.5, color: '#64748b' }}>{note.date}</span>
                               </div>
                               <p style={{ fontSize: 11.5, color: '#94a3b8', margin: '6px 0 0', lineHeight: 1.4 }}>{note.text}</p>
@@ -5823,8 +5825,8 @@ const ClientDashboard = () => {
                     </div>
 
                     {/* Panel 3: Recent Activity */}
-                    <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 14 }}>Recent Activity</span>
+                    <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 14 }}>Recent Activity</span>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 11.5, color: '#94a3b8' }}>
                         {allCandidatesList.length > 0 ? (
                           allCandidatesList.slice(0, 4).map((c, idx) => {
@@ -5850,8 +5852,8 @@ const ClientDashboard = () => {
                 </div>
 
                 {/* Bottom Row: Quick Actions */}
-                <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'block', marginBottom: 16 }}>Quick Actions</span>
+                <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: themeText, display: 'block', marginBottom: 16 }}>Quick Actions</span>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap: 12 }}>
                     {[
                       { label: 'Invite to Project', icon: '📥', bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', action: () => setShowInviteModal(true) },
@@ -5902,7 +5904,7 @@ const ClientDashboard = () => {
                       <div 
                         key={idx} 
                         onClick={act.action}
-                        style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 10, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'border-color 0.2s' }}
+                        style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 10, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'border-color 0.2s' }}
                         onMouseEnter={(e) => e.currentTarget.style.borderColor = act.color}
                         onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1d2433'}
                       >
@@ -5925,7 +5927,7 @@ const ClientDashboard = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 20 }}>⚙️</span>
                 <div>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: 0 }}>Client Settings & Billing Configuration</h2>
+                  <h2 style={{ fontSize: 16, fontWeight: 700, color: themeText, margin: 0 }}>Client Settings & Billing Configuration</h2>
                   <span style={{ fontSize: 12, color: '#64748b', marginTop: 2, display: 'block' }}>Manage your business details, billing information, preferences and account settings.</span>
                 </div>
               </div>
@@ -5942,7 +5944,7 @@ const ClientDashboard = () => {
             {/* Row 1: Corporate Info & Billing Contact */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
               {/* Corporate Information Card */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 6 }}>🏢 Corporate Information</span>
                 </div>
@@ -5962,7 +5964,7 @@ const ClientDashboard = () => {
                     value={settingsForm.gstin}
                     onChange={(e) => setSettingsForm({ ...settingsForm, gstin: e.target.value })}
                     disabled={!isGstinEditable}
-                    style={{ width: '100%', padding: '10px 12px', background: isGstinEditable ? '#0e1320' : '#161c2c', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 12px', background: isGstinEditable ? '#0e1320' : '#161c2c', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, outline: 'none' }}
                   />
                 </div>
 
@@ -5987,13 +5989,13 @@ const ClientDashboard = () => {
                     onChange={(e) => setSettingsForm({ ...settingsForm, billingAddress: e.target.value })}
                     disabled={!isAddressEditable}
                     rows={2}
-                    style={{ width: '100%', padding: '10px 12px', background: isAddressEditable ? '#0e1320' : '#161c2c', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, outline: 'none', resize: 'none', lineHeight: 1.4 }}
+                    style={{ width: '100%', padding: '10px 12px', background: isAddressEditable ? '#0e1320' : '#161c2c', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, outline: 'none', resize: 'none', lineHeight: 1.4 }}
                   />
                 </div>
               </div>
 
               {/* Billing Contact Card */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 6 }}>👤 Billing Contact</span>
                   <span 
@@ -6016,7 +6018,7 @@ const ClientDashboard = () => {
                     value={settingsForm.contactName}
                     onChange={(e) => setSettingsForm({ ...settingsForm, contactName: e.target.value })}
                     disabled={!isContactEditable}
-                    style={{ width: '100%', padding: '8px 10px', background: isContactEditable ? '#0e1320' : '#161c2c', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, outline: 'none' }}
+                    style={{ width: '100%', padding: '8px 10px', background: isContactEditable ? '#0e1320' : '#161c2c', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, outline: 'none' }}
                   />
                 </div>
 
@@ -6026,7 +6028,7 @@ const ClientDashboard = () => {
                     value={settingsForm.email}
                     onChange={(e) => setSettingsForm({ ...settingsForm, email: e.target.value })}
                     disabled={!isContactEditable}
-                    style={{ width: '100%', padding: '8px 10px', background: isContactEditable ? '#0e1320' : '#161c2c', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, outline: 'none' }}
+                    style={{ width: '100%', padding: '8px 10px', background: isContactEditable ? '#0e1320' : '#161c2c', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, outline: 'none' }}
                   />
                 </div>
 
@@ -6036,7 +6038,7 @@ const ClientDashboard = () => {
                     value={settingsForm.phone}
                     onChange={(e) => setSettingsForm({ ...settingsForm, phone: e.target.value })}
                     disabled={!isContactEditable}
-                    style={{ width: '100%', padding: '8px 10px', background: isContactEditable ? '#0e1320' : '#161c2c', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, outline: 'none' }}
+                    style={{ width: '100%', padding: '8px 10px', background: isContactEditable ? '#0e1320' : '#161c2c', border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, outline: 'none' }}
                   />
                 </div>
               </div>
@@ -6045,24 +6047,24 @@ const ClientDashboard = () => {
             {/* Row 2: Tax, Preferences, Payments, Docs Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: 16 }}>
               {/* Card 1: Tax & Compliance */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: '#cbd5e1' }}>📄 Tax & Compliance</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11.5 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Tax Type</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.taxType} ›</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.taxType} ›</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>GST Registration</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.registrationType} ›</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.registrationType} ›</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Place of Supply</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.placeOfSupply.slice(0, 11)}.. ›</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.placeOfSupply.slice(0, 11)}.. ›</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>PAN Number</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.panNumber} 👁️</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.panNumber} 👁️</strong>
                   </div>
                 </div>
                 <div 
@@ -6074,24 +6076,24 @@ const ClientDashboard = () => {
               </div>
 
               {/* Card 2: Billing Preferences */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: '#cbd5e1' }}>⚙️ Billing Preferences</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11.5 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Currency</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.currency} ›</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.currency} ›</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Payment Terms</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.paymentTerms} ›</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.paymentTerms} ›</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Invoice Prefix</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.invoicePrefix} ›</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.invoicePrefix} ›</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Due Reminder</span>
-                    <strong style={{ color: '#fff' }}>{settingsForm.reminderDays} ›</strong>
+                    <strong style={{ color: themeText }}>{settingsForm.reminderDays} ›</strong>
                   </div>
                 </div>
                 <div 
@@ -6103,19 +6105,19 @@ const ClientDashboard = () => {
               </div>
 
               {/* Card 3: Payment Methods */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: '#cbd5e1' }}>💳 Payment Methods</span>
-                <div style={{ background: '#161c2c', border: '1px solid rgba(255,255,255,0.02)', padding: 10, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ background: themeInnerCard, border: '1px solid rgba(255,255,255,0.02)', padding: 10, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 11, color: '#64748b' }}>Primary Method</span>
                     <span style={{ fontSize: 9.5, color: '#10b981', fontWeight: 600, background: 'rgba(16,185,129,0.1)', padding: '1px 4px', borderRadius: 4 }}>Active</span>
                   </div>
-                  <strong style={{ fontSize: 12, color: '#fff' }}>Bank Transfer</strong>
+                  <strong style={{ fontSize: 12, color: themeText }}>Bank Transfer</strong>
                   <span style={{ fontSize: 10.5, color: '#cbd5e1' }}>**** **** 1234</span>
                 </div>
                 <button 
                   onClick={() => setShowAddPaymentMethodModal(true)}
-                  style={{ padding: '6px 12px', background: '#0e1320', border: '1px solid #1d2433', color: '#cbd5e1', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
+                  style={{ padding: '6px 12px', background: themeInputBg, border: `1px solid ${themeBorder}`, color: '#cbd5e1', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
                 >
                   + Add Payment Method
                 </button>
@@ -6128,7 +6130,7 @@ const ClientDashboard = () => {
               </div>
 
               {/* Card 4: Documents */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 6 }}>📁 Documents</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11.5 }}>
                   {companyDocuments.map((doc) => (
@@ -6168,7 +6170,7 @@ const ClientDashboard = () => {
             {/* Row 3: Notification Preferences & Account Security */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1.3fr', gap: 16 }}>
               {/* Notification Preferences */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <span style={{ fontSize: 13.5, fontWeight: 700, color: '#cbd5e1' }}>🔔 Notification Preferences</span>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
@@ -6286,15 +6288,15 @@ const ClientDashboard = () => {
               </div>
 
               {/* Account & Security */}
-              <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <span style={{ fontSize: 13.5, fontWeight: 700, color: '#cbd5e1' }}>🛡️ Account & Security</span>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12.5 }}>
                   <div 
                     onClick={() => setShowChangePasswordModal(true)}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#161c2c', border: '1px solid #1d2433', borderRadius: 8, cursor: 'pointer' }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 8, cursor: 'pointer' }}
                   >
-                    <span style={{ color: '#fff' }}>Change Password</span>
+                    <span style={{ color: themeText }}>Change Password</span>
                     <strong style={{ color: '#64748b' }}>›</strong>
                   </div>
 
@@ -6304,17 +6306,17 @@ const ClientDashboard = () => {
                       setSettingsForm({ ...settingsForm, twoFactor: !prevVal });
                       toast.success(!prevVal ? "Two-Factor Authentication Activated!" : "Two-Factor Authentication Disabled");
                     }}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#161c2c', border: '1px solid #1d2433', borderRadius: 8, cursor: 'pointer' }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 8, cursor: 'pointer' }}
                   >
-                    <span style={{ color: '#fff' }}>Two-Factor Authentication</span>
+                    <span style={{ color: themeText }}>Two-Factor Authentication</span>
                     <strong style={{ color: settingsForm.twoFactor ? '#10b981' : '#64748b', fontWeight: 600 }}>{settingsForm.twoFactor ? 'Enabled' : 'Disabled'} ›</strong>
                   </div>
 
                   <div 
                     onClick={() => setShowLoginSessionsModal(true)}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#161c2c', border: '1px solid #1d2433', borderRadius: 8, cursor: 'pointer' }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 8, cursor: 'pointer' }}
                   >
-                    <span style={{ color: '#fff' }}>Login Activity</span>
+                    <span style={{ color: themeText }}>Login Activity</span>
                     <strong style={{ color: '#64748b' }}>›</strong>
                   </div>
                 </div>
@@ -6329,12 +6331,12 @@ const ClientDashboard = () => {
             </div>
 
             {/* Vertical Help Card Widget */}
-            <div style={{ background: '#111625', border: '1px solid #1d2433', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 300 }}>
-              <strong style={{ fontSize: 14, color: '#fff' }}>Need Help?</strong>
+            <div style={{ background: themeCard, border: `1px solid ${themeBorder}`, borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 300 }}>
+              <strong style={{ fontSize: 14, color: themeText }}>Need Help?</strong>
               <span style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.4 }}>Our support team is here to help you 24/7.</span>
               <button 
                 onClick={() => setShowSupportModal(true)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#161c2c'}
                 onMouseLeave={(e) => e.currentTarget.style.background = '#1e293b'}
               >
@@ -6547,10 +6549,10 @@ const ClientDashboard = () => {
         >
           <form 
             onSubmit={handleCreateContract}
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '90%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '90%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1d2433', paddingBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${themeBorder}`, paddingBottom: 12 }}>
               <span style={{ fontSize: 16, fontWeight: 700, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
                 📄 Create New Work Contract
               </span>
@@ -6564,7 +6566,7 @@ const ClientDashboard = () => {
                 value={newContractForm.title}
                 onChange={(e) => setNewContractForm({ ...newContractForm, title: e.target.value })}
                 placeholder="e.g. Frontend Engineering Services" 
-                style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
+                style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
               />
             </div>
 
@@ -6576,7 +6578,7 @@ const ClientDashboard = () => {
                   value={newContractForm.partner}
                   onChange={(e) => setNewContractForm({ ...newContractForm, partner: e.target.value })}
                   placeholder="e.g. Acme Corp / John Doe" 
-                  style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
+                  style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
                 />
               </div>
               <div>
@@ -6586,7 +6588,7 @@ const ClientDashboard = () => {
                   value={newContractForm.val}
                   onChange={(e) => setNewContractForm({ ...newContractForm, val: e.target.value })}
                   placeholder="e.g. 150000 or ₹1,50,000" 
-                  style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
+                  style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
                 />
               </div>
             </div>
@@ -6598,7 +6600,7 @@ const ClientDashboard = () => {
                   type="date"
                   value={newContractForm.start}
                   onChange={(e) => setNewContractForm({ ...newContractForm, start: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
+                  style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
                 />
               </div>
               <div>
@@ -6607,7 +6609,7 @@ const ClientDashboard = () => {
                   type="date"
                   value={newContractForm.end}
                   onChange={(e) => setNewContractForm({ ...newContractForm, end: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
+                  style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
                 />
               </div>
             </div>
@@ -6617,7 +6619,7 @@ const ClientDashboard = () => {
               <select 
                 value={newContractForm.status}
                 onChange={(e) => setNewContractForm({ ...newContractForm, status: e.target.value })}
-                style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
+                style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none', fontSize: 12.5 }}
               >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="PENDING">PENDING</option>
@@ -6625,7 +6627,7 @@ const ClientDashboard = () => {
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 12, borderTop: '1px solid #1d2433', paddingTop: 16 }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 12, borderTop: `1px solid ${themeBorder}`, paddingTop: 16 }}>
               <button 
                 type="submit"
                 style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}
@@ -6635,7 +6637,7 @@ const ClientDashboard = () => {
               <button 
                 type="button"
                 onClick={() => setShowNewContractModal(false)} 
-                style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -6651,7 +6653,7 @@ const ClientDashboard = () => {
           onClick={() => setShowInviteModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '90%' : 460, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '90%' : 460, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -6660,7 +6662,7 @@ const ClientDashboard = () => {
             </div>
             <div>
               <label style={{ fontSize: 11.5, color: '#94a3b8', display: 'block', marginBottom: 6 }}>Select Active Project</label>
-              <select defaultValue="website" style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none' }}>
+              <select defaultValue="website" style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none' }}>
                 <option value="website">Website Redesign (Acme Corp)</option>
                 <option value="mobile">E-commerce Mobile App (Acme Corp)</option>
               </select>
@@ -6671,7 +6673,7 @@ const ClientDashboard = () => {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="e.g. rajesh@freelance.in" 
-                style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none' }}
+                style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none' }}
               />
             </div>
             <div>
@@ -6680,7 +6682,7 @@ const ClientDashboard = () => {
                 value={inviteMessage}
                 onChange={(e) => setInviteMessage(e.target.value)}
                 rows="4" 
-                style={{ width: '100%', padding: '10px 14px', background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', outline: 'none', resize: 'none', fontSize: 12.5, lineHeight: 1.4 }}
+                style={{ width: '100%', padding: '10px 14px', background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', outline: 'none', resize: 'none', fontSize: 12.5, lineHeight: 1.4 }}
               />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
@@ -6698,7 +6700,7 @@ const ClientDashboard = () => {
               >
                 Send Invitation
               </button>
-              <button onClick={() => setShowInviteModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowInviteModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -6713,7 +6715,7 @@ const ClientDashboard = () => {
           onClick={() => setShowCreateMilestoneModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -6727,7 +6729,7 @@ const ClientDashboard = () => {
                 <select 
                   value={milestoneForm.contractId} 
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, contractId: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="">-- Select Contract --</option>
                   {contracts.map(c => (
@@ -6742,7 +6744,7 @@ const ClientDashboard = () => {
                   value={milestoneForm.name}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, name: e.target.value })}
                   placeholder="e.g. Phase 1 - High Fidelity Prototypes"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -6754,7 +6756,7 @@ const ClientDashboard = () => {
                     value={milestoneForm.amount}
                     onChange={(e) => setMilestoneForm({ ...milestoneForm, amount: e.target.value })}
                     placeholder="50000"
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -6763,7 +6765,7 @@ const ClientDashboard = () => {
                     type="date"
                     value={milestoneForm.due}
                     onChange={(e) => setMilestoneForm({ ...milestoneForm, due: e.target.value })}
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -6784,7 +6786,7 @@ const ClientDashboard = () => {
               >
                 Fund & Deploy
               </button>
-              <button onClick={() => setShowCreateMilestoneModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowCreateMilestoneModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -6799,7 +6801,7 @@ const ClientDashboard = () => {
           onClick={() => setShowRequestPaymentModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -6813,7 +6815,7 @@ const ClientDashboard = () => {
                 <select 
                   value={requestPaymentForm.freelancer} 
                   onChange={(e) => setRequestPaymentForm({ ...requestPaymentForm, freelancer: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="">-- Choose Freelancer --</option>
                   {hiredFreelancersList.map(f => (
@@ -6829,7 +6831,7 @@ const ClientDashboard = () => {
                   value={requestPaymentForm.amount}
                   onChange={(e) => setRequestPaymentForm({ ...requestPaymentForm, amount: e.target.value })}
                   placeholder="30000"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -6839,7 +6841,7 @@ const ClientDashboard = () => {
                   value={requestPaymentForm.msg}
                   onChange={(e) => setRequestPaymentForm({ ...requestPaymentForm, msg: e.target.value })}
                   placeholder="e.g. Requesting release for milestone 3 deliverables approved yesterday."
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none', height: 80, resize: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none', height: 80, resize: 'none' }}
                 />
               </div>
             </div>
@@ -6859,7 +6861,7 @@ const ClientDashboard = () => {
               >
                 Send Request
               </button>
-              <button onClick={() => setShowRequestPaymentModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowRequestPaymentModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -6874,7 +6876,7 @@ const ClientDashboard = () => {
           onClick={() => setShowWithdrawModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 400, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 400, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -6888,7 +6890,7 @@ const ClientDashboard = () => {
                 <select 
                   value={withdrawForm.methodId} 
                   onChange={(e) => setWithdrawForm({ ...withdrawForm, methodId: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   {paymentMethods.length === 0 ? (
                     <option value="">No Payment Methods Added</option>
@@ -6907,7 +6909,7 @@ const ClientDashboard = () => {
                   value={withdrawForm.amount}
                   onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
                   placeholder="10000"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
             </div>
@@ -6927,7 +6929,7 @@ const ClientDashboard = () => {
               >
                 Withdraw Funds
               </button>
-              <button onClick={() => setShowWithdrawModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowWithdrawModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -6942,7 +6944,7 @@ const ClientDashboard = () => {
           onClick={() => setShowCreateNewInvoiceModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -6957,7 +6959,7 @@ const ClientDashboard = () => {
                   value={newInvoiceFormState.title}
                   onChange={(e) => setNewInvoiceFormState({ ...newInvoiceFormState, title: e.target.value })}
                   placeholder="e.g. Mobile Application Development"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -6967,7 +6969,7 @@ const ClientDashboard = () => {
                   value={newInvoiceFormState.desc}
                   onChange={(e) => setNewInvoiceFormState({ ...newInvoiceFormState, desc: e.target.value })}
                   placeholder="e.g. Phase 2 - API Endpoints implementation"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -6979,7 +6981,7 @@ const ClientDashboard = () => {
                     value={newInvoiceFormState.amount}
                     onChange={(e) => setNewInvoiceFormState({ ...newInvoiceFormState, amount: e.target.value })}
                     placeholder="15000"
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -6988,7 +6990,7 @@ const ClientDashboard = () => {
                     type="date"
                     value={newInvoiceFormState.due}
                     onChange={(e) => setNewInvoiceFormState({ ...newInvoiceFormState, due: e.target.value })}
-                    style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                    style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -7034,7 +7036,7 @@ const ClientDashboard = () => {
               >
                 Generate Invoice
               </button>
-              <button onClick={() => setShowCreateNewInvoiceModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowCreateNewInvoiceModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7049,7 +7051,7 @@ const ClientDashboard = () => {
           onClick={() => setShowBillingSettingsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7063,7 +7065,7 @@ const ClientDashboard = () => {
                 <input 
                   value={billingSettingsForm.company}
                   onChange={(e) => setBillingSettingsForm({ ...billingSettingsForm, company: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -7072,7 +7074,7 @@ const ClientDashboard = () => {
                 <input 
                   value={billingSettingsForm.taxId}
                   onChange={(e) => setBillingSettingsForm({ ...billingSettingsForm, taxId: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -7081,7 +7083,7 @@ const ClientDashboard = () => {
                 <textarea 
                   value={billingSettingsForm.address}
                   onChange={(e) => setBillingSettingsForm({ ...billingSettingsForm, address: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none', height: 60, resize: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none', height: 60, resize: 'none' }}
                 />
               </div>
 
@@ -7090,7 +7092,7 @@ const ClientDashboard = () => {
                 <select 
                   value={billingSettingsForm.currency}
                   onChange={(e) => setBillingSettingsForm({ ...billingSettingsForm, currency: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="INR">Indian Rupee (INR - ₹)</option>
                   <option value="USD">US Dollar (USD - $)</option>
@@ -7109,7 +7111,7 @@ const ClientDashboard = () => {
               >
                 Save Settings
               </button>
-              <button onClick={() => setShowBillingSettingsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowBillingSettingsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7124,7 +7126,7 @@ const ClientDashboard = () => {
           onClick={() => setShowAllExpensesModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 700, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 700, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7132,10 +7134,10 @@ const ClientDashboard = () => {
               <button onClick={() => setShowAllExpensesModal(false)} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: 24, cursor: 'pointer', lineHeight: 1 }}>×</button>
             </div>
             
-            <div style={{ maxHeight: 360, overflowY: 'auto', border: '1px solid #1d2433', borderRadius: 8 }}>
+            <div style={{ maxHeight: 360, overflowY: 'auto', border: `1px solid ${themeBorder}`, borderRadius: 8 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#161c2c', borderBottom: '1px solid #1d2433', color: '#64748b' }}>
+                  <tr style={{ background: themeInnerCard, borderBottom: `1px solid ${themeBorder}`, color: '#64748b' }}>
                     <th style={{ padding: '10px 12px', width: 40 }}>#</th>
                     <th style={{ padding: '10px 12px' }}>Project Description</th>
                     <th style={{ padding: '10px 12px' }}>Category</th>
@@ -7160,7 +7162,7 @@ const ClientDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-              <button onClick={() => setShowAllExpensesModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowAllExpensesModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close
               </button>
             </div>
@@ -7175,7 +7177,7 @@ const ClientDashboard = () => {
           onClick={() => setShowScheduleReportModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7189,7 +7191,7 @@ const ClientDashboard = () => {
                 <select 
                   value={scheduleReportForm.frequency}
                   onChange={(e) => setScheduleReportForm({ ...scheduleReportForm, frequency: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="weekly">Weekly Summary (Every Monday)</option>
                   <option value="monthly">Monthly Audit (1st of month)</option>
@@ -7202,7 +7204,7 @@ const ClientDashboard = () => {
                 <select 
                   value={scheduleReportForm.channel}
                   onChange={(e) => setScheduleReportForm({ ...scheduleReportForm, channel: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="email">Primary Corporate Email</option>
                   <option value="slack">Slack Webhook Channel</option>
@@ -7216,7 +7218,7 @@ const ClientDashboard = () => {
                   value={scheduleReportForm.recipient}
                   onChange={(e) => setScheduleReportForm({ ...scheduleReportForm, recipient: e.target.value })}
                   placeholder="client@acme.com"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
             </div>
@@ -7235,7 +7237,7 @@ const ClientDashboard = () => {
               >
                 Schedule Delivery
               </button>
-              <button onClick={() => setShowScheduleReportModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowScheduleReportModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7250,7 +7252,7 @@ const ClientDashboard = () => {
           onClick={() => setShowBroadcastModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7265,7 +7267,7 @@ const ClientDashboard = () => {
                   value={broadcastMessage}
                   onChange={(e) => setBroadcastMessage(e.target.value)}
                   rows={5}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none', resize: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none', resize: 'none' }}
                 />
               </div>
             </div>
@@ -7284,7 +7286,7 @@ const ClientDashboard = () => {
               >
                 Send Broadcast
               </button>
-              <button onClick={() => setShowBroadcastModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowBroadcastModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7299,7 +7301,7 @@ const ClientDashboard = () => {
           onClick={() => setShowFavoritesCompareModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 750, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 750, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7307,10 +7309,10 @@ const ClientDashboard = () => {
               <button onClick={() => setShowFavoritesCompareModal(false)} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: 24, cursor: 'pointer', lineHeight: 1 }}>×</button>
             </div>
             
-            <div style={{ overflowX: 'auto', border: '1px solid #1d2433', borderRadius: 8 }}>
+            <div style={{ overflowX: 'auto', border: `1px solid ${themeBorder}`, borderRadius: 8 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'left', minWidth: 600 }}>
                 <thead>
-                  <tr style={{ background: '#161c2c', borderBottom: '1px solid #1d2433', color: '#cbd5e1' }}>
+                  <tr style={{ background: themeInnerCard, borderBottom: `1px solid ${themeBorder}`, color: '#cbd5e1' }}>
                     <th style={{ padding: '12px 16px', width: 140 }}>Metric / Detail</th>
                     {favoritesList.slice(0, 3).map((cand, idx) => (
                       <th key={idx} style={{ padding: '12px 16px' }}>
@@ -7366,7 +7368,7 @@ const ClientDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button onClick={() => setShowFavoritesCompareModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowFavoritesCompareModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close
               </button>
             </div>
@@ -7381,7 +7383,7 @@ const ClientDashboard = () => {
           onClick={() => setShowCandidateInsightsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7390,7 +7392,7 @@ const ClientDashboard = () => {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ background: '#161c2c', padding: 14, borderRadius: 10, border: '1px solid #1d2433' }}>
+              <div style={{ background: themeInnerCard, padding: 14, borderRadius: 10, border: `1px solid ${themeBorder}` }}>
                 <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600, display: 'block', marginBottom: 8 }}>PROFILE VIEWS BY ACTIVE PROJECT</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -7408,7 +7410,7 @@ const ClientDashboard = () => {
                 </div>
               </div>
 
-              <div style={{ background: '#161c2c', padding: 14, borderRadius: 10, border: '1px solid #1d2433' }}>
+              <div style={{ background: themeInnerCard, padding: 14, borderRadius: 10, border: `1px solid ${themeBorder}` }}>
                 <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600, display: 'block', marginBottom: 8 }}>RELIABILITY & CONVERSION METRICS</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -7428,7 +7430,7 @@ const ClientDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-              <button onClick={() => setShowCandidateInsightsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowCandidateInsightsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close
               </button>
             </div>
@@ -7443,7 +7445,7 @@ const ClientDashboard = () => {
           onClick={() => setShowManageNotesModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7457,10 +7459,10 @@ const ClientDashboard = () => {
                 <div style={{ fontSize: 12, color: '#64748b', textAlign: 'center', padding: '16px 0' }}>No saved notes. Add a note below!</div>
               ) : (
                 starredNotesList.map((note) => (
-                  <div key={note.id} style={{ background: '#161c2c', border: '1px solid #1d2433', borderRadius: 8, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                  <div key={note.id} style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, borderRadius: 8, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong style={{ fontSize: 12, color: '#fff' }}>{note.name}</strong>
+                        <strong style={{ fontSize: 12, color: themeText }}>{note.name}</strong>
                         <span style={{ fontSize: 9.5, color: '#64748b' }}>{note.date}</span>
                       </div>
                       <p style={{ fontSize: 11, color: '#94a3b8', margin: '4px 0 0', lineHeight: 1.3 }}>{note.text}</p>
@@ -7478,15 +7480,15 @@ const ClientDashboard = () => {
             </div>
 
             {/* Add note sub-form */}
-            <div style={{ borderTop: '1px solid #1d2433', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>Add New Note</span>
+            <div style={{ borderTop: `1px solid ${themeBorder}`, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: themeText }}>Add New Note</span>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>SELECT CANDIDATE</span>
                 <select 
                   value={newNoteForm.candidateName}
                   onChange={(e) => setNewNoteForm({ ...newNoteForm, candidateName: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 11.5, padding: '6px 8px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 11.5, padding: '6px 8px', outline: 'none' }}
                 >
                   {favoritesList.map((c) => (
                     <option key={c.key} value={c.name}>{c.name}</option>
@@ -7501,7 +7503,7 @@ const ClientDashboard = () => {
                   onChange={(e) => setNewNoteForm({ ...newNoteForm, text: e.target.value })}
                   placeholder="Type note details here..."
                   rows={2}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '6px 8px', outline: 'none', resize: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '6px 8px', outline: 'none', resize: 'none' }}
                 />
               </div>
 
@@ -7537,7 +7539,7 @@ const ClientDashboard = () => {
           onClick={() => setShowTaxDetailsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7551,7 +7553,7 @@ const ClientDashboard = () => {
                 <select 
                   value={settingsForm.registrationType}
                   onChange={(e) => setSettingsForm({ ...settingsForm, registrationType: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="Regular">Regular Taxpayer</option>
                   <option value="Composition">Composition Scheme</option>
@@ -7564,7 +7566,7 @@ const ClientDashboard = () => {
                 <select 
                   value={settingsForm.placeOfSupply}
                   onChange={(e) => setSettingsForm({ ...settingsForm, placeOfSupply: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="Maharashtra (27)">Maharashtra (27)</option>
                   <option value="Delhi (07)">Delhi (07)</option>
@@ -7584,7 +7586,7 @@ const ClientDashboard = () => {
               >
                 Save Details
               </button>
-              <button onClick={() => setShowTaxDetailsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowTaxDetailsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7599,7 +7601,7 @@ const ClientDashboard = () => {
           onClick={() => setShowPreferencesModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7613,7 +7615,7 @@ const ClientDashboard = () => {
                 <select 
                   value={settingsForm.currency}
                   onChange={(e) => setSettingsForm({ ...settingsForm, currency: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="INR (₹)">INR (₹) - Indian Rupee</option>
                   <option value="USD ($)">USD ($) - US Dollar</option>
@@ -7626,7 +7628,7 @@ const ClientDashboard = () => {
                 <select 
                   value={settingsForm.paymentTerms}
                   onChange={(e) => setSettingsForm({ ...settingsForm, paymentTerms: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="Net 15">Net 15 Days</option>
                   <option value="Net 30">Net 30 Days</option>
@@ -7645,7 +7647,7 @@ const ClientDashboard = () => {
               >
                 Save Preferences
               </button>
-              <button onClick={() => setShowPreferencesModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowPreferencesModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7660,7 +7662,7 @@ const ClientDashboard = () => {
           onClick={() => setShowDocManagerModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7671,7 +7673,7 @@ const ClientDashboard = () => {
             {/* List of files */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 220, overflowY: 'auto', paddingRight: 4 }}>
               {companyDocuments.map((doc) => (
-                <div key={doc.id} style={{ background: '#161c2c', border: '1px solid #1d2433', padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={doc.id} style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <strong style={{ fontSize: 12.5, color: '#fff', display: 'block' }}>{doc.name}</strong>
                     <span style={{ fontSize: 11, color: '#64748b', marginTop: 2, display: 'block' }}>{doc.type} • {doc.size} ({doc.fileName})</span>
@@ -7688,7 +7690,7 @@ const ClientDashboard = () => {
                         document.body.removeChild(element);
                         toast.success(doc.fileName + " downloaded successfully!");
                       }}
-                      style={{ background: '#1e293b', border: '1px solid #1d2433', padding: '6px 10px', color: '#fff', borderRadius: 6, fontSize: 11.5, cursor: 'pointer' }}
+                      style={{ background: '#1e293b', border: `1px solid ${themeBorder}`, padding: '6px 10px', color: '#fff', borderRadius: 6, fontSize: 11.5, cursor: 'pointer' }}
                     >
                       📥 Download
                     </button>
@@ -7707,9 +7709,9 @@ const ClientDashboard = () => {
             </div>
 
             {/* Document Uploader subsegment */}
-            <div style={{ borderTop: '1px solid #1d2433', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>Upload New Verification Document</span>
-              <div style={{ border: '1.5px dashed #1d2433', borderRadius: 8, padding: '16px 10px', textAlign: 'center', background: '#0e1320', cursor: 'pointer', position: 'relative' }}>
+            <div style={{ borderTop: `1px solid ${themeBorder}`, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: themeText }}>Upload New Verification Document</span>
+              <div style={{ border: '1.5px dashed #1d2433', borderRadius: 8, padding: '16px 10px', textAlign: 'center', background: themeInputBg, cursor: 'pointer', position: 'relative' }}>
                 <span style={{ fontSize: 12, color: '#cbd5e1', display: 'block' }}>📁 Click to browse or drag & drop files here</span>
                 <span style={{ fontSize: 10, color: '#64748b', display: 'block', marginTop: 4 }}>PDF, PNG, JPG up to 10MB</span>
                 <input 
@@ -7735,7 +7737,7 @@ const ClientDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-              <button onClick={() => setShowDocManagerModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowDocManagerModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close
               </button>
             </div>
@@ -7750,7 +7752,7 @@ const ClientDashboard = () => {
           onClick={() => setShowChangePasswordModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7765,7 +7767,7 @@ const ClientDashboard = () => {
                   type="password"
                   value={passwordForm.current}
                   onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -7775,7 +7777,7 @@ const ClientDashboard = () => {
                   type="password"
                   value={passwordForm.new}
                   onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -7785,7 +7787,7 @@ const ClientDashboard = () => {
                   type="password"
                   value={passwordForm.confirm}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
             </div>
@@ -7809,7 +7811,7 @@ const ClientDashboard = () => {
               >
                 Update Password
               </button>
-              <button onClick={() => setShowChangePasswordModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowChangePasswordModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7824,7 +7826,7 @@ const ClientDashboard = () => {
           onClick={() => setShowLoginSessionsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 460, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 460, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7834,7 +7836,7 @@ const ClientDashboard = () => {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {loginSessionsList.map((sess) => (
-                <div key={sess.id} style={{ background: '#161c2c', border: '1px solid #1d2433', padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={sess.id} style={{ background: themeInnerCard, border: `1px solid ${themeBorder}`, padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <strong style={{ fontSize: 12.5, color: '#fff', display: 'block' }}>{sess.browser}</strong>
                     <span style={{ fontSize: 11, color: '#64748b', marginTop: 2, display: 'block' }}>📍 {sess.location} • IP: {sess.ip}</span>
@@ -7858,7 +7860,7 @@ const ClientDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-              <button onClick={() => setShowLoginSessionsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowLoginSessionsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close
               </button>
             </div>
@@ -7873,7 +7875,7 @@ const ClientDashboard = () => {
           onClick={() => setShowNotificationChannelsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7882,7 +7884,7 @@ const ClientDashboard = () => {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#161c2c', padding: 12, borderRadius: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: themeInnerCard, padding: 12, borderRadius: 8 }}>
                 <div>
                   <strong style={{ fontSize: 12.5, color: '#fff', display: 'block' }}>Platform Push Notifications</strong>
                   <span style={{ fontSize: 11, color: '#64748b', marginTop: 1, display: 'block' }}>Display alerts in browser notification feed</span>
@@ -7890,7 +7892,7 @@ const ClientDashboard = () => {
                 <input type="checkbox" defaultChecked style={{ width: 16, height: 16 }} />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#161c2c', padding: 12, borderRadius: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: themeInnerCard, padding: 12, borderRadius: 8 }}>
                 <div>
                   <strong style={{ fontSize: 12.5, color: '#fff', display: 'block' }}>SMS Alerts Delivery</strong>
                   <span style={{ fontSize: 11, color: '#64748b', marginTop: 1, display: 'block' }}>Receive direct text alerts for urgent payments</span>
@@ -7898,7 +7900,7 @@ const ClientDashboard = () => {
                 <input type="checkbox" style={{ width: 16, height: 16 }} />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#161c2c', padding: 12, borderRadius: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: themeInnerCard, padding: 12, borderRadius: 8 }}>
                 <div>
                   <strong style={{ fontSize: 12.5, color: '#fff', display: 'block' }}>Audible Alerts</strong>
                   <span style={{ fontSize: 11, color: '#64748b', marginTop: 1, display: 'block' }}>Play sound alerts upon incoming messages</span>
@@ -7917,7 +7919,7 @@ const ClientDashboard = () => {
               >
                 Save Preferences
               </button>
-              <button onClick={() => setShowNotificationChannelsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowNotificationChannelsModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -7932,7 +7934,7 @@ const ClientDashboard = () => {
           onClick={() => setShowSupportModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -7947,7 +7949,7 @@ const ClientDashboard = () => {
                   value={settingsSupportTicket.subject}
                   onChange={(e) => setSettingsSupportTicket({ ...settingsSupportTicket, subject: e.target.value })}
                   placeholder="e.g. GST registration verify help"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -7956,7 +7958,7 @@ const ClientDashboard = () => {
                 <select 
                   value={settingsSupportTicket.category}
                   onChange={(e) => setSettingsSupportTicket({ ...settingsSupportTicket, category: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="Billing">Billing & Invoices</option>
                   <option value="Security">Security & 2FA</option>
@@ -7972,7 +7974,7 @@ const ClientDashboard = () => {
                   onChange={(e) => setSettingsSupportTicket({ ...settingsSupportTicket, message: e.target.value })}
                   placeholder="Describe your query in detail..."
                   rows={4}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none', resize: 'none', lineHeight: 1.4 }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none', resize: 'none', lineHeight: 1.4 }}
                 />
               </div>
             </div>
@@ -7992,7 +7994,7 @@ const ClientDashboard = () => {
               >
                 Submit Ticket
               </button>
-              <button onClick={() => setShowSupportModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowSupportModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -8007,7 +8009,7 @@ const ClientDashboard = () => {
           onClick={() => setShowInvoiceDateRangeModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 400, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 400, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8022,7 +8024,7 @@ const ClientDashboard = () => {
                   type="date" 
                   value={invoiceStartDate} 
                   onChange={(e) => setInvoiceStartDate(e.target.value)}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -8031,7 +8033,7 @@ const ClientDashboard = () => {
                   type="date" 
                   value={invoiceEndDate} 
                   onChange={(e) => setInvoiceEndDate(e.target.value)}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
             </div>
@@ -8137,7 +8139,7 @@ const ClientDashboard = () => {
           onClick={() => setShowManagePaymentsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8147,7 +8149,7 @@ const ClientDashboard = () => {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {paymentMethods.map((method) => (
-                <div key={method.id} style={{ background: '#161c2c', padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={method.id} style={{ background: themeInnerCard, padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 18 }}>{method.icon}</span>
                     <div>
@@ -8200,7 +8202,7 @@ const ClientDashboard = () => {
               ))}
             </div>
 
-            <button onClick={() => setShowManagePaymentsModal(false)} style={{ padding: '10px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => setShowManagePaymentsModal(false)} style={{ padding: '10px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
               Dismiss
             </button>
           </div>
@@ -8214,7 +8216,7 @@ const ClientDashboard = () => {
           onClick={() => setShowAddPaymentMethodModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8228,7 +8230,7 @@ const ClientDashboard = () => {
                 <select 
                   value={newPaymentForm.type} 
                   onChange={(e) => setNewPaymentForm({ ...newPaymentForm, type: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="Bank Account">Bank Account</option>
                   <option value="PayTM Wallet">PayTM Wallet</option>
@@ -8242,7 +8244,7 @@ const ClientDashboard = () => {
                   value={newPaymentForm.detail}
                   onChange={(e) => setNewPaymentForm({ ...newPaymentForm, detail: e.target.value })}
                   placeholder={newPaymentForm.type === 'UPI ID' ? 'example@upi' : '**** 1234'}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
 
@@ -8252,7 +8254,7 @@ const ClientDashboard = () => {
                   value={newPaymentForm.bankName}
                   onChange={(e) => setNewPaymentForm({ ...newPaymentForm, bankName: e.target.value })}
                   placeholder="e.g. HDFC Bank, GPay"
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12.5, padding: '8px 10px', outline: 'none' }}
                 />
               </div>
             </div>
@@ -8284,7 +8286,7 @@ const ClientDashboard = () => {
               >
                 Save Method
               </button>
-              <button onClick={() => setShowAddPaymentMethodModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowAddPaymentMethodModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -8299,7 +8301,7 @@ const ClientDashboard = () => {
           onClick={() => setShowAllExpirationsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8314,7 +8316,7 @@ const ClientDashboard = () => {
                 { title: 'UI/UX Design Work Agreement', exp: 'Expires on 28 Nov, 2024', days: '69 days' },
                 { title: 'Database Optimization Consultation', exp: 'Expires on 15 Oct, 2024', days: '110 days' }
               ].map((item, idx) => (
-                <div key={idx} style={{ background: '#161c2c', padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={idx} style={{ background: themeInnerCard, padding: 12, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <strong style={{ fontSize: 12.5, color: '#fff', display: 'block' }}>{item.title}</strong>
                     <span style={{ fontSize: 11, color: '#64748b' }}>{item.exp}</span>
@@ -8326,7 +8328,7 @@ const ClientDashboard = () => {
               ))}
             </div>
 
-            <button onClick={() => setShowAllExpirationsModal(false)} style={{ padding: '10px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => setShowAllExpirationsModal(false)} style={{ padding: '10px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
               Close
             </button>
           </div>
@@ -8340,7 +8342,7 @@ const ClientDashboard = () => {
           onClick={() => setShowUploadDocModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8354,7 +8356,7 @@ const ClientDashboard = () => {
                 <select 
                   value={uploadForm.contractId} 
                   onChange={(e) => setUploadForm({ ...uploadForm, contractId: e.target.value })}
-                  style={{ background: '#0e1320', border: '1px solid #1d2433', borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
+                  style={{ background: themeInputBg, border: `1px solid ${themeBorder}`, borderRadius: 8, color: '#fff', fontSize: 12, padding: '8px 10px', outline: 'none' }}
                 >
                   <option value="">-- Choose Contract --</option>
                   {contracts.map(c => (
@@ -8363,7 +8365,7 @@ const ClientDashboard = () => {
                 </select>
               </div>
 
-              <div style={{ border: '2px dashed #1d2433', borderRadius: 12, padding: '24px 10px', textAlign: 'center', background: '#0e1320', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div style={{ border: '2px dashed #1d2433', borderRadius: 12, padding: '24px 10px', textAlign: 'center', background: themeInputBg, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 24 }}>📄</span>
                 <div>
                   <span 
@@ -8405,7 +8407,7 @@ const ClientDashboard = () => {
               >
                 Upload & Confirm
               </button>
-              <button onClick={() => setShowUploadDocModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowUploadDocModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -8420,7 +8422,7 @@ const ClientDashboard = () => {
           onClick={() => setShowTemplatesModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8434,9 +8436,9 @@ const ClientDashboard = () => {
                 { name: 'Non-Disclosure Agreement (NDA)', desc: 'General mutual confidentiality agreement protecting intellectual property, product designs, and corporate codebase access.' },
                 { name: 'Graphic Design Work Contract', desc: 'Asset transfer agreement mapping Figma project parameters, feedback iteration cycles, and copyright handoff.' }
               ].map((tpl, idx) => (
-                <div key={idx} style={{ background: '#161c2c', padding: 12, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div key={idx} style={{ background: themeInnerCard, padding: 12, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: 12.5, color: '#fff' }}>{tpl.name}</strong>
+                    <strong style={{ fontSize: 12.5, color: themeText }}>{tpl.name}</strong>
                     <button 
                       onClick={() => {
                         const element = document.createElement("a");
@@ -8458,7 +8460,7 @@ const ClientDashboard = () => {
               ))}
             </div>
 
-            <button onClick={() => setShowTemplatesModal(false)} style={{ padding: '10px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => setShowTemplatesModal(false)} style={{ padding: '10px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
               Dismiss
             </button>
           </div>
@@ -8472,7 +8474,7 @@ const ClientDashboard = () => {
           onClick={() => setShowBulkActionsModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 480, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8482,7 +8484,7 @@ const ClientDashboard = () => {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>SELECT TARGET CONTRACTS</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 150, overflowY: 'auto', background: '#0e1320', padding: 10, borderRadius: 8, border: '1px solid #1d2433' }} className="no-scrollbar">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 150, overflowY: 'auto', background: themeInputBg, padding: 10, borderRadius: 8, border: `1px solid ${themeBorder}` }} className="no-scrollbar">
                 {contracts.map(c => (
                   <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#cbd5e1', cursor: 'pointer' }}>
                     <input 
@@ -8535,7 +8537,7 @@ const ClientDashboard = () => {
               </div>
             </div>
 
-            <button onClick={() => setShowBulkActionsModal(false)} style={{ padding: '10px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => setShowBulkActionsModal(false)} style={{ padding: '10px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -8549,7 +8551,7 @@ const ClientDashboard = () => {
           onClick={() => setShowAuditLogModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 440, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8573,7 +8575,7 @@ const ClientDashboard = () => {
               ))}
             </div>
 
-            <button onClick={() => setShowAuditLogModal(false)} style={{ width: '100%', padding: '10px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', marginTop: 10 }}>
+            <button onClick={() => setShowAuditLogModal(false)} style={{ width: '100%', padding: '10px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', marginTop: 10 }}>
               Dismiss
             </button>
           </div>
@@ -8587,7 +8589,7 @@ const ClientDashboard = () => {
           onClick={() => setShowTerminateConfirmModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 400, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 400, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -8614,7 +8616,7 @@ const ClientDashboard = () => {
               >
                 Yes, Terminate
               </button>
-              <button onClick={() => setShowTerminateConfirmModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowTerminateConfirmModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -8629,7 +8631,7 @@ const ClientDashboard = () => {
           onClick={() => setShowContractPreviewModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 540, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 540, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8638,7 +8640,7 @@ const ClientDashboard = () => {
             </div>
             
             <div style={{ maxHeight: 300, overflowY: 'auto', paddingRight: 6, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 12, lineHeight: 1.5, color: '#cbd5e1' }} className="no-scrollbar">
-              <div style={{ borderBottom: '1px solid #1d2433', paddingBottom: 10 }}>
+              <div style={{ borderBottom: `1px solid ${themeBorder}`, paddingBottom: 10 }}>
                 <strong style={{ color: '#fff', fontSize: 13.5 }}>{previewContractData.title}</strong>
                 <div style={{ display: 'flex', gap: 10, color: '#64748b', fontSize: 11, marginTop: 4 }}>
                   <span>ID: {previewContractData.id}</span>
@@ -8648,13 +8650,13 @@ const ClientDashboard = () => {
               </div>
 
               <div>
-                <strong style={{ color: '#fff' }}>Contracting Parties</strong>
+                <strong style={{ color: themeText }}>Contracting Parties</strong>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4 }}>
-                  <div style={{ background: '#161c2c', padding: 8, borderRadius: 6 }}>
+                  <div style={{ background: themeInnerCard, padding: 8, borderRadius: 6 }}>
                     <span style={{ fontSize: 10.5, color: '#64748b', display: 'block' }}>CLIENT</span>
                     <span style={{ fontWeight: 600 }}>Acme Corp</span>
                   </div>
-                  <div style={{ background: '#161c2c', padding: 8, borderRadius: 6 }}>
+                  <div style={{ background: themeInnerCard, padding: 8, borderRadius: 6 }}>
                     <span style={{ fontSize: 10.5, color: '#64748b', display: 'block' }}>FREELANCER</span>
                     <span style={{ fontWeight: 600 }}>{previewContractData.partner.split(' / ')[1] || previewContractData.partner}</span>
                   </div>
@@ -8662,15 +8664,15 @@ const ClientDashboard = () => {
               </div>
 
               <div>
-                <strong style={{ color: '#fff' }}>Financial Parameters</strong>
-                <div style={{ display: 'flex', gap: 12, marginTop: 4, background: '#161c2c', padding: 8, borderRadius: 6, justifyContent: 'space-between' }}>
-                  <span>Escrow Budget: <strong style={{ color: '#fff' }}>{previewContractData.val}</strong></span>
+                <strong style={{ color: themeText }}>Financial Parameters</strong>
+                <div style={{ display: 'flex', gap: 12, marginTop: 4, background: themeInnerCard, padding: 8, borderRadius: 6, justifyContent: 'space-between' }}>
+                  <span>Escrow Budget: <strong style={{ color: themeText }}>{previewContractData.val}</strong></span>
                   <span style={{ color: '#10b981', fontWeight: 700 }}>STATUS: {previewContractData.status}</span>
                 </div>
               </div>
 
               <div>
-                <strong style={{ color: '#fff' }}>Terms & Scope:</strong>
+                <strong style={{ color: themeText }}>Terms & Scope:</strong>
                 <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#94a3b8' }}>
                   The contractor agrees to perform deliverables outlined in the milestones statement. All work source files, intellectual property, and design components developed under this agreement transfer fully to the client on work approval. Payment release is executed securely via Escrow protection protocol.
                 </p>
@@ -8687,7 +8689,7 @@ const ClientDashboard = () => {
               >
                 Download PDF
               </button>
-              <button onClick={() => setShowContractPreviewModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowContractPreviewModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close
               </button>
             </div>
@@ -8702,7 +8704,7 @@ const ClientDashboard = () => {
           onClick={() => setShowAnalysisReportModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 540, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 540, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8721,15 +8723,15 @@ const ClientDashboard = () => {
               <div>
                 <strong style={{ color: '#94a3b8' }}>Key Evaluation Metrics:</strong>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-                  <div style={{ display: 'flex', justifycontent: 'space-between', background: '#161c2c', padding: 8, borderRadius: 6 }}>
+                  <div style={{ display: 'flex', justifycontent: 'space-between', background: themeInnerCard, padding: 8, borderRadius: 6 }}>
                     <span>Skills Match Score:</span>
                     <strong style={{ color: '#10b981' }}>{skillsMatchPct}% (Excellent)</strong>
                   </div>
-                  <div style={{ display: 'flex', justifycontent: 'space-between', background: '#161c2c', padding: 8, borderRadius: 6 }}>
+                  <div style={{ display: 'flex', justifycontent: 'space-between', background: themeInnerCard, padding: 8, borderRadius: 6 }}>
                     <span>Experience Level Match:</span>
                     <strong style={{ color: '#3b82f6' }}>{expMatchPct}% (Verified)</strong>
                   </div>
-                  <div style={{ display: 'flex', justifycontent: 'space-between', background: '#161c2c', padding: 8, borderRadius: 6 }}>
+                  <div style={{ display: 'flex', justifycontent: 'space-between', background: themeInnerCard, padding: 8, borderRadius: 6 }}>
                     <span>Budget Optimization:</span>
                     <strong style={{ color: '#10b981' }}>{budgetMatchPct}% (Within parameters)</strong>
                   </div>
@@ -8818,7 +8820,7 @@ const ClientDashboard = () => {
               >
                 📥 Download PDF Report
               </button>
-              <button onClick={() => setShowAnalysisReportModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowAnalysisReportModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close
               </button>
             </div>
@@ -8833,7 +8835,7 @@ const ClientDashboard = () => {
           onClick={() => setShowCompareModal(false)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '95%' : 700, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '95%' : 700, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 16 }} 
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -8844,7 +8846,7 @@ const ClientDashboard = () => {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left', minWidth: 500 }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #1d2433', color: '#64748b' }}>
+                  <tr style={{ borderBottom: `1px solid ${themeBorder}`, color: '#64748b' }}>
                     <th style={{ padding: '10px 8px' }}>Candidate Name</th>
                     <th style={{ padding: '10px 8px' }}>Role</th>
                     <th style={{ padding: '10px 8px' }}>Match Score</th>
@@ -8882,7 +8884,7 @@ const ClientDashboard = () => {
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <button 
                           onClick={() => { setShowCompareModal(false); handleMessageFreelancer(cand.key || cand._id); }}
-                          style={{ padding: '4px 10px', background: '#1e293b', border: '1px solid #1d2433', borderRadius: 6, color: '#fff', fontSize: 11, cursor: 'pointer' }}
+                          style={{ padding: '4px 10px', background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 6, color: '#fff', fontSize: 11, cursor: 'pointer' }}
                         >
                           Message
                         </button>
@@ -8894,7 +8896,7 @@ const ClientDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-              <button onClick={() => setShowCompareModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setShowCompareModal(false)} style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                 Close Matrix
               </button>
             </div>
@@ -8909,7 +8911,7 @@ const ClientDashboard = () => {
           onClick={() => setActiveFreelancerProfile(null)}
         >
           <div 
-            style={{ background: '#111625', border: '1px solid #1d2433', padding: 24, borderRadius: 16, width: isMobile ? '90%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 20 }} 
+            style={{ background: themeCard, border: `1px solid ${themeBorder}`, padding: 24, borderRadius: 16, width: isMobile ? '90%' : 500, color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: 20 }} 
             onClick={e => e.stopPropagation()}
           >
             {/* Top Bar / Profile Header */}
@@ -8936,7 +8938,7 @@ const ClientDashboard = () => {
             </div>
 
             {/* Highlights Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: '#161c2c', borderRadius: 10, padding: 12, border: '1px solid rgba(255,255,255,0.02)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: themeInnerCard, borderRadius: 10, padding: 12, border: '1px solid rgba(255,255,255,0.02)' }}>
               <div>
                 <div style={{ fontSize: 10.5, color: '#64748b' }}>Rate</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#10b981', marginTop: 2 }}>{activeFreelancerProfile.rate}</div>
@@ -8960,12 +8962,12 @@ const ClientDashboard = () => {
               <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: 6 }}>Core Skills</span>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {activeFreelancerProfile.skills && activeFreelancerProfile.skills.map((skill, sKey) => (
-                  <span key={sKey} style={{ fontSize: 11, background: '#1e293b', border: '1px solid #1d2433', borderRadius: 6, padding: '3px 8px', color: '#cbd5e1' }}>
+                  <span key={sKey} style={{ fontSize: 11, background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 6, padding: '3px 8px', color: '#cbd5e1' }}>
                     {skill}
                   </span>
                 ))}
                 {['REST APIs', 'Git Workflow', 'Redux', 'Unit Testing'].map((skill, sKey) => (
-                  <span key={sKey} style={{ fontSize: 11, background: '#1e293b', border: '1px solid #1d2433', borderRadius: 6, padding: '3px 8px', color: '#64748b' }}>
+                  <span key={sKey} style={{ fontSize: 11, background: '#1e293b', border: `1px solid ${themeBorder}`, borderRadius: 6, padding: '3px 8px', color: '#64748b' }}>
                     {skill}
                   </span>
                 ))}
@@ -8976,7 +8978,7 @@ const ClientDashboard = () => {
             <div>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: 6 }}>Client Testimonials</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ background: '#0e1320', borderRadius: 8, padding: 10, fontSize: 11 }}>
+                <div style={{ background: themeInputBg, borderRadius: 8, padding: 10, fontSize: 11 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff', fontWeight: 600 }}>
                     <span>Website UI Overhaul</span>
                     <span style={{ color: '#f59e0b' }}>★★★★★</span>
@@ -8999,7 +9001,7 @@ const ClientDashboard = () => {
               </button>
               <button 
                 onClick={() => setActiveFreelancerProfile(null)} 
-                style={{ padding: '8px 16px', background: '#1e293b', border: '1px solid #1d2433', color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '8px 16px', background: '#1e293b', border: `1px solid ${themeBorder}`, color: '#fff', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
               >
                 Close
               </button>
