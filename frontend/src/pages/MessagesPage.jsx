@@ -344,8 +344,34 @@ const MessagesPage = ({ userType = 'client' }) => {
   const activeOther = activeConv ? getOtherParticipant(activeConv, myId) : null;
   const accentColor = userType === 'freelancer' ? '#16a34a' : '#2563eb';
 
-  const createPeerConnection = (targetUserId) => {
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+  const createPeerConnection = async (targetUserId) => {
+    let serversConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+      ],
+    };
+
+    const turnUrl = process.env.REACT_APP_TURN_URL;
+    const turnUser = process.env.REACT_APP_TURN_USERNAME;
+    const turnCred = process.env.REACT_APP_TURN_CREDENTIAL;
+    if (turnUrl && turnUser && turnCred) {
+      serversConfig.iceServers.push({
+        urls: turnUrl,
+        username: turnUser,
+        credential: turnCred,
+      });
+    }
+
+    try {
+      const res = await api.get('/messages/turn-credentials');
+      if (res.data?.success && Array.isArray(res.data?.iceServers)) {
+        serversConfig = { iceServers: res.data.iceServers };
+      }
+    } catch (e) {}
+
+    const pc = new RTCPeerConnection(serversConfig);
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
@@ -354,7 +380,7 @@ const MessagesPage = ({ userType = 'client' }) => {
     };
 
     pc.ontrack = (event) => {
-      if (remoteVideoRef.current) {
+      if (remoteVideoRef.current && event.streams && event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
@@ -433,7 +459,7 @@ const MessagesPage = ({ userType = 'client' }) => {
 
       try {
         const stream = await startLocalMedia(!isAudioOnlyRef.current);
-        const pc = createPeerConnection(targetUserId);
+        const pc = await createPeerConnection(targetUserId);
         stream.getTracks().forEach(track => pc.addTrack(track, stream));
         peerConnectionRef.current = pc;
 
@@ -451,7 +477,7 @@ const MessagesPage = ({ userType = 'client' }) => {
         targetUserCallRef.current = callerId;
         let pc = peerConnectionRef.current;
         if (!pc) {
-          pc = createPeerConnection(callerId);
+          pc = await createPeerConnection(callerId);
           peerConnectionRef.current = pc;
         }
         if (localStreamRef.current) {
@@ -746,7 +772,7 @@ const MessagesPage = ({ userType = 'client' }) => {
     try {
       const withVideo = !isAudioOnlyRef.current;
       const stream = await startLocalMedia(withVideo);
-      const pc = createPeerConnection(callerId);
+      const pc = await createPeerConnection(callerId);
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
       peerConnectionRef.current = pc;
     } catch (err) {
@@ -1184,12 +1210,12 @@ const MessagesPage = ({ userType = 'client' }) => {
         setVideoCallDuration(0);
         setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
 
-        startLocalMedia(true).then((stream) => {
+        startLocalMedia(true).then(async (stream) => {
           const target = targetUserCallRef.current;
           if (target) {
             let pc = peerConnectionRef.current;
             if (!pc) {
-              pc = createPeerConnection(target);
+              pc = await createPeerConnection(target);
               peerConnectionRef.current = pc;
             }
             stream.getTracks().forEach(track => {

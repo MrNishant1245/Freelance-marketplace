@@ -233,6 +233,50 @@ const getUnreadCount = async (req, res) => {
   }
 };
 
+// ─── Get TURN Credentials for WebRTC ─────────────────────────────────────────
+const getTurnCredentials = async (req, res) => {
+  try {
+    let iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+    ];
+
+    // Static TURN env vars
+    const turnUrl = process.env.TURN_URL || process.env.REACT_APP_TURN_URL;
+    const turnUser = process.env.TURN_USERNAME || process.env.REACT_APP_TURN_USERNAME;
+    const turnCred = process.env.TURN_CREDENTIAL || process.env.REACT_APP_TURN_CREDENTIAL;
+
+    if (turnUrl && turnUser && turnCred) {
+      iceServers.push({
+        urls: turnUrl,
+        username: turnUser,
+        credential: turnCred,
+      });
+    }
+
+    // Dynamic Twilio TURN service if credentials exist
+    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
+    if (twilioSid && twilioAuth) {
+      try {
+        const client = require('twilio')(twilioSid, twilioAuth);
+        const token = await client.tokens.create();
+        if (token && token.iceServers) {
+          iceServers = token.iceServers;
+        }
+      } catch (twErr) {
+        console.error('Twilio TURN token generation error:', twErr.message);
+      }
+    }
+
+    return res.json({ success: true, iceServers });
+  } catch (err) {
+    console.error('getTurnCredentials error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch TURN credentials.' });
+  }
+};
+
 module.exports = {
   getConversations,
   getOrCreateConversation,
@@ -240,4 +284,5 @@ module.exports = {
   sendMessage,
   deleteMessage,
   getUnreadCount,
+  getTurnCredentials,
 };

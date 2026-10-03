@@ -8,15 +8,17 @@ const {
   sendMessage,
   deleteMessage,
   getUnreadCount,
+  getTurnCredentials,
 } = require('../controllers/message.controller');
 
 // All routes require authentication
 router.use(protect);
 
 // Conversations
-router.get('/',           getConversations);           // GET  /api/messages
-router.post('/start',     getOrCreateConversation);    // POST /api/messages/start
-router.get('/unread',     getUnreadCount);             // GET  /api/messages/unread
+router.get('/',                 getConversations);           // GET  /api/messages
+router.post('/start',           getOrCreateConversation);    // POST /api/messages/start
+router.get('/unread',           getUnreadCount);             // GET  /api/messages/unread
+router.get('/turn-credentials', getTurnCredentials);         // GET  /api/messages/turn-credentials
 
 // Messages within a conversation
 router.get('/:conversationId',         getMessages);   // GET  /api/messages/:id
