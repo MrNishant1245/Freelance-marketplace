@@ -764,8 +764,6 @@ const PaymentPage = () => {
           </div>
         </div>
       )}
-        </div>
-      </div>
       <style>{`* { box-sizing: border-box; } button { cursor: pointer; }`}</style>
     </div>
   );
