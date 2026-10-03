@@ -95,6 +95,19 @@ io.on('connection', (socket) => {
     socket.to(`user:${targetUserId}`).emit('callEnded', { conversationId });
   });
 
+  // WebRTC P2P Signaling Relays
+  socket.on('webrtc-offer', ({ targetUserId, offer }) => {
+    socket.to(`user:${targetUserId}`).emit('webrtc-offer', { offer, callerId: socket.userId });
+  });
+
+  socket.on('webrtc-answer', ({ targetUserId, answer }) => {
+    socket.to(`user:${targetUserId}`).emit('webrtc-answer', { answer, callerId: socket.userId });
+  });
+
+  socket.on('webrtc-ice-candidate', ({ targetUserId, candidate }) => {
+    socket.to(`user:${targetUserId}`).emit('webrtc-ice-candidate', { candidate, callerId: socket.userId });
+  });
+
   socket.on('disconnect', () => {
     console.log(`🔌 Socket disconnected: ${socket.userId}`);
   });

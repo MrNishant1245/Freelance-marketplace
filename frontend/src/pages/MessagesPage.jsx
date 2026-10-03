@@ -39,6 +39,14 @@ const formatFileSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ],
+};
+
 // ─── Get other participant from conversation ───────────────────────────────────
 const getOtherParticipant = (conv, myId) => {
   if (conv.otherParticipant) return conv.otherParticipant;
@@ -325,9 +333,57 @@ const MessagesPage = ({ userType = 'client' }) => {
   const audioChunksRef = useRef([]);
   const audioPlayerRef = useRef(null);
 
+  const peerConnectionRef = useRef(null);
+  const localStreamRef    = useRef(null);
+  const localVideoRef     = useRef(null);
+  const remoteVideoRef    = useRef(null);
+  const isAudioOnlyRef    = useRef(false);
+  const targetUserCallRef = useRef(null);
+
   const myId        = user?._id || user?.id;
   const activeOther = activeConv ? getOtherParticipant(activeConv, myId) : null;
   const accentColor = userType === 'freelancer' ? '#16a34a' : '#2563eb';
+
+  const createPeerConnection = (targetUserId) => {
+    const pc = new RTCPeerConnection(ICE_SERVERS);
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socketRef.current?.emit('webrtc-ice-candidate', { targetUserId, candidate: event.candidate });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        toast.error('Call connection lost.');
+        handleEndCall();
+      }
+    };
+
+    return pc;
+  };
+
+  const startLocalMedia = async (withVideo = true) => {
+    try {
+      const constraints = { audio: true, video: withVideo };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      localStreamRef.current = stream;
+      if (localVideoRef.current && withVideo) {
+        localVideoRef.current.srcObject = stream;
+      }
+      return stream;
+    } catch (err) {
+      console.error('Media access error:', err);
+      toast.error('Could not access camera/microphone. Please check permissions.');
+      throw err;
+    }
+  };
 
   // ── Socket setup ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -356,15 +412,69 @@ const MessagesPage = ({ userType = 'client' }) => {
 
     s.on('incomingCall', ({ conversationId, callerName, callerId }) => {
       setIncomingCall({ conversationId, callerName, callerId });
+      targetUserCallRef.current = callerId;
     });
-    s.on('callAccepted', ({ conversationId }) => {
+    s.on('callAccepted', async ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
+      const targetUserId = targetUserCallRef.current || (activeOther ? (activeOther._id || activeOther) : null);
       setOutgoingCall(null);
       setVideoCallActive(true);
       setVideoCallDuration(0);
-      setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
-      toast.success('Call connected! Zoom Room starting...', { icon: '📞' });
+      setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
+
+      try {
+        const stream = await startLocalMedia(!isAudioOnlyRef.current);
+        const pc = createPeerConnection(targetUserId);
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        peerConnectionRef.current = pc;
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        s.emit('webrtc-offer', { targetUserId, offer });
+        toast.success('WebRTC P2P Call Connected!', { icon: '📞' });
+      } catch (err) {
+        handleEndCall();
+      }
     });
+
+    s.on('webrtc-offer', async ({ offer, callerId }) => {
+      try {
+        let pc = peerConnectionRef.current;
+        if (!pc) {
+          pc = createPeerConnection(callerId);
+          peerConnectionRef.current = pc;
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        s.emit('webrtc-answer', { targetUserId: callerId, answer });
+      } catch (err) {
+        console.error('WebRTC offer error:', err);
+      }
+    });
+
+    s.on('webrtc-answer', async ({ answer }) => {
+      try {
+        const pc = peerConnectionRef.current;
+        if (pc) {
+          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+      } catch (err) {
+        console.error('WebRTC answer error:', err);
+      }
+    });
+
+    s.on('webrtc-ice-candidate', async ({ candidate }) => {
+      try {
+        const pc = peerConnectionRef.current;
+        if (pc && candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      } catch (err) {
+        console.error('ICE candidate error:', err);
+      }
+    });
+
     s.on('callDeclined', ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       setOutgoingCall(null);
@@ -372,9 +482,7 @@ const MessagesPage = ({ userType = 'client' }) => {
     });
     s.on('callEnded', ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
-      setIncomingCall(null);
-      setOutgoingCall(null);
-      setVideoCallActive(false);
+      handleEndCallCleanupOnly();
       toast.error('Call ended.', { icon: '📞' });
     });
 
@@ -382,7 +490,7 @@ const MessagesPage = ({ userType = 'client' }) => {
       s.off('newMessage'); s.off('conversationUpdated');
       s.off('userTyping'); s.off('userStoppedTyping'); s.off('messageDeleted');
       s.off('incomingCall'); s.off('callAccepted');
-      s.off('callDeclined'); s.off('callEnded');
+      s.off('callDeclined'); s.off('callEnded'); s.off('webrtc-offer'); s.off('webrtc-answer'); s.off('webrtc-ice-candidate');
     };
   }, [token]);
 
@@ -512,17 +620,52 @@ const MessagesPage = ({ userType = 'client' }) => {
     setSearchStatus('Review is not available for this job yet.');
   };
 
-  const handleVoiceCall = () => {
-    if (!activeOther?.phone) {
-      return alert('No phone number available for this user.');
+  const handleEndCallCleanupOnly = () => {
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
+
+    if (peerConnectionRef.current) {
+      try { peerConnectionRef.current.close(); } catch (e) {}
+      peerConnectionRef.current = null;
     }
-    window.location.href = `tel:${activeOther.phone}`;
+    if (localStreamRef.current) {
+      try { localStreamRef.current.getTracks().forEach(t => t.stop()); } catch (e) {}
+      localStreamRef.current = null;
+    }
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+
+    setIncomingCall(null);
+    setOutgoingCall(null);
+    setVideoCallActive(false);
   };
 
-  const handleVideoCall = () => {
+  const handleEndCall = () => {
+    if (outgoingCall) {
+      socketRef.current?.emit('endCall', {
+        conversationId: outgoingCall.conversationId,
+        targetUserId: outgoingCall.targetUserId
+      });
+    } else if (activeConv && activeOther) {
+      socketRef.current?.emit('endCall', {
+        conversationId: activeConv._id,
+        targetUserId: activeOther._id || activeOther
+      });
+    } else if (targetUserCallRef.current) {
+      socketRef.current?.emit('endCall', {
+        conversationId: activeConv?._id,
+        targetUserId: targetUserCallRef.current
+      });
+    }
+
+    handleEndCallCleanupOnly();
+  };
+
+  const startCallProcess = (withVideo) => {
     if (!activeConv || !activeOther) return;
+    isAudioOnlyRef.current = !withVideo;
     const callerName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Someone';
     const targetUserId = activeOther._id || activeOther;
+    targetUserCallRef.current = targetUserId;
 
     socketRef.current?.emit('callUser', {
       conversationId: activeConv._id,
@@ -538,23 +681,42 @@ const MessagesPage = ({ userType = 'client' }) => {
     callTimeoutRef.current = setTimeout(() => {
       handleEndCall();
       toast.error('No answer from user.', { icon: '📞' });
-    }, 15000);
+    }, 20000);
   };
 
-  const handleAcceptCall = () => {
+  const handleVoiceCall = () => {
+    startCallProcess(false);
+  };
+
+  const handleVideoCall = () => {
+    startCallProcess(true);
+  };
+
+  const handleAcceptCall = async () => {
     if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
     if (!incomingCall) return;
     const { conversationId, callerId } = incomingCall;
+    targetUserCallRef.current = callerId;
 
     socketRef.current?.emit('acceptCall', {
       conversationId,
       targetUserId: callerId
     });
 
+    try {
+      const withVideo = !isAudioOnlyRef.current;
+      const stream = await startLocalMedia(withVideo);
+      const pc = createPeerConnection(callerId);
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      peerConnectionRef.current = pc;
+    } catch (err) {
+      toast.error('Could not access camera/microphone permissions.');
+    }
+
     setIncomingCall(null);
     setVideoCallActive(true);
     setVideoCallDuration(0);
-    setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
+    setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
   };
 
   const handleDeclineCall = () => {
@@ -567,30 +729,21 @@ const MessagesPage = ({ userType = 'client' }) => {
       targetUserId: callerId
     });
 
-    setIncomingCall(null);
+    handleEndCallCleanupOnly();
   };
 
-  const handleEndCall = () => {
-    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
-    if (outgoingCall) {
-      socketRef.current?.emit('endCall', {
-        conversationId: outgoingCall.conversationId,
-        targetUserId: outgoingCall.targetUserId
-      });
-      setOutgoingCall(null);
-      return;
-    }
+  const toggleMuteCallTrack = () => {
+    const track = localStreamRef.current?.getAudioTracks()[0];
+    if (track) track.enabled = !track.enabled;
+    setVideoCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
+    toast.success(videoCallState.isMuted ? 'Microphone unmuted' : 'Microphone muted');
+  };
 
-    if (activeConv && activeOther) {
-      socketRef.current?.emit('endCall', {
-        conversationId: activeConv._id,
-        targetUserId: activeOther._id || activeOther
-      });
-    }
-
-    setIncomingCall(null);
-    setOutgoingCall(null);
-    setVideoCallActive(false);
+  const toggleVideoCallTrack = () => {
+    const track = localStreamRef.current?.getVideoTracks()[0];
+    if (track) track.enabled = !track.enabled;
+    setVideoCallState(prev => ({ ...prev, isVideoOff: !prev.isVideoOff }));
+    toast.success(videoCallState.isVideoOff ? 'Camera turned on' : 'Camera turned off');
   };
 
   const toggleSelectMode = () => {
@@ -1741,44 +1894,48 @@ const MessagesPage = ({ userType = 'client' }) => {
                   
                   {/* Remote Feed (Main view) */}
                   <div style={{ width: '100%', height: '100%', background: '#1e293b', borderRadius: 16, border: '2px solid #334155', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                    {videoCallState.isScreenSharing ? (
-                      /* Screen share simulation */
-                      <div style={{ width: '100%', height: '100%', background: '#090d16', padding: 20, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: 8, marginBottom: 12 }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: '#3b82f6' }}>💻 Screen Sharing: Desktop Workspace</span>
-                          <span style={{ background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>LIVE REVIEW</span>
-                        </div>
-                        <div style={{ flex: 1, fontFamily: 'monospace', fontSize: 12, color: '#38bdf8', overflow: 'hidden', whiteSpace: 'pre-wrap', textAlign: 'left', lineHeight: 1.4 }}>
-                          {`// Freelance Marketplace Code Review\nimport React from 'react';\n\nconst ProjectComponent = () => {\n  return (\n    <div className="container">\n      <h1>Reviewing latest milestone changes</h1>\n      <p>Status: All tests passed successfully</p>\n    </div>\n  );\n};`}
+                    {/* Real P2P Remote Video Element */}
+                    <video
+                      ref={remoteVideoRef}
+                      autoPlay
+                      playsInline
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: 16,
+                        display: videoCallState.isVideoOff ? 'none' : 'block'
+                      }}
+                    />
+
+                    {videoCallState.isVideoOff && (
+                      <div style={{ textAlign: 'center' }}>
+                        <Avatar user={activeOther} size={120} color={accentColor} />
+                        <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600, color: '#94a3b8' }}>
+                          {activeOther.firstName} (Audio Active)
                         </div>
                       </div>
-                    ) : videoCallState.isVideoOff ? (
-                      /* Camera turned off view */
-                      <>
-                        <Avatar user={activeOther} size={120} color={accentColor} />
-                        <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600, color: '#94a3b8' }}>{activeOther.firstName} turned off camera</div>
-                      </>
-                    ) : (
-                      /* Regular active call simulated view */
-                      <>
-                        <Avatar user={activeOther} size={100} color={accentColor} />
-                        <div style={{ fontSize: 16, fontWeight: 700, marginTop: 16 }}>{activeOther.firstName} {activeOther.lastName}</div>
-                        <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Camera Active - Live Video</div>
-                        
-                        {/* Audio wave waves simulator */}
-                        <div style={{ display: 'flex', gap: 3, marginTop: 20 }}>
-                          {[5, 12, 18, 24, 15, 8, 14, 22, 10, 6].map((h, idx) => (
-                            <span key={idx} style={{ width: 3, height: h, background: '#2563eb', borderRadius: 1.5, animation: 'pulse 1s infinite' }} />
-                          ))}
-                        </div>
-                      </>
                     )}
 
-                    {/* Local Feed PIP (Mini window at bottom corner) */}
-                    <div style={{ position: 'absolute', bottom: 20, right: 20, width: 140, height: 100, background: '#090d16', border: '2px solid #2563eb', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 15px rgba(0,0,0,0.5)' }}>
-                      <div style={{ fontSize: 24 }}>👨‍💻</div>
-                      <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 4 }}>You (Local Feed)</div>
-                    </div>
+                    {/* Real P2P Local Video PIP Element */}
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      style={{
+                        position: 'absolute',
+                        bottom: 20,
+                        right: 20,
+                        width: 150,
+                        height: 110,
+                        objectFit: 'cover',
+                        borderRadius: 12,
+                        border: '2px solid #2563eb',
+                        background: '#090d16',
+                        boxShadow: '0 10px 20px rgba(0,0,0,0.6)'
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -1787,10 +1944,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                   
                   {/* Mute Mic */}
                   <button 
-                    onClick={() => {
-                      setVideoCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
-                      toast.success(videoCallState.isMuted ? 'Microphone unmuted' : 'Microphone muted');
-                    }}
+                    onClick={toggleMuteCallTrack}
                     style={{ background: videoCallState.isMuted ? '#ef4444' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                   >
                     <span>{videoCallState.isMuted ? '🎤 Unmute' : '🎙️ Mute'}</span>
@@ -1798,10 +1952,7 @@ const MessagesPage = ({ userType = 'client' }) => {
 
                   {/* Toggle Camera */}
                   <button 
-                    onClick={() => {
-                      setVideoCallState(prev => ({ ...prev, isVideoOff: !prev.isVideoOff }));
-                      toast.success(videoCallState.isVideoOff ? 'Camera turned on' : 'Camera turned off');
-                    }}
+                    onClick={toggleVideoCallTrack}
                     style={{ background: videoCallState.isVideoOff ? '#ef4444' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                   >
                     <span>{videoCallState.isVideoOff ? '📹 Start Video' : '🚫 Stop Video'}</span>
