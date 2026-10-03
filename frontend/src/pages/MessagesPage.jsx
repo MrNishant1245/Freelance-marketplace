@@ -664,7 +664,8 @@ const MessagesPage = ({ userType = 'client' }) => {
     if (!activeConv || !activeOther) return;
     isAudioOnlyRef.current = !withVideo;
     const callerName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Someone';
-    const targetUserId = activeOther._id || activeOther;
+    const rawTarget = activeOther._id || activeOther.id || activeOther;
+    const targetUserId = typeof rawTarget === 'object' ? String(rawTarget._id || rawTarget.id || rawTarget) : String(rawTarget);
     targetUserCallRef.current = targetUserId;
 
     socketRef.current?.emit('callUser', {

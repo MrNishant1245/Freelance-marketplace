@@ -79,33 +79,49 @@ io.on('connection', (socket) => {
     socket.to(conversationId).emit('userStoppedTyping', { userId: socket.userId });
   });
 
+  const getCleanUserId = (val) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    if (val._id) return String(val._id);
+    if (val.id) return String(val.id);
+    return String(val);
+  };
+
   socket.on('callUser', ({ conversationId, targetUserId, callerName, callerId }) => {
-    socket.to(`user:${targetUserId}`).emit('incomingCall', { conversationId, callerName, callerId });
+    const targetId = getCleanUserId(targetUserId);
+    console.log(`📞 callUser from ${callerId} (${callerName}) to target ${targetId}`);
+    socket.to(`user:${targetId}`).emit('incomingCall', { conversationId, callerName, callerId });
   });
 
   socket.on('acceptCall', ({ conversationId, targetUserId }) => {
-    socket.to(`user:${targetUserId}`).emit('callAccepted', { conversationId });
+    const targetId = getCleanUserId(targetUserId);
+    socket.to(`user:${targetId}`).emit('callAccepted', { conversationId });
   });
 
   socket.on('declineCall', ({ conversationId, targetUserId }) => {
-    socket.to(`user:${targetUserId}`).emit('callDeclined', { conversationId });
+    const targetId = getCleanUserId(targetUserId);
+    socket.to(`user:${targetId}`).emit('callDeclined', { conversationId });
   });
 
   socket.on('endCall', ({ conversationId, targetUserId }) => {
-    socket.to(`user:${targetUserId}`).emit('callEnded', { conversationId });
+    const targetId = getCleanUserId(targetUserId);
+    socket.to(`user:${targetId}`).emit('callEnded', { conversationId });
   });
 
   // WebRTC P2P Signaling Relays
   socket.on('webrtc-offer', ({ targetUserId, offer }) => {
-    socket.to(`user:${targetUserId}`).emit('webrtc-offer', { offer, callerId: socket.userId });
+    const targetId = getCleanUserId(targetUserId);
+    socket.to(`user:${targetId}`).emit('webrtc-offer', { offer, callerId: socket.userId });
   });
 
   socket.on('webrtc-answer', ({ targetUserId, answer }) => {
-    socket.to(`user:${targetUserId}`).emit('webrtc-answer', { answer, callerId: socket.userId });
+    const targetId = getCleanUserId(targetUserId);
+    socket.to(`user:${targetId}`).emit('webrtc-answer', { answer, callerId: socket.userId });
   });
 
   socket.on('webrtc-ice-candidate', ({ targetUserId, candidate }) => {
-    socket.to(`user:${targetUserId}`).emit('webrtc-ice-candidate', { candidate, callerId: socket.userId });
+    const targetId = getCleanUserId(targetUserId);
+    socket.to(`user:${targetId}`).emit('webrtc-ice-candidate', { candidate, callerId: socket.userId });
   });
 
   socket.on('disconnect', () => {
