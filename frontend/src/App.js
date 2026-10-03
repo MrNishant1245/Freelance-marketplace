@@ -24,6 +24,7 @@ import PaymentPage           from './pages/PaymentPage';
 import { getSocket }         from './utils/socket';
 import { tokenStorage }      from './utils/tokenStorage';
 import CategoryLandingPage   from './pages/CategoryLandingPage';
+import LandingPage           from './pages/LandingPage';
 
 const RootRedirect = () => {
   const { isAuthenticated, user, loading } = useAuth();
@@ -267,7 +268,7 @@ const App = () => (
         <Route path="/admin/*" element={<RoleRoute roles={['admin']}><AdminDashboard /></RoleRoute>} />
 
         {/* ── Default ── */}
-        <Route path="/"  element={<RootRedirect />} />
+        <Route path="/"  element={<LandingPage />} />
         <Route path="*"  element={<Navigate to="/" replace />} />
       </Routes>
 
