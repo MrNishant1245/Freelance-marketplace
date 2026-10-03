@@ -147,7 +147,7 @@ const CallManager = () => {
     });
     setIncomingCall(null);
     const messagesPath = user?.role === 'freelancer' ? '/freelancer/messages' : '/messages';
-    navigate(`${messagesPath}?conversation=${conversationId}&startCall=true`);
+    navigate(`${messagesPath}?conversation=${conversationId}&startCall=true&callerId=${callerId}`);
   };
 
   const handleDeclineCall = () => {

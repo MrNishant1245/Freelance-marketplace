@@ -377,6 +377,13 @@ const MessagesPage = ({ userType = 'client' }) => {
       if (localVideoRef.current && withVideo) {
         localVideoRef.current.srcObject = stream;
       }
+      if (peerConnectionRef.current) {
+        stream.getTracks().forEach(track => {
+          if (!peerConnectionRef.current.getSenders().some(s => s.track === track)) {
+            peerConnectionRef.current.addTrack(track, stream);
+          }
+        });
+      }
       return stream;
     } catch (err) {
       console.error('Media access error:', err);
@@ -439,10 +446,18 @@ const MessagesPage = ({ userType = 'client' }) => {
 
     s.on('webrtc-offer', async ({ offer, callerId }) => {
       try {
+        targetUserCallRef.current = callerId;
         let pc = peerConnectionRef.current;
         if (!pc) {
           pc = createPeerConnection(callerId);
           peerConnectionRef.current = pc;
+        }
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach(track => {
+            if (!pc.getSenders().some(s => s.track === track)) {
+              pc.addTrack(track, localStreamRef.current);
+            }
+          });
         }
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
@@ -1135,13 +1150,38 @@ const MessagesPage = ({ userType = 'client' }) => {
         selectConversationRef.current(match);
       }
       const startCall = queryParams.get('startCall');
+      const callerIdParam = queryParams.get('callerId');
       if (startCall === 'true') {
+        const callerId = callerIdParam || (match ? (getOtherParticipant(match, myId)?._id || getOtherParticipant(match, myId)) : null);
+        if (callerId) {
+          targetUserCallRef.current = typeof callerId === 'object' ? String(callerId._id || callerId) : String(callerId);
+        }
         setVideoCallActive(true);
         setVideoCallDuration(0);
         setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
-        // Clear startCall query parameter from URL
+
+        startLocalMedia(true).then((stream) => {
+          const target = targetUserCallRef.current;
+          if (target) {
+            let pc = peerConnectionRef.current;
+            if (!pc) {
+              pc = createPeerConnection(target);
+              peerConnectionRef.current = pc;
+            }
+            stream.getTracks().forEach(track => {
+              if (!pc.getSenders().some(s => s.track === track)) {
+                pc.addTrack(track, stream);
+              }
+            });
+          }
+        }).catch(err => {
+          console.error("Failed to start local media on call accept:", err);
+        });
+
+        // Clear startCall and callerId query parameters from URL
         const newSearch = new URLSearchParams(location.search);
         newSearch.delete('startCall');
+        newSearch.delete('callerId');
         navigate({ search: newSearch.toString() }, { replace: true });
       }
     }
