@@ -398,30 +398,32 @@ const MessagesPage = ({ userType = 'client' }) => {
     const s = getSocket(token);
     socketRef.current = s;
 
-    s.on('newMessage', (msg) => {
+    const handleNewMessage = (msg) => {
       setMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
       setConversations(prev =>
         prev.map(c => c._id === msg.conversation ? { ...c, lastMessage: msg } : c)
       );
-    });
-    s.on('conversationUpdated', (data) => {
+    };
+
+    const handleConvUpdated = (data) => {
       setConversations(prev =>
         prev.map(c => c._id === data.conversationId
           ? { ...c, lastMessage: data.lastMessage, unreadCount: data.unreadCount }
           : c)
       );
-    });
-    s.on('userTyping',        ({ userId }) => setTypingUsers(p => [...new Set([...p, userId])]));
-    s.on('userStoppedTyping', ({ userId }) => setTypingUsers(p => p.filter(id => id !== userId)));
-    s.on('messageDeleted',    ({ messageId }) =>
-      setMessages(p => p.map(m => m._id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted.' } : m))
-    );
+    };
 
-    s.on('incomingCall', ({ conversationId, callerName, callerId }) => {
+    const handleUserTyping = ({ userId }) => setTypingUsers(p => [...new Set([...p, userId])]);
+    const handleUserStoppedTyping = ({ userId }) => setTypingUsers(p => p.filter(id => id !== userId));
+    const handleMessageDeleted = ({ messageId }) =>
+      setMessages(p => p.map(m => m._id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted.' } : m));
+
+    const handleIncomingCallMsg = ({ conversationId, callerName, callerId }) => {
       setIncomingCall({ conversationId, callerName, callerId });
       targetUserCallRef.current = callerId;
-    });
-    s.on('callAccepted', async ({ conversationId }) => {
+    };
+
+    const handleCallAccepted = async ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       const targetUserId = targetUserCallRef.current || (activeOther ? (activeOther._id || activeOther) : null);
       setOutgoingCall(null);
@@ -442,9 +444,9 @@ const MessagesPage = ({ userType = 'client' }) => {
       } catch (err) {
         handleEndCall();
       }
-    });
+    };
 
-    s.on('webrtc-offer', async ({ offer, callerId }) => {
+    const handleWebRTCOffer = async ({ offer, callerId }) => {
       try {
         targetUserCallRef.current = callerId;
         let pc = peerConnectionRef.current;
@@ -466,9 +468,9 @@ const MessagesPage = ({ userType = 'client' }) => {
       } catch (err) {
         console.error('WebRTC offer error:', err);
       }
-    });
+    };
 
-    s.on('webrtc-answer', async ({ answer }) => {
+    const handleWebRTCAnswer = async ({ answer }) => {
       try {
         const pc = peerConnectionRef.current;
         if (pc) {
@@ -477,9 +479,9 @@ const MessagesPage = ({ userType = 'client' }) => {
       } catch (err) {
         console.error('WebRTC answer error:', err);
       }
-    });
+    };
 
-    s.on('webrtc-ice-candidate', async ({ candidate }) => {
+    const handleWebRTCICE = async ({ candidate }) => {
       try {
         const pc = peerConnectionRef.current;
         if (pc && candidate) {
@@ -488,24 +490,46 @@ const MessagesPage = ({ userType = 'client' }) => {
       } catch (err) {
         console.error('ICE candidate error:', err);
       }
-    });
+    };
 
-    s.on('callDeclined', ({ conversationId }) => {
+    const handleCallDeclinedMsg = ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       setOutgoingCall(null);
       toast.error('Call declined by user.', { icon: '📞' });
-    });
-    s.on('callEnded', ({ conversationId }) => {
+    };
+
+    const handleCallEndedMsg = ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       handleEndCallCleanupOnly();
       toast.error('Call ended.', { icon: '📞' });
-    });
+    };
+
+    s.on('newMessage', handleNewMessage);
+    s.on('conversationUpdated', handleConvUpdated);
+    s.on('userTyping', handleUserTyping);
+    s.on('userStoppedTyping', handleUserStoppedTyping);
+    s.on('messageDeleted', handleMessageDeleted);
+    s.on('incomingCall', handleIncomingCallMsg);
+    s.on('callAccepted', handleCallAccepted);
+    s.on('webrtc-offer', handleWebRTCOffer);
+    s.on('webrtc-answer', handleWebRTCAnswer);
+    s.on('webrtc-ice-candidate', handleWebRTCICE);
+    s.on('callDeclined', handleCallDeclinedMsg);
+    s.on('callEnded', handleCallEndedMsg);
 
     return () => {
-      s.off('newMessage'); s.off('conversationUpdated');
-      s.off('userTyping'); s.off('userStoppedTyping'); s.off('messageDeleted');
-      s.off('incomingCall'); s.off('callAccepted');
-      s.off('callDeclined'); s.off('callEnded'); s.off('webrtc-offer'); s.off('webrtc-answer'); s.off('webrtc-ice-candidate');
+      s.off('newMessage', handleNewMessage);
+      s.off('conversationUpdated', handleConvUpdated);
+      s.off('userTyping', handleUserTyping);
+      s.off('userStoppedTyping', handleUserStoppedTyping);
+      s.off('messageDeleted', handleMessageDeleted);
+      s.off('incomingCall', handleIncomingCallMsg);
+      s.off('callAccepted', handleCallAccepted);
+      s.off('webrtc-offer', handleWebRTCOffer);
+      s.off('webrtc-answer', handleWebRTCAnswer);
+      s.off('webrtc-ice-candidate', handleWebRTCICE);
+      s.off('callDeclined', handleCallDeclinedMsg);
+      s.off('callEnded', handleCallEndedMsg);
     };
   }, [token]);
 

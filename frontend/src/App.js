@@ -102,20 +102,25 @@ const CallManager = () => {
     if (!token) return;
 
     const s = getSocket(token);
+    if (!s) return;
 
-    s.on('incomingCall', ({ conversationId, callerName, callerId }) => {
+    const handleIncomingCall = ({ conversationId, callerName, callerId }) => {
+      console.log('📞 Global incomingCall event in App.js:', { conversationId, callerName, callerId });
       setIncomingCall({ conversationId, callerName, callerId });
-    });
+    };
 
-    s.on('callEnded', () => {
+    const handleCallEnded = () => {
       setIncomingCall(null);
-    });
+    };
+
+    s.on('incomingCall', handleIncomingCall);
+    s.on('callEnded', handleCallEnded);
 
     return () => {
-      s.off('incomingCall');
-      s.off('callEnded');
+      s.off('incomingCall', handleIncomingCall);
+      s.off('callEnded', handleCallEnded);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (incomingCall) {
