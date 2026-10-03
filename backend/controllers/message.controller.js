@@ -243,16 +243,16 @@ const getTurnCredentials = async (req, res) => {
     ];
 
     // Static TURN env vars
-    const turnUrl = process.env.TURN_URL || process.env.REACT_APP_TURN_URL;
-    const turnUser = process.env.TURN_USERNAME || process.env.REACT_APP_TURN_USERNAME;
-    const turnCred = process.env.TURN_CREDENTIAL || process.env.REACT_APP_TURN_CREDENTIAL;
+    const turnUrl = process.env.TURN_URL || process.env.REACT_APP_TURN_URL || 'turn:relay.metered.ca:80';
+    const turnUser = process.env.TURN_USERNAME || process.env.REACT_APP_TURN_USERNAME || 'openrelayproject';
+    const turnCred = process.env.TURN_CREDENTIAL || process.env.REACT_APP_TURN_CREDENTIAL || '61d3cd3d39f64f538cc50afb11f8a151';
 
     if (turnUrl && turnUser && turnCred) {
-      iceServers.push({
-        urls: turnUrl,
-        username: turnUser,
-        credential: turnCred,
-      });
+      iceServers.push(
+        { urls: turnUrl, username: turnUser, credential: turnCred },
+        { urls: 'turn:relay.metered.ca:443', username: turnUser, credential: turnCred },
+        { urls: 'turns:relay.metered.ca:443?transport=tcp', username: turnUser, credential: turnCred }
+      );
     }
 
     // Dynamic Twilio TURN service if credentials exist
