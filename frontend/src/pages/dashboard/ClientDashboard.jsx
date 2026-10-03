@@ -1043,7 +1043,8 @@ const SpendingChart = ({ isDarkMode, expenses = [] }) => {
 };
 
 // ── Project Status Donut Chart ──
-const DonutChart = ({ jobs = [] }) => {
+const DonutChart = ({ jobs = [], isDarkMode }) => {
+  const themeText = isDarkMode ? '#f8fafc' : '#0f172a';
   const total = jobs.length || 0;
   const inProgress = jobs.filter(j => j.status === 'in_progress').length;
   const inReview = jobs.filter(j => j.status === 'submitted').length;
@@ -3134,7 +3135,7 @@ const ClientDashboard = () => {
                   <h3 style={{ fontSize: 14.5, fontWeight: 700, color: isDarkMode ? '#fff' : '#0f172a', margin: 0 }}>Project Status</h3>
                   <button onClick={() => setActiveTab('jobs')} style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View all</button>
                 </div>
-                <DonutChart jobs={jobs} />
+                <DonutChart jobs={jobs} isDarkMode={isDarkMode} />
               </div>
 
               {/* Recent Activity */}
