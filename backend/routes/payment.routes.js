@@ -7,13 +7,16 @@ const {
   createStripeIntent,
   releasePayment,
   refundPayment,
-  getPaymentHistory, // ✅ NEW
-  getTransaction,    // ✅ NEW
+  getPaymentHistory,
+  getTransaction,
+  handleRazorpayWebhook,
 } = require('../controllers/payment.controller');
 
 // Razorpay
-router.post('/razorpay/order',  protect, createRazorpayOrder);
-router.post('/razorpay/verify', protect, verifyRazorpayPayment);
+router.post('/razorpay/order',   protect, createRazorpayOrder);
+router.post('/razorpay/verify',  protect, verifyRazorpayPayment);
+router.post('/razorpay/webhook', handleRazorpayWebhook); // Webhook callback from Razorpay
+
 
 // Stripe
 router.post('/stripe/intent', protect, createStripeIntent);

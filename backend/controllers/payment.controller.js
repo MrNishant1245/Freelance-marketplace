@@ -332,12 +332,57 @@ const getTransaction = async (req, res) => {
   }
 };
 
+// ─── Razorpay Webhook Handler (Server-side Source of Truth) ──────────────────
+const handleRazorpayWebhook = async (req, res) => {
+  try {
+    const signature = req.headers['x-razorpay-signature'];
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
+
+    if (secret && signature) {
+      const shasum = crypto.createHmac('sha256', secret);
+      shasum.update(JSON.stringify(req.body));
+      const digest = shasum.digest('hex');
+
+      if (digest !== signature) {
+        return res.status(400).json({ success: false, message: 'Invalid webhook signature.' });
+      }
+    }
+
+    const event = req.body.event;
+    const payload = req.body.payload;
+
+    if (event === 'payment.captured' || event === 'order.paid') {
+      const paymentEntity = payload.payment?.entity;
+      const orderId = paymentEntity?.order_id;
+      const paymentId = paymentEntity?.id;
+
+      if (orderId) {
+        const transaction = await Transaction.findOne({ gatewayOrderId: orderId });
+        if (transaction && transaction.status === 'pending') {
+          transaction.status = 'in_escrow';
+          transaction.gatewayPaymentId = paymentId;
+          transaction.paidAt = new Date();
+          await transaction.save();
+          console.log(`[Webhook] Transaction ${transaction._id} updated to in_escrow via Razorpay webhook.`);
+        }
+      }
+    }
+
+    return res.json({ success: true, status: 'ok' });
+  } catch (error) {
+    console.error('Razorpay webhook error:', error);
+    res.status(500).json({ success: false, message: 'Webhook processing error.' });
+  }
+};
+
 module.exports = {
   createRazorpayOrder,
   verifyRazorpayPayment,
   createStripeIntent,
   releasePayment,
   refundPayment,
-  getPaymentHistory, // ✅ NEW
-  getTransaction,    // ✅ NEW
+  getPaymentHistory,
+  getTransaction,
+  handleRazorpayWebhook,
 };
+
