@@ -37,13 +37,17 @@ const PaymentPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
 
-  // ── Activated Payment Method States ──────────────────────────────────────────
+  // ── Activated Payment Method & Promo Code States ────────────────────────────
   const [rzpTab, setRzpTab] = useState('UPI'); // 'UPI' | 'Card' | 'NetBanking' | 'Wallet'
   const [upiId, setUpiId] = useState('');
   const [upiVerified, setUpiVerified] = useState(false);
   const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvv: '', name: '' });
   const [selectedBank, setSelectedBank] = useState('HDFC Bank');
   const [selectedWallet, setSelectedWallet] = useState('Paytm Wallet');
+
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [showEscrowModal, setShowEscrowModal] = useState(false);
 
   const handleVerifyUPI = () => {
     if (!upiId || !upiId.includes('@')) {
@@ -53,6 +57,16 @@ const PaymentPage = () => {
     }
     setUpiVerified(true);
     toast.success(`UPI ID "${upiId}" verified successfully! ✓`, { icon: '✅' });
+  };
+
+  const handleApplyCoupon = () => {
+    const clean = couponCode.trim().toUpperCase();
+    if (clean === 'FREELANCE10' || clean === 'WELCOME10' || clean === 'DISCOUNT10') {
+      setAppliedCoupon(clean);
+      toast.success(`🎉 Promo code "${clean}" applied! Platform fee waived.`, { icon: '🏷️' });
+    } else {
+      toast.error('Invalid promo code. Try "FREELANCE10" or "WELCOME10".');
+    }
   };
 
   const styles = {
@@ -589,6 +603,9 @@ const PaymentPage = () => {
               <div style={styles.jobCard}>
                 <div style={styles.jobTitle}>{job.title}</div>
                 <div style={styles.jobFreelancer}>👨‍💻 {job.freelancer}</div>
+                <div style={{ fontSize: 11.5, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 4 }}>
+                  Selected Gateway: <strong>{gateway === 'razorpay' ? `Razorpay (${rzpTab})` : 'Stripe Card'}</strong>
+                </div>
               </div>
 
               <div style={styles.summaryRows}>
@@ -598,30 +615,111 @@ const PaymentPage = () => {
                 </div>
                 <div style={styles.summaryRow}>
                   <span>Platform Fee (10%)</span>
-                  <span>₹{job.platformFee.toLocaleString()}</span>
+                  <span style={{ textDecoration: appliedCoupon ? 'line-through' : 'none', color: appliedCoupon ? '#ef4444' : undefined }}>
+                    ₹{job.platformFee.toLocaleString()}
+                  </span>
                 </div>
+                {appliedCoupon && (
+                  <div style={{ ...styles.summaryRow, color: '#10b981', fontWeight: 600 }}>
+                    <span>Promo Discount ({appliedCoupon})</span>
+                    <span>-₹{job.platformFee.toLocaleString()}</span>
+                  </div>
+                )}
                 <div style={{ ...styles.summaryRow, ...styles.totalRow }}>
                   <span>Total</span>
-                  <span>₹{job.total.toLocaleString()}</span>
+                  <span style={{ color: '#2563eb', fontSize: 18, fontWeight: 800 }}>₹{(appliedCoupon ? job.amount : job.total).toLocaleString()}</span>
                 </div>
                 {gateway === 'stripe' && (
                   <div style={{ ...s.summaryRow, color: '#737373', fontSize: 12 }}>
                     <span>≈ USD</span>
-                    <span>${(job.total / 83).toFixed(0)}</span>
+                    <span>${((appliedCoupon ? job.amount : job.total) / 83).toFixed(0)}</span>
                   </div>
                 )}
               </div>
 
-              <div style={styles.escrowNote}>
-                🔒 Your payment is held in escrow until you approve the completed work.
+              {/* Promo Code Input */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: isDarkMode ? '#94a3b8' : '#64748b', marginBottom: 6 }}>
+                  Have a Promo Code?
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1.5px solid #cbd5e1',
+                      background: isDarkMode ? '#0f172a' : '#ffffff',
+                      color: isDarkMode ? '#ffffff' : '#0f172a',
+                      fontSize: 13,
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      outline: 'none'
+                    }}
+                    placeholder="e.g. FREELANCE10"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    style={{
+                      padding: '8px 14px',
+                      background: '#2563eb',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Apply
+                  </button>
+                </div>
+                {appliedCoupon && (
+                  <div style={{ fontSize: 11.5, color: '#10b981', marginTop: 4, fontWeight: 600 }}>
+                    ✓ Promo code {appliedCoupon} active!
+                  </div>
+                )}
               </div>
 
+              {/* Escrow Banner Note */}
+              <div 
+                onClick={() => setShowEscrowModal(true)}
+                style={{ ...styles.escrowNote, cursor: 'pointer' }}
+                title="Click to view 100% Escrow Protection Policy"
+              >
+                🔒 Your payment is held in escrow until you approve the completed work. <span style={{ textDecoration: 'underline', fontWeight: 700 }}>Learn more →</span>
+              </div>
+
+              {/* Pay Button */}
               <button
+                type="button"
                 onClick={handlePay}
                 disabled={isProcessing}
-                style={{ ...styles.payBtn, opacity: isProcessing ? 0.8 : 1 }}
+                style={{
+                  ...styles.payBtn,
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  boxShadow: '0 8px 20px -4px rgba(37, 99, 235, 0.4)',
+                  opacity: isProcessing ? 0.8 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  fontSize: 16,
+                  fontWeight: 800
+                }}
               >
-                {isProcessing ? '⏳ Processing…' : `Pay ₹${job.total.toLocaleString()} Securely`}
+                {isProcessing ? (
+                  <>
+                    <span>⏳ Creating Order & Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Pay ₹{(appliedCoupon ? job.amount : job.total).toLocaleString()} Securely</span>
+                  </>
+                )}
               </button>
 
               <div style={styles.trustRow}>
@@ -630,6 +728,42 @@ const PaymentPage = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Escrow Policy Modal */}
+      {showEscrowModal && (
+        <div 
+          onClick={() => setShowEscrowModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: isDarkMode ? '#0f172a' : '#ffffff', borderRadius: 16, padding: 24, maxWidth: 460, width: '100%', color: isDarkMode ? '#fff' : '#0f172a', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
+                🛡️ 100% Escrow Protection Policy
+              </div>
+              <button onClick={() => setShowEscrowModal(false)} style={{ background: 'none', border: 'none', fontSize: 18, color: '#94a3b8', cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ fontSize: 13.5, color: isDarkMode ? '#cbd5e1' : '#475569', lineHeight: 1.6, marginBottom: 16 }}>
+              When you deposit funds into FreelanceHub Escrow, the money is locked in a non-custodial vault:
+            </p>
+            <ul style={{ fontSize: 13, color: isDarkMode ? '#cbd5e1' : '#475569', lineHeight: 1.6, paddingLeft: 20, marginBottom: 20 }}>
+              <li><strong>Zero Upfront Risk:</strong> Freelancer does not receive funds until you review and approve work.</li>
+              <li><strong>Guided Mediation:</strong> Built-in 3-step AI dispute resolution if deliverables don't match criteria.</li>
+              <li><strong>Instant Payout:</strong> Approving work releases funds directly to freelancer wallet.</li>
+            </ul>
+            <button 
+              onClick={() => setShowEscrowModal(false)}
+              style={{ width: '100%', padding: '10px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Understood
+            </button>
+          </div>
+        </div>
+      )}
         </div>
       </div>
       <style>{`* { box-sizing: border-box; } button { cursor: pointer; }`}</style>
