@@ -206,10 +206,11 @@ const MessagesPage = ({ userType = 'client' }) => {
   const ringtoneRef = useRef(null);
   const callTimeoutRef = useRef(null);
 
-  // WhatsApp Alert & Voice Messages
+  // WhatsApp Alert, Voice Messages & Emoji Picker
   const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [voiceRecordDuration, setVoiceRecordDuration] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Auto-Translation state
   const [translatedMessages, setTranslatedMessages] = useState({});
@@ -1428,38 +1429,227 @@ const MessagesPage = ({ userType = 'client' }) => {
               )}
             </div>
 
-            {/* Input */}
-            <div style={styles.inputArea}>
-              <input ref={fileInputRef} type="file" multiple
+            {/* WhatsApp-Style Modern Chat Input Bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 16px',
+              background: isDarkMode ? '#111b21' : '#ffffff',
+              borderTop: isDarkMode ? '1px solid #222d34' : '1px solid #e2e8f0',
+              flexShrink: 0,
+              position: 'relative'
+            }}>
+              {/* Emoji Picker Popover Popup */}
+              {showEmojiPicker && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: 'calc(100% + 8px)',
+                  left: 16,
+                  background: isDarkMode ? '#202c33' : '#ffffff',
+                  border: `1px solid ${isDarkMode ? '#3b4a54' : '#cbd5e1'}`,
+                  borderRadius: 16,
+                  padding: '12px 14px',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
+                  zIndex: 100,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  gap: 8,
+                  maxWidth: 300
+                }}>
+                  {['👍', '❤️', '😊', '😂', '🔥', '🎉', '🙏', '🚀', '💡', '👏', '💯', '🤝', '✅', '⭐', '💼', '📌', '🎯', '⚡', '📱', '💻', '😃', '👀'].map((emoji, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setInput(prev => prev + emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: 20,
+                        cursor: 'pointer',
+                        padding: 4,
+                        borderRadius: 8,
+                        transition: 'transform 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.25)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input 
+                ref={fileInputRef} 
+                type="file" 
+                multiple
                 accept="*/*"
-                style={{ display: 'none' }} onChange={handleFilesSelected} />
-              <button onClick={handleAttachClick} disabled={uploadingFiles}
-                style={{ ...styles.attachBtn, opacity: uploadingFiles ? 0.5 : 1 }} title="Attach file" type="button">
-                {uploadingFiles ? '…' : <Icon name="paperclip" />}
-              </button>
+                style={{ display: 'none' }} 
+                onChange={handleFilesSelected} 
+              />
 
-              {/* Mic Button for voice notes */}
+              {/* Sleek Pill Bar Container */}
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: isDarkMode ? '#202c33' : '#f0f2f5',
+                borderRadius: 24,
+                padding: '6px 14px',
+                border: isDarkMode ? '1px solid #2a3942' : '1px solid #e2e8f0',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+              }}>
+                {/* 1. Attachment Button 📎 */}
+                <button
+                  type="button"
+                  onClick={handleAttachClick}
+                  disabled={uploadingFiles}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: isDarkMode ? '#8696a0' : '#54656f',
+                    cursor: 'pointer',
+                    padding: 4,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: uploadingFiles ? 0.5 : 1,
+                    transition: 'color 0.15s ease'
+                  }}
+                  title="Attach file"
+                  onMouseEnter={(e) => e.currentTarget.style.color = accentColor}
+                  onMouseLeave={(e) => e.currentTarget.style.color = isDarkMode ? '#8696a0' : '#54656f'}
+                >
+                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+
+                {/* 2. Emoji Button 😀 */}
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(prev => !prev)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: showEmojiPicker ? accentColor : (isDarkMode ? '#8696a0' : '#54656f'),
+                    cursor: 'pointer',
+                    padding: 4,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'color 0.15s ease'
+                  }}
+                  title="Choose emoji"
+                  onMouseEnter={(e) => e.currentTarget.style.color = accentColor}
+                  onMouseLeave={(e) => e.currentTarget.style.color = showEmojiPicker ? accentColor : (isDarkMode ? '#8696a0' : '#54656f')}
+                >
+                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                  </svg>
+                </button>
+
+                {/* 3. Textarea Input */}
+                <textarea 
+                  value={input} 
+                  onChange={handleInputChange} 
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message"
+                  rows={1} 
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: 14.5,
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    color: isDarkMode ? '#e9edef' : '#111b21',
+                    resize: 'none',
+                    maxHeight: 100,
+                    lineHeight: 1.4,
+                    padding: '6px 0'
+                  }} 
+                />
+
+                {/* 4. Microphone Button 🎤 */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isRecordingVoice) {
+                      stopRecordingAudio();
+                    } else {
+                      startRecordingAudio();
+                    }
+                  }}
+                  style={{
+                    background: isRecordingVoice ? '#ef4444' : 'none',
+                    border: 'none',
+                    color: isRecordingVoice ? '#ffffff' : (isDarkMode ? '#8696a0' : '#54656f'),
+                    cursor: 'pointer',
+                    padding: 6,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title={isRecordingVoice ? 'Stop voice recording' : 'Record voice note'}
+                  onMouseEnter={(e) => {
+                    if (!isRecordingVoice) e.currentTarget.style.color = accentColor;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isRecordingVoice) e.currentTarget.style.color = isDarkMode ? '#8696a0' : '#54656f';
+                  }}
+                >
+                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+
+              {/* 5. Send Button Paper Plane */}
               <button 
-                onClick={() => {
-                  if (isRecordingVoice) {
-                    stopRecordingAudio();
-                  } else {
-                    startRecordingAudio();
-                  }
-                }} 
-                style={{ border: 'none', background: 'none', color: isRecordingVoice ? '#ef4444' : (isDarkMode ? '#9aa3b3' : '#6b7280'), fontSize: 18, cursor: 'pointer', padding: '0 8px', display: 'flex', alignItems: 'center' }}
-                title="Record voice note"
                 type="button"
+                onClick={handleSend} 
+                disabled={!canSend}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: canSend ? accentColor : (isDarkMode ? '#2a3942' : '#cbd5e1'),
+                  color: '#ffffff',
+                  fontSize: 16,
+                  cursor: canSend ? 'pointer' : 'default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: canSend ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Send message"
               >
-                🎤
-              </button>
-
-              <textarea value={input} onChange={handleInputChange} onKeyDown={handleKeyDown}
-                placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
-                rows={1} style={styles.textarea} />
-              <button onClick={handleSend} disabled={!canSend}
-                style={{ ...styles.sendBtn, background: accentColor, opacity: canSend ? 1 : 0.5 }}>
-                {sending ? '…' : '➤'}
+                {sending ? '…' : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                  </svg>
+                )}
               </button>
             </div>
 
