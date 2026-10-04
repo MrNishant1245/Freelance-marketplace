@@ -9,6 +9,7 @@ const {
   deleteMessage,
   getUnreadCount,
   getTurnCredentials,
+  generateAgoraToken,
 } = require('../controllers/message.controller');
 
 // All routes require authentication
@@ -19,6 +20,7 @@ router.get('/',                 getConversations);           // GET  /api/messag
 router.post('/start',           getOrCreateConversation);    // POST /api/messages/start
 router.get('/unread',           getUnreadCount);             // GET  /api/messages/unread
 router.get('/turn-credentials', getTurnCredentials);         // GET  /api/messages/turn-credentials
+router.get('/agora-token',      generateAgoraToken);         // GET  /api/messages/agora-token
 
 // Messages within a conversation
 router.get('/:conversationId',         getMessages);   // GET  /api/messages/:id

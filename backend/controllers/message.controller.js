@@ -1,6 +1,7 @@
 const Conversation = require('../models/Conversation.model');
 const Message      = require('../models/Message.model');
 const User         = require('../models/User.model');
+const { RtcTokenBuilder, RtcRole } = require('agora-token');
 
 // ─── Get all conversations for current user ───────────────────────────────────
 const getConversations = async (req, res) => {
@@ -277,6 +278,46 @@ const getTurnCredentials = async (req, res) => {
   }
 };
 
+// ─── Generate Agora RTC Token ────────────────────────────────────────────────
+const generateAgoraToken = (req, res) => {
+  try {
+    const appId = process.env.AGORA_APP_ID || '8a61421f108d4b31a8b981f211eb5a7c';
+    const appCertificate = process.env.AGORA_APP_CERTIFICATE || '';
+    const channelName = req.query.channelName || req.params.channelName || 'general-call';
+    const uid = req.query.uid ? parseInt(req.query.uid, 10) : 0;
+    const role = req.query.role === 'subscriber' ? RtcRole.SUBSCRIBER : RtcRole.PUBLISHER;
+
+    const expirationTimeInSeconds = 3600 * 24;
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+
+    let token = '';
+    if (appCertificate) {
+      token = RtcTokenBuilder.buildTokenWithUid(
+        appId,
+        appCertificate,
+        channelName,
+        uid,
+        role,
+        privilegeExpiredTs
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        appId,
+        token,
+        channelName,
+        uid,
+      },
+    });
+  } catch (err) {
+    console.error('Agora token generation error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to generate Agora RTC token.' });
+  }
+};
+
 module.exports = {
   getConversations,
   getOrCreateConversation,
@@ -285,4 +326,5 @@ module.exports = {
   deleteMessage,
   getUnreadCount,
   getTurnCredentials,
+  generateAgoraToken,
 };

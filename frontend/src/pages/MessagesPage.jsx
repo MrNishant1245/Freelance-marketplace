@@ -5,6 +5,7 @@ import api, { profileAPI, reviewAPI, jobAPI } from '../api';
 import { tokenStorage } from '../utils/tokenStorage';
 import toast from 'react-hot-toast';
 import { getSocket } from '../utils/socket';
+import AgoraRTC from 'agora-rtc-sdk-ng';
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 const msgAPI = {
@@ -342,9 +343,94 @@ const MessagesPage = ({ userType = 'client' }) => {
   const isAudioOnlyRef    = useRef(false);
   const targetUserCallRef = useRef(null);
 
+  const agoraClientRef          = useRef(null);
+  const agoraLocalAudioTrackRef = useRef(null);
+  const agoraLocalVideoTrackRef = useRef(null);
+
   const myId        = user?._id || user?.id;
   const activeOther = activeConv ? getOtherParticipant(activeConv, myId) : null;
   const accentColor = userType === 'freelancer' ? '#16a34a' : '#2563eb';
+
+  const joinAgoraCall = async (channelName, withVideo = true) => {
+    try {
+      if (!agoraClientRef.current) {
+        agoraClientRef.current = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+      }
+      const client = agoraClientRef.current;
+
+      let appId = process.env.REACT_APP_AGORA_APP_ID || '8a61421f108d4b31a8b981f211eb5a7c';
+      let token = '';
+
+      try {
+        const res = await api.get(`/messages/agora-token?channelName=${channelName}`);
+        if (res.data?.success && res.data?.data) {
+          appId = res.data.data.appId || appId;
+          token = res.data.data.token || '';
+        }
+      } catch (e) {}
+
+      client.on('user-published', async (remoteUser, mediaType) => {
+        await client.subscribe(remoteUser, mediaType);
+        console.log('🎥 Agora remote user published:', remoteUser.uid, mediaType);
+
+        if (mediaType === 'video' && remoteVideoRef.current) {
+          remoteUser.videoTrack.play(remoteVideoRef.current);
+        }
+        if (mediaType === 'audio') {
+          remoteUser.audioTrack.play();
+        }
+      });
+
+      client.on('user-left', (remoteUser) => {
+        console.log('🎥 Agora remote user left:', remoteUser.uid);
+        toast('User left the call.', { icon: '📞' });
+      });
+
+      const uid = await client.join(appId, channelName, token || null, null);
+      console.log('🎥 Agora client joined channel:', channelName, 'UID:', uid);
+
+      const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      agoraLocalAudioTrackRef.current = localAudioTrack;
+
+      let tracksToPublish = [localAudioTrack];
+
+      if (withVideo) {
+        const localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+        agoraLocalVideoTrackRef.current = localVideoTrack;
+        if (localVideoRef.current) {
+          localVideoTrack.play(localVideoRef.current);
+        }
+        tracksToPublish.push(localVideoTrack);
+      }
+
+      await client.publish(tracksToPublish);
+      toast.success('Agora Video Room Connected!', { icon: '📞' });
+    } catch (err) {
+      console.error('Agora join error:', err);
+    }
+  };
+
+  const leaveAgoraCall = async () => {
+    try {
+      if (agoraLocalAudioTrackRef.current) {
+        agoraLocalAudioTrackRef.current.stop();
+        agoraLocalAudioTrackRef.current.close();
+        agoraLocalAudioTrackRef.current = null;
+      }
+      if (agoraLocalVideoTrackRef.current) {
+        agoraLocalVideoTrackRef.current.stop();
+        agoraLocalVideoTrackRef.current.close();
+        agoraLocalVideoTrackRef.current = null;
+      }
+      if (agoraClientRef.current) {
+        await agoraClientRef.current.leave();
+        agoraClientRef.current.removeAllListeners();
+        agoraClientRef.current = null;
+      }
+    } catch (err) {
+      console.error('Agora leave error:', err);
+    }
+  };
 
   const createPeerConnection = async (targetUserId) => {
     let serversConfig = {
@@ -476,6 +562,9 @@ const MessagesPage = ({ userType = 'client' }) => {
       setVideoCallDuration(0);
       setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
 
+      // Connect to Agora RTC Channel
+      joinAgoraCall(conversationId || activeConv?._id || 'general-call', !isAudioOnlyRef.current);
+
       try {
         const stream = await startLocalMedia(!isAudioOnlyRef.current);
         const pc = await createPeerConnection(targetUserId);
@@ -489,10 +578,7 @@ const MessagesPage = ({ userType = 'client' }) => {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         s.emit('webrtc-offer', { targetUserId, offer });
-        toast.success('WebRTC P2P Call Connected!', { icon: '📞' });
-      } catch (err) {
-        handleEndCall();
-      }
+      } catch (err) {}
     };
 
     const handleWebRTCOffer = async ({ offer, callerId }) => {
@@ -501,6 +587,9 @@ const MessagesPage = ({ userType = 'client' }) => {
         setVideoCallActive(true);
         setVideoCallDuration(0);
         setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
+
+        // Connect to Agora RTC Channel
+        joinAgoraCall(activeConv?._id || 'general-call', !isAudioOnlyRef.current);
 
         let stream = localStreamRef.current;
         if (!stream) {
@@ -727,6 +816,8 @@ const MessagesPage = ({ userType = 'client' }) => {
   const handleEndCallCleanupOnly = () => {
     if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
 
+    leaveAgoraCall();
+
     iceCandidatesQueueRef.current = [];
 
     if (peerConnectionRef.current) {
@@ -822,20 +913,20 @@ const MessagesPage = ({ userType = 'client' }) => {
       targetUserId: callerId
     });
 
+    setIncomingCall(null);
+    setVideoCallActive(true);
+    setVideoCallDuration(0);
+    setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
+
+    joinAgoraCall(conversationId || activeConv?._id || 'general-call', !isAudioOnlyRef.current);
+
     try {
       const withVideo = !isAudioOnlyRef.current;
       const stream = await startLocalMedia(withVideo);
       const pc = await createPeerConnection(callerId);
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
       peerConnectionRef.current = pc;
-    } catch (err) {
-      toast.error('Could not access camera/microphone permissions.');
-    }
-
-    setIncomingCall(null);
-    setVideoCallActive(true);
-    setVideoCallDuration(0);
-    setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
+    } catch (err) {}
   };
 
   const handleDeclineCall = () => {
@@ -852,17 +943,31 @@ const MessagesPage = ({ userType = 'client' }) => {
   };
 
   const toggleMuteCallTrack = () => {
-    const track = localStreamRef.current?.getAudioTracks()[0];
-    if (track) track.enabled = !track.enabled;
-    setVideoCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
-    toast.success(videoCallState.isMuted ? 'Microphone unmuted' : 'Microphone muted');
+    if (agoraLocalAudioTrackRef.current) {
+      const nextMuted = !videoCallState.isMuted;
+      agoraLocalAudioTrackRef.current.setEnabled(!nextMuted);
+      setVideoCallState(prev => ({ ...prev, isMuted: nextMuted }));
+      toast.success(nextMuted ? 'Microphone muted' : 'Microphone unmuted');
+    } else {
+      const track = localStreamRef.current?.getAudioTracks()[0];
+      if (track) track.enabled = !track.enabled;
+      setVideoCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
+      toast.success(videoCallState.isMuted ? 'Microphone unmuted' : 'Microphone muted');
+    }
   };
 
   const toggleVideoCallTrack = () => {
-    const track = localStreamRef.current?.getVideoTracks()[0];
-    if (track) track.enabled = !track.enabled;
-    setVideoCallState(prev => ({ ...prev, isVideoOff: !prev.isVideoOff }));
-    toast.success(videoCallState.isVideoOff ? 'Camera turned on' : 'Camera turned off');
+    if (agoraLocalVideoTrackRef.current) {
+      const nextVideoOff = !videoCallState.isVideoOff;
+      agoraLocalVideoTrackRef.current.setEnabled(!nextVideoOff);
+      setVideoCallState(prev => ({ ...prev, isVideoOff: nextVideoOff }));
+      toast.success(nextVideoOff ? 'Camera turned off' : 'Camera turned on');
+    } else {
+      const track = localStreamRef.current?.getVideoTracks()[0];
+      if (track) track.enabled = !track.enabled;
+      setVideoCallState(prev => ({ ...prev, isVideoOff: !prev.isVideoOff }));
+      toast.success(videoCallState.isVideoOff ? 'Camera turned on' : 'Camera turned off');
+    }
   };
 
   const toggleSelectMode = () => {
