@@ -212,6 +212,7 @@ const MessagesPage = ({ userType = 'client' }) => {
   const [sending, setSending]             = useState(false);
   const [isTyping, setIsTyping]           = useState(false);
   const [typingUsers, setTypingUsers]     = useState([]);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
 
   // Built-in Video Call & Screen Share
   const [videoCallActive, setVideoCallActive] = useState(false);
@@ -1556,39 +1557,129 @@ const MessagesPage = ({ userType = 'client' }) => {
               )}
             </div>
 
-            {/* Input */}
-            <div style={styles.inputArea}>
-              <input ref={fileInputRef} type="file" multiple
-                accept="*/*"
-                style={{ display: 'none' }} onChange={handleFilesSelected} />
-              <button onClick={handleAttachClick} disabled={uploadingFiles}
-                style={{ ...styles.attachBtn, opacity: uploadingFiles ? 0.5 : 1 }} title="Attach file" type="button">
-                {uploadingFiles ? '…' : <Icon name="paperclip" />}
-              </button>
+            {/* WhatsApp Style Input Bar matching Image 2 */}
+            {emojiPickerOpen && (
+              <div style={{
+                position: 'absolute', bottom: 75, left: 20, zIndex: 10,
+                background: isDarkMode ? '#0d1b23' : '#ffffff',
+                border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+                borderRadius: 16, padding: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6, width: 310
+              }}>
+                {['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😍', '🥰', '😘', '😜', '😎', '🥳', '👍', '👎', '👏', '🙌', '🙏', '🔥', '✨', '🎉', '❤️', '💡', '🚀', '💯', '🤝', '✅', '⭐', '💬', '📞', '📷'].map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => {
+                      setInput((prev) => prev + emoji);
+                      setEmojiPickerOpen(false);
+                    }}
+                    style={{
+                      background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
+                      padding: 6, borderRadius: 8, transition: 'background 0.15s'
+                    }}
+                    type="button"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              {/* Mic Button for voice notes */}
-              <button 
-                onClick={() => {
-                  if (isRecordingVoice) {
-                    stopRecordingAudio();
-                  } else {
-                    startRecordingAudio();
-                  }
-                }} 
-                style={{ border: 'none', background: 'none', color: isRecordingVoice ? '#ef4444' : (isDarkMode ? '#9aa3b3' : '#6b7280'), fontSize: 18, cursor: 'pointer', padding: '0 8px', display: 'flex', alignItems: 'center' }}
-                title="Record voice note"
-                type="button"
-              >
-                🎤
-              </button>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px',
+              background: isDarkMode ? '#071422' : '#ffffff',
+              borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #f0f0f0',
+              position: 'relative'
+            }}>
+              <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display: 'none' }} onChange={handleFilesSelected} />
 
-              <textarea value={input} onChange={handleInputChange} onKeyDown={handleKeyDown}
-                placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
-                rows={1} style={styles.textarea} />
-              <button onClick={handleSend} disabled={!canSend}
-                style={{ ...styles.sendBtn, background: accentColor, opacity: canSend ? 1 : 0.5 }}>
-                {sending ? '…' : '➤'}
-              </button>
+              {/* Left Group: Attachment & Emoji Picker */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  onClick={handleAttachClick}
+                  disabled={uploadingFiles}
+                  style={{
+                    width: 38, height: 38, borderRadius: '50%', border: 'none',
+                    background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+                    color: isDarkMode ? '#9aa3b3' : '#64748b', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                  title="Attach file"
+                  type="button"
+                >
+                  {uploadingFiles ? '…' : <Icon name="paperclip" />}
+                </button>
+
+                <button
+                  onClick={() => setEmojiPickerOpen((prev) => !prev)}
+                  style={{
+                    width: 38, height: 38, borderRadius: '50%', border: 'none',
+                    background: emojiPickerOpen ? (isDarkMode ? 'rgba(37,99,235,0.2)' : '#e0e7ff') : (isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9'),
+                    color: emojiPickerOpen ? '#2563eb' : (isDarkMode ? '#9aa3b3' : '#64748b'),
+                    fontSize: 18, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                  title="Insert emoji"
+                  type="button"
+                >
+                  😃
+                </button>
+              </div>
+
+              {/* Text Area */}
+              <textarea
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a message…"
+                rows={1}
+                style={{
+                  flex: 1, padding: '10px 16px',
+                  border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+                  borderRadius: 24, fontSize: 13.5, fontFamily: "'DM Sans', sans-serif",
+                  outline: 'none', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
+                  background: isDarkMode ? '#0d1b23' : '#f8fafc',
+                  color: isDarkMode ? '#e6eef8' : '#0f172a'
+                }}
+              />
+
+              {/* Right Action: Mic when empty, Send when typing/attached */}
+              {!input.trim() && pendingFiles.length === 0 ? (
+                <button
+                  onClick={() => {
+                    if (isRecordingVoice) {
+                      stopRecordingAudio();
+                    } else {
+                      startRecordingAudio();
+                    }
+                  }}
+                  style={{
+                    width: 42, height: 42, borderRadius: '50%', border: 'none',
+                    background: isRecordingVoice ? '#ef4444' : accentColor,
+                    color: '#ffffff', fontSize: 18, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                  }}
+                  title={isRecordingVoice ? 'Stop recording' : 'Record voice note'}
+                  type="button"
+                >
+                  {isRecordingVoice ? '⏹' : '🎤'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleSend}
+                  disabled={!canSend}
+                  style={{
+                    width: 42, height: 42, borderRadius: '50%', border: 'none',
+                    background: accentColor, color: '#ffffff', fontSize: 16,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, opacity: canSend ? 1 : 0.5
+                  }}
+                  title="Send message"
+                  type="button"
+                >
+                  {sending ? '…' : '➤'}
+                </button>
+              )}
             </div>
 
             {contactInfoOpen && activeOther && (
