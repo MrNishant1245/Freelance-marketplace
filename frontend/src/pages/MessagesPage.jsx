@@ -161,12 +161,16 @@ const EmptyState = ({ icon, title, sub }) => {
 };
 
 // ─── Attachment renderer ──────────────────────────────────────────────────────
-const AttachmentList = ({ attachments, isMe }) => {
+const AttachmentList = ({ attachments, isMe, isVoiceNote }) => {
   if (!attachments?.length) return null;
+  const filtered = isVoiceNote
+    ? attachments.filter(att => !att.name?.startsWith('voicenote-') && att.type !== 'audio' && !att.url?.endsWith('.webm'))
+    : attachments;
+  if (!filtered.length) return null;
   const { isDarkMode } = useAuth();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 6 }}>
-      {attachments.map((att, i) =>
+      {filtered.map((att, i) =>
         (att.type === 'image' || isImageFile(att.name || att.url)) ? (
           <a key={i} href={att.url} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
             <img src={att.url} alt={att.name || 'image'} style={{ maxWidth: 220, maxHeight: 180, borderRadius: 10, display: 'block', objectFit: 'cover' }} />
@@ -1508,7 +1512,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                         boxShadow: isTargetMatch ? '0 0 0 3px #2563eb, 0 4px 12px rgba(37,99,235,0.3)' : 'none',
                         transition: 'box-shadow 0.2s ease'
                       }}>
-                        {!msg.isDeleted && <AttachmentList attachments={msg.attachments} isMe={isMe} />}
+                        {!msg.isDeleted && <AttachmentList attachments={msg.attachments} isMe={isMe} isVoiceNote={msg.content?.startsWith('[Voice Message]')} />}
                         {msg.content?.startsWith('[Voice Message]') ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, padding: '4px 0' }}>
                             <button 
