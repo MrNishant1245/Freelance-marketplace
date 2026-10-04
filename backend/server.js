@@ -80,8 +80,8 @@ io.on('connection', (socket) => {
     socket.to(conversationId).emit('userStoppedTyping', { userId: socket.userId });
   });
 
-  socket.on('callUser', ({ conversationId, targetUserId, callerName, callerId }) => {
-    socket.to(`user:${targetUserId}`).emit('incomingCall', { conversationId, callerName, callerId });
+  socket.on('callUser', ({ conversationId, targetUserId, callerName, callerId, callType }) => {
+    socket.to(`user:${targetUserId}`).emit('incomingCall', { conversationId, callerName, callerId, callType: callType || 'video' });
   });
 
   socket.on('acceptCall', ({ conversationId, targetUserId }) => {

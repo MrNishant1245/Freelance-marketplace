@@ -207,6 +207,10 @@ const MessagesPage = ({ userType = 'client' }) => {
   const ringtoneRef = useRef(null);
   const callTimeoutRef = useRef(null);
 
+  // In-Chat Search state
+  const [inChatSearchOpen, setInChatSearchOpen] = useState(false);
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
+
   // WhatsApp Alert & Voice Messages
   const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
@@ -354,8 +358,8 @@ const MessagesPage = ({ userType = 'client' }) => {
       setMessages(p => p.map(m => m._id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted.' } : m))
     );
 
-    s.on('incomingCall', ({ conversationId, callerName, callerId }) => {
-      setIncomingCall({ conversationId, callerName, callerId });
+    s.on('incomingCall', ({ conversationId, callerName, callerId, callType }) => {
+      setIncomingCall({ conversationId, callerName, callerId, callType: callType || 'video' });
     });
     s.on('callAccepted', ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
@@ -513,10 +517,26 @@ const MessagesPage = ({ userType = 'client' }) => {
   };
 
   const handleVoiceCall = () => {
-    if (!activeOther?.phone) {
-      return alert('No phone number available for this user.');
-    }
-    window.location.href = `tel:${activeOther.phone}`;
+    if (!activeConv || !activeOther) return;
+    const callerName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Someone';
+    const targetUserId = activeOther._id || activeOther;
+
+    socketRef.current?.emit('callUser', {
+      conversationId: activeConv._id,
+      targetUserId,
+      callerName,
+      callerId: myId,
+      callType: 'voice',
+    });
+
+    setOutgoingCall({ conversationId: activeConv._id, targetUserId, callType: 'voice' });
+    toast.success(`Voice calling ${activeOther.firstName || 'user'}...`, { icon: '📞' });
+
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
+    callTimeoutRef.current = setTimeout(() => {
+      handleEndCall();
+      toast.error('No answer from user.', { icon: '📞' });
+    }, 15000);
   };
 
   const handleVideoCall = () => {
@@ -528,10 +548,11 @@ const MessagesPage = ({ userType = 'client' }) => {
       conversationId: activeConv._id,
       targetUserId,
       callerName,
-      callerId: myId
+      callerId: myId,
+      callType: 'video',
     });
 
-    setOutgoingCall({ conversationId: activeConv._id, targetUserId });
+    setOutgoingCall({ conversationId: activeConv._id, targetUserId, callType: 'video' });
     toast.success(`Calling ${activeOther.firstName || 'user'}...`, { icon: '📞' });
 
     if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
@@ -1128,6 +1149,7 @@ const MessagesPage = ({ userType = 'client' }) => {
     pendingName: { ...s.pendingName, color: isDarkMode ? '#e6eef8' : s.pendingName.color },
     menuBtn: { ...s.menuBtn, border: isDarkMode ? '1px solid rgba(255,255,255,0.03)' : s.menuBtn.border, background: isDarkMode ? '#071422' : s.menuBtn.background, color: isDarkMode ? '#e6eef8' : s.menuBtn.color },
     actionIcon: { ...s.actionIcon, border: isDarkMode ? '1px solid rgba(255,255,255,0.03)' : s.actionIcon.border, background: isDarkMode ? '#071422' : s.actionIcon.background, color: isDarkMode ? '#e6eef8' : s.actionIcon.color },
+    actionIconCircle: { ...s.actionIconCircle, border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : s.actionIconCircle.border, background: isDarkMode ? '#071422' : s.actionIconCircle.background, color: isDarkMode ? '#e6eef8' : s.actionIconCircle.color },
     menuPanel: { ...s.menuPanel, background: isDarkMode ? '#071422' : s.menuPanel.background, border: isDarkMode ? '1px solid rgba(255,255,255,0.03)' : s.menuPanel.border },
     menuItem: { ...s.menuItem, color: isDarkMode ? '#e6eef8' : s.menuItem.color },
     centerMsg: { ...s.centerMsg, color: isDarkMode ? '#9aa3b3' : s.centerMsg.color },
@@ -1220,10 +1242,10 @@ const MessagesPage = ({ userType = 'client' }) => {
                         {activeConv.job && <> · {activeConv.job.title}{activeConv.job.status ? ` · ${activeConv.job.status.replace('_', ' ')}` : ''}</>}
                       </div>
                     </div>
-                    <div style={styles.headerActions}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       {activeConv.job?.status === 'completed' && (
                         <button onClick={handleReviewAction} style={{
-                          ...styles.actionIcon,
+                          ...styles.actionIconCircle,
                           color: reviewInfo?.canReview ? '#2563eb' : reviewInfo?.alreadyReviewed ? '#f59e0b' : (isDarkMode ? '#e6eef8' : '#111'),
                           borderColor: reviewInfo?.canReview ? '#2563eb' : (isDarkMode ? 'rgba(255,255,255,0.04)' : '#e5e7eb'),
                           background: reviewInfo?.alreadyReviewed ? '#fef3c7' : (isDarkMode ? '#071422' : '#fff'),
@@ -1231,41 +1253,81 @@ const MessagesPage = ({ userType = 'client' }) => {
                           <Icon name="star" />
                         </button>
                       )}
-                      <button onClick={handleVideoCall} style={styles.actionIcon} type="button"><Icon name="video" /></button>
-                      <button onClick={handleVoiceCall} style={styles.actionIcon} type="button"><Icon name="phone" /></button>
-                      <button onClick={handleSearch} style={styles.actionIcon} type="button"><Icon name="search" /></button>
-                    </div>
-                    <div style={{ position: 'relative' }} ref={menuRef}>
-                      <button onClick={() => setMenuOpen((prev) => !prev)} style={styles.menuBtn} type="button">
-                        ⋮
-                      </button>
-                      {menuOpen && (
-                        <div style={styles.menuPanel}>
-                          <button onClick={handleSearch} style={styles.menuItem} type="button">Search</button>
-                          <button onClick={handleContactInfo} style={styles.menuItem} type="button">Contact info</button>
-                          <button onClick={toggleSelectMode} style={styles.menuItem} type="button">
-                            {selectMode ? 'Exit selection' : 'Select messages'}
-                          </button>
-                          <button onClick={toggleMute} style={styles.menuItem} type="button">
-                            {mutedConversations[activeConv._id] ? 'Unmute notifications' : 'Mute notifications'}
-                          </button>
-                          <button onClick={toggleFavorite} style={styles.menuItem} type="button">
-                            {favoriteConversations[activeConv._id] ? 'Remove from favorites' : 'Add to favorites'}
-                          </button>
-                          <button onClick={handleBlockUser} style={styles.menuItem} type="button">
-                            {isBlocked ? 'Unblock' : 'Block'} user
-                          </button>
-                          <button onClick={handleReport} style={styles.menuItem} type="button">Report</button>
-                          <button onClick={handleClearChat} style={styles.menuItem} type="button">Clear chat</button>
-                          <button onClick={handleDeleteConversation} style={styles.menuItemDanger} type="button">Delete chat</button>
-                          <button onClick={handleCloseChat} style={styles.menuItem} type="button">Close chat</button>
-                        </div>
-                      )}
+                      <button onClick={handleVideoCall} style={styles.actionIconCircle} title="Start Video Call" type="button"><Icon name="video" /></button>
+                      <button onClick={handleVoiceCall} style={styles.actionIconCircle} title="Start Voice Call" type="button"><Icon name="phone" /></button>
+                      <button onClick={() => setInChatSearchOpen((prev) => !prev)} style={{
+                        ...styles.actionIconCircle,
+                        ...(inChatSearchOpen ? { background: isDarkMode ? 'rgba(37,99,235,0.2)' : '#eff6ff', borderColor: '#2563eb', color: '#2563eb' } : {})
+                      }} title="Search Chat" type="button"><Icon name="search" /></button>
+                      <div style={{ position: 'relative' }} ref={menuRef}>
+                        <button onClick={() => setMenuOpen((prev) => !prev)} style={styles.actionIconCircle} title="More Options" type="button">
+                          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="5" r="2" />
+                            <circle cx="12" cy="12" r="2" />
+                            <circle cx="12" cy="19" r="2" />
+                          </svg>
+                        </button>
+                        {menuOpen && (
+                          <div style={styles.menuPanel}>
+                            <button onClick={() => { setMenuOpen(false); setInChatSearchOpen(true); }} style={styles.menuItem} type="button">🔍 Search in chat</button>
+                            <button onClick={handleContactInfo} style={styles.menuItem} type="button">📇 Contact info</button>
+                            <button onClick={toggleSelectMode} style={styles.menuItem} type="button">
+                              {selectMode ? 'Exit selection' : '☑️ Select messages'}
+                            </button>
+                            <button onClick={toggleMute} style={styles.menuItem} type="button">
+                              {mutedConversations[activeConv._id] ? '🔔 Unmute notifications' : '🔕 Mute notifications'}
+                            </button>
+                            <button onClick={toggleFavorite} style={styles.menuItem} type="button">
+                              {favoriteConversations[activeConv._id] ? '⭐ Remove from favorites' : '⭐ Add to favorites'}
+                            </button>
+                            <button onClick={handleBlockUser} style={styles.menuItem} type="button">
+                              {isBlocked ? '🔓 Unblock user' : '🚫 Block user'}
+                            </button>
+                            <button onClick={handleReport} style={styles.menuItem} type="button">🚩 Report user</button>
+                            <button onClick={handleClearChat} style={styles.menuItem} type="button">🧹 Clear chat</button>
+                            <button onClick={handleDeleteConversation} style={styles.menuItemDanger} type="button">🗑️ Delete chat</button>
+                            <button onClick={handleCloseChat} style={styles.menuItem} type="button">❌ Close chat</button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 );
               })()}
             </div>
+
+            {inChatSearchOpen && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px',
+                background: isDarkMode ? '#0d1b23' : '#f8fafc',
+                borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.05)' : '1px solid #e5e7eb'
+              }}>
+                <Icon name="search" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Search messages in this chat..."
+                  value={chatSearchQuery}
+                  onChange={(e) => setChatSearchQuery(e.target.value)}
+                  style={{
+                    flex: 1, padding: '8px 14px', borderRadius: 8,
+                    border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
+                    background: isDarkMode ? '#071422' : '#fff',
+                    color: isDarkMode ? '#e6eef8' : '#0f172a',
+                    fontSize: 13, outline: 'none', fontFamily: "'DM Sans', sans-serif"
+                  }}
+                />
+                {chatSearchQuery && (
+                  <span style={{ fontSize: 12, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 600 }}>
+                    {messages.filter(m => m.content?.toLowerCase().includes(chatSearchQuery.toLowerCase())).length} match(es)
+                  </span>
+                )}
+                <button onClick={() => { setInChatSearchOpen(false); setChatSearchQuery(''); }} style={{
+                  background: 'none', border: 'none', color: isDarkMode ? '#94a3b8' : '#64748b',
+                  cursor: 'pointer', fontSize: 16, padding: '4px 8px'
+                }} title="Close search" type="button">✕</button>
+              </div>
+            )}
 
             {selectMode && (
               <div style={styles.selectBar}>
@@ -1681,8 +1743,9 @@ const s = {
   pendingSize:    { fontSize: 10.5, color: '#a3a3a3' },
   pendingRemove:  { background: 'none', border: 'none', color: '#737373', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 2, flexShrink: 0 },
   menuBtn:       { width: 36, height: 36, borderRadius: 999, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', color: '#111', fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  headerActions: { display: 'flex', alignItems: 'center', gap: 8, marginRight: 8 },
-  actionIcon:    { width: 36, height: 36, borderRadius: 999, border: '1px solid #e5e7eb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#111' },
+  headerActions: { display: 'flex', alignItems: 'center', gap: 10 },
+  actionIcon:    { width: 38, height: 38, borderRadius: 999, border: '1px solid #e5e7eb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#111' },
+  actionIconCircle: { width: 38, height: 38, borderRadius: '50%', border: '1px solid #e2e8f0', background: '#ffffff', color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s ease', boxShadow: '0 1px 2px rgba(0,0,0,0.04)', outline: 'none' },
   reviewBtn:      { border: '1px solid #e5e7eb', borderRadius: 999, padding: '10px 14px', background: '#fff', color: '#111', cursor: 'pointer', fontSize: 13.5, minWidth: 82 },
   reviewBtnActive:{ borderColor: '#2563eb', background: '#2563eb', color: '#fff' },
   menuPanel:     { position: 'absolute', right: 0, top: 48, width: 220, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: 10, boxShadow: '0 12px 40px rgba(15, 23, 42, 0.08)', zIndex: 5, display: 'flex', flexDirection: 'column', gap: 6 },
