@@ -969,8 +969,10 @@ const MessagesPage = ({ userType = 'client' }) => {
             const durSecs = voiceDurationRef.current || voiceRecordDuration || 1;
             const formattedDur = formatCallDuration(durSecs);
             toast.dismiss(loadingToastId);
-            toast.success(`Voice note (${formattedDur}) uploaded! Click send to share.`);
-            setInput(`[Voice Message] duration:${durSecs} (${formattedDur}) url:${url}`);
+            const voiceContent = `[Voice Message] duration:${durSecs} (${formattedDur}) url:${url}`;
+            const voiceAttachments = [{ name: fileName, url, type: 'audio' }];
+            await sendVoiceMessage(voiceContent, voiceAttachments);
+            toast.success(`Voice note (${formattedDur}) sent!`, { icon: '🎙️' });
           } else {
             throw new Error("Invalid response url");
           }
@@ -1176,6 +1178,35 @@ const MessagesPage = ({ userType = 'client' }) => {
       console.error('Send error:', err);
     } finally {
       setSending(false);
+    }
+  };
+
+  const sendVoiceMessage = async (voiceContent, voiceAttachments = []) => {
+    if (!activeConv || isBlocked) return;
+    
+    const optimistic = {
+      _id: `temp-${Date.now()}`,
+      content: voiceContent,
+      attachments: voiceAttachments,
+      sender: { _id: myId, firstName: user?.firstName, lastName: user?.lastName },
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    };
+    setMessages(prev => [...prev, optimistic]);
+
+    try {
+      const res = await msgAPI.sendMessage(activeConv._id, {
+        content: voiceContent,
+        attachments: voiceAttachments,
+      });
+      setMessages(prev => prev.map(m => m._id === optimistic._id ? res.data.data : m));
+      if (whatsAppAlertsActive) {
+        toast.success('WhatsApp copy alert sync dispatched successfully!', { duration: 2500, icon: '💬' });
+      }
+    } catch (err) {
+      setMessages(prev => prev.filter(m => m._id !== optimistic._id));
+      toast.error('Failed to transmit voice note.');
+      console.error('Send voice note error:', err);
     }
   };
 
@@ -1590,8 +1621,9 @@ const MessagesPage = ({ userType = 'client' }) => {
                       const durSecs = voiceDurationRef.current || voiceRecordDuration || 1;
                       const formattedDur = formatCallDuration(durSecs);
                       setIsRecordingVoice(false);
-                      setInput(`[Voice Message] duration:${durSecs} 🎤 Voice Note (${formattedDur})`);
-                      toast.success(`Voice note (${formattedDur}) recorded. Press Send to transmit.`);
+                      const voiceContent = `[Voice Message] duration:${durSecs} 🎤 Voice Note (${formattedDur})`;
+                      sendVoiceMessage(voiceContent, []);
+                      toast.success(`Voice note (${formattedDur}) sent!`, { icon: '🎙️' });
                     }}
                     style={{ border: 'none', background: '#ef4444', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 10, cursor: 'pointer' }}
                   >
