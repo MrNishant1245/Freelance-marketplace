@@ -1604,23 +1604,30 @@ const MessagesPage = ({ userType = 'client' }) => {
             {/* WhatsApp Style Input Bar matching Image 2 */}
             {emojiPickerOpen && (
               <div style={{
-                position: 'absolute', bottom: 75, left: 20, zIndex: 10,
+                position: 'absolute', bottom: 75, left: 20, zIndex: 50,
                 background: isDarkMode ? '#0d1b23' : '#ffffff',
-                border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-                borderRadius: 16, padding: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6, width: 310
+                border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e2e8f0',
+                borderRadius: 18, padding: '14px 12px',
+                boxShadow: '0 12px 36px rgba(15, 23, 42, 0.18)',
+                display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px 4px',
+                width: 330, maxWidth: 'calc(100% - 40px)', boxSizing: 'border-box',
+                overflow: 'hidden'
               }}>
-                {['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😍', '🥰', '😘', '😜', '😎', '🥳', '👍', '👎', '👏', '🙌', '🙏', '🔥', '✨', '🎉', '❤️', '💡', '🚀', '💯', '🤝', '✅', '⭐', '💬', '📞', '📷'].map((emoji) => (
+                {['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😍', '🥰', '😘', '😜', '😎', '🥳', '👍', '👎', '👏', '🙌', '🙏', '🔥', '✨', '🎉', '❤️', '💡', '🚀', '💯', '🤝', '✅', '⭐', '💬', '📞', '📷', '🎁', '⚡', '🎈'].map((emoji, idx) => (
                   <button
-                    key={emoji}
+                    key={`${emoji}-${idx}`}
                     onClick={() => {
                       setInput((prev) => prev + emoji);
                       setEmojiPickerOpen(false);
                     }}
                     style={{
                       background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
-                      padding: 6, borderRadius: 8, transition: 'background 0.15s'
+                      width: 36, height: 36, borderRadius: 8, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', transition: 'background 0.12s ease',
+                      margin: '0 auto', outline: 'none'
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.1)' : '#f1f5f9')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                     type="button"
                   >
                     {emoji}
