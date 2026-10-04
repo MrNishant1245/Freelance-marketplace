@@ -335,6 +335,8 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   const peerConnectionRef = useRef(null);
   const localStreamRef    = useRef(null);
+  const remoteStreamRef   = useRef(null);
+  const iceCandidatesQueueRef = useRef([]);
   const localVideoRef     = useRef(null);
   const remoteVideoRef    = useRef(null);
   const isAudioOnlyRef    = useRef(false);
@@ -380,8 +382,12 @@ const MessagesPage = ({ userType = 'client' }) => {
     };
 
     pc.ontrack = (event) => {
-      if (remoteVideoRef.current && event.streams && event.streams[0]) {
-        remoteVideoRef.current.srcObject = event.streams[0];
+      console.log('🎥 Received remote track:', event.streams);
+      if (event.streams && event.streams[0]) {
+        remoteStreamRef.current = event.streams[0];
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+        }
       }
     };
 
@@ -449,6 +455,19 @@ const MessagesPage = ({ userType = 'client' }) => {
       targetUserCallRef.current = callerId;
     };
 
+    const flushIceCandidatesQueue = async () => {
+      const pc = peerConnectionRef.current;
+      if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) return;
+      while (iceCandidatesQueueRef.current.length > 0) {
+        const cand = iceCandidatesQueueRef.current.shift();
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(cand));
+        } catch (e) {
+          console.error('Flushing ICE candidate error:', e);
+        }
+      }
+    };
+
     const handleCallAccepted = async ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       const targetUserId = targetUserCallRef.current || (activeOther ? (activeOther._id || activeOther) : null);
@@ -460,7 +479,11 @@ const MessagesPage = ({ userType = 'client' }) => {
       try {
         const stream = await startLocalMedia(!isAudioOnlyRef.current);
         const pc = await createPeerConnection(targetUserId);
-        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        stream.getTracks().forEach(track => {
+          if (!pc.getSenders().some(s => s.track === track)) {
+            pc.addTrack(track, stream);
+          }
+        });
         peerConnectionRef.current = pc;
 
         const offer = await pc.createOffer();
@@ -475,19 +498,32 @@ const MessagesPage = ({ userType = 'client' }) => {
     const handleWebRTCOffer = async ({ offer, callerId }) => {
       try {
         targetUserCallRef.current = callerId;
+        setVideoCallActive(true);
+        setVideoCallDuration(0);
+        setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
+
+        let stream = localStreamRef.current;
+        if (!stream) {
+          try {
+            stream = await startLocalMedia(!isAudioOnlyRef.current);
+          } catch (e) {}
+        }
+
         let pc = peerConnectionRef.current;
         if (!pc) {
           pc = await createPeerConnection(callerId);
           peerConnectionRef.current = pc;
         }
-        if (localStreamRef.current) {
-          localStreamRef.current.getTracks().forEach(track => {
+        if (stream) {
+          stream.getTracks().forEach(track => {
             if (!pc.getSenders().some(s => s.track === track)) {
-              pc.addTrack(track, localStreamRef.current);
+              pc.addTrack(track, stream);
             }
           });
         }
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        await flushIceCandidatesQueue();
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         s.emit('webrtc-answer', { targetUserId: callerId, answer });
@@ -501,6 +537,7 @@ const MessagesPage = ({ userType = 'client' }) => {
         const pc = peerConnectionRef.current;
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(answer));
+          await flushIceCandidatesQueue();
         }
       } catch (err) {
         console.error('WebRTC answer error:', err);
@@ -510,8 +547,10 @@ const MessagesPage = ({ userType = 'client' }) => {
     const handleWebRTCICE = async ({ candidate }) => {
       try {
         const pc = peerConnectionRef.current;
-        if (pc && candidate) {
+        if (pc && pc.remoteDescription && pc.remoteDescription.type) {
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } else if (candidate) {
+          iceCandidatesQueueRef.current.push(candidate);
         }
       } catch (err) {
         console.error('ICE candidate error:', err);
@@ -688,6 +727,8 @@ const MessagesPage = ({ userType = 'client' }) => {
   const handleEndCallCleanupOnly = () => {
     if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
 
+    iceCandidatesQueueRef.current = [];
+
     if (peerConnectionRef.current) {
       try { peerConnectionRef.current.close(); } catch (e) {}
       peerConnectionRef.current = null;
@@ -696,6 +737,7 @@ const MessagesPage = ({ userType = 'client' }) => {
       try { localStreamRef.current.getTracks().forEach(t => t.stop()); } catch (e) {}
       localStreamRef.current = null;
     }
+    remoteStreamRef.current = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
 
@@ -703,6 +745,17 @@ const MessagesPage = ({ userType = 'client' }) => {
     setOutgoingCall(null);
     setVideoCallActive(false);
   };
+
+  useEffect(() => {
+    if (videoCallActive) {
+      if (localStreamRef.current && localVideoRef.current && !localVideoRef.current.srcObject) {
+        localVideoRef.current.srcObject = localStreamRef.current;
+      }
+      if (remoteStreamRef.current && remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
+        remoteVideoRef.current.srcObject = remoteStreamRef.current;
+      }
+    }
+  }, [videoCallActive]);
 
   const handleEndCall = () => {
     if (outgoingCall) {
