@@ -267,6 +267,29 @@ const MessagesPage = ({ userType = 'client' }) => {
   const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [voiceRecordDuration, setVoiceRecordDuration] = useState(0);
+  const voiceDurationRef = useRef(0);
+
+  const getVoiceNoteDuration = (msg) => {
+    if (msg?.content) {
+      const durMatch = msg.content.match(/duration:(\d+)/i);
+      if (durMatch && durMatch[1]) {
+        return formatCallDuration(parseInt(durMatch[1], 10));
+      }
+      const timeMatch = msg.content.match(/\((\d{1,2}:\d{2})\)/);
+      if (timeMatch && timeMatch[1]) {
+        return timeMatch[1];
+      }
+    }
+
+    if (msg?.attachments && msg.attachments.length > 0) {
+      const audioAtt = msg.attachments.find(a => a.duration);
+      if (audioAtt && audioAtt.duration) {
+        return formatCallDuration(Math.round(audioAtt.duration));
+      }
+    }
+
+    return '0:03';
+  };
 
   // Auto-Translation state
   const [translatedMessages, setTranslatedMessages] = useState({});
@@ -306,8 +329,13 @@ const MessagesPage = ({ userType = 'client' }) => {
   useEffect(() => {
     let timer = null;
     if (isRecordingVoice) {
+      voiceDurationRef.current = 0;
       timer = setInterval(() => {
-        setVoiceRecordDuration(prev => prev + 1);
+        setVoiceRecordDuration(prev => {
+          const next = prev + 1;
+          voiceDurationRef.current = next;
+          return next;
+        });
       }, 1000);
     } else {
       setVoiceRecordDuration(0);
@@ -938,9 +966,11 @@ const MessagesPage = ({ userType = 'client' }) => {
           const res = await profileAPI.uploadFile(formData);
           const url  = res.data?.data?.url || res.data?.url || res.data?.fileUrl;
           if (url) {
+            const durSecs = voiceDurationRef.current || voiceRecordDuration || 1;
+            const formattedDur = formatCallDuration(durSecs);
             toast.dismiss(loadingToastId);
-            toast.success('Voice note uploaded! Click send to share.');
-            setInput(`[Voice Message] url:${url}`);
+            toast.success(`Voice note (${formattedDur}) uploaded! Click send to share.`);
+            setInput(`[Voice Message] duration:${durSecs} (${formattedDur}) url:${url}`);
           } else {
             throw new Error("Invalid response url");
           }
@@ -1477,7 +1507,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                                 })}
                               </div>
                             </div>
-                            <span style={{ fontSize: 11, opacity: 0.8 }}>0:08</span>
+                            <span style={{ fontSize: 11, opacity: 0.8 }}>{getVoiceNoteDuration(msg)}</span>
                           </div>
                         ) : (
                           renderHighlightedText(textContent, chatSearchQuery)
@@ -1557,9 +1587,11 @@ const MessagesPage = ({ userType = 'client' }) => {
                   <span>Recording Voice Note... ({voiceRecordDuration}s)</span>
                   <button 
                     onClick={() => {
+                      const durSecs = voiceDurationRef.current || voiceRecordDuration || 1;
+                      const formattedDur = formatCallDuration(durSecs);
                       setIsRecordingVoice(false);
-                      setInput('[Voice Message] 🎤 Voice Note (0:08)');
-                      toast.success('Voice note recorded. Press Send to transmit.');
+                      setInput(`[Voice Message] duration:${durSecs} 🎤 Voice Note (${formattedDur})`);
+                      toast.success(`Voice note (${formattedDur}) recorded. Press Send to transmit.`);
                     }}
                     style={{ border: 'none', background: '#ef4444', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 10, cursor: 'pointer' }}
                   >
