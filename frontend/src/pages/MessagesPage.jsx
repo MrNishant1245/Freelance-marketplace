@@ -40,6 +40,21 @@ const formatFileSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const renderHighlightedText = (text = '', query = '') => {
+  if (!query || !query.trim() || typeof text !== 'string') return text;
+  const safeQuery = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${safeQuery})`, 'gi'));
+  return parts.map((part, index) =>
+    part.toLowerCase() === query.trim().toLowerCase() ? (
+      <mark key={index} style={{ background: '#fde047', color: '#0f172a', padding: '1px 4px', borderRadius: 3, fontWeight: 700 }}>
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+};
+
 // ─── Get other participant from conversation ───────────────────────────────────
 const getOtherParticipant = (conv, myId) => {
   if (conv.otherParticipant) return conv.otherParticipant;
@@ -210,6 +225,42 @@ const MessagesPage = ({ userType = 'client' }) => {
   // In-Chat Search state
   const [inChatSearchOpen, setInChatSearchOpen] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [activeMatchIndex, setActiveMatchIndex] = useState(0);
+
+  const matchingMessages = chatSearchQuery.trim()
+    ? messages.filter((m) => m.content && m.content.toLowerCase().includes(chatSearchQuery.toLowerCase()))
+    : [];
+
+  const scrollToMessage = (msgId) => {
+    const el = document.getElementById(`chat-msg-${msgId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const handleNextMatch = () => {
+    if (!matchingMessages.length) return;
+    const nextIdx = (activeMatchIndex + 1) % matchingMessages.length;
+    setActiveMatchIndex(nextIdx);
+    scrollToMessage(matchingMessages[nextIdx]._id);
+  };
+
+  const handlePrevMatch = () => {
+    if (!matchingMessages.length) return;
+    const prevIdx = (activeMatchIndex - 1 + matchingMessages.length) % matchingMessages.length;
+    setActiveMatchIndex(prevIdx);
+    scrollToMessage(matchingMessages[prevIdx]._id);
+  };
+
+  const handleChatSearchChange = (e) => {
+    const query = e.target.value;
+    setChatSearchQuery(query);
+    setActiveMatchIndex(0);
+    if (query.trim()) {
+      const matches = messages.filter((m) => m.content && m.content.toLowerCase().includes(query.toLowerCase()));
+      if (matches.length > 0) {
+        setTimeout(() => scrollToMessage(matches[0]._id), 100);
+      }
+    }
+  };
 
   // WhatsApp Alert & Voice Messages
   const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
@@ -1302,30 +1353,40 @@ const MessagesPage = ({ userType = 'client' }) => {
                 background: isDarkMode ? '#0d1b23' : '#f8fafc',
                 borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.05)' : '1px solid #e5e7eb'
               }}>
-                <Icon name="search" />
+                <div style={{ color: isDarkMode ? '#94a3b8' : '#64748b', display: 'flex', alignItems: 'center' }}>
+                  <Icon name="search" />
+                </div>
                 <input
                   autoFocus
                   type="text"
                   placeholder="Search messages in this chat..."
                   value={chatSearchQuery}
-                  onChange={(e) => setChatSearchQuery(e.target.value)}
+                  onChange={handleChatSearchChange}
                   style={{
                     flex: 1, padding: '8px 14px', borderRadius: 8,
                     border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
                     background: isDarkMode ? '#071422' : '#fff',
                     color: isDarkMode ? '#e6eef8' : '#0f172a',
-                    fontSize: 13, outline: 'none', fontFamily: "'DM Sans', sans-serif"
+                    fontSize: 13.5, outline: 'none', fontFamily: "'DM Sans', sans-serif"
                   }}
                 />
-                {chatSearchQuery && (
-                  <span style={{ fontSize: 12, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 600 }}>
-                    {messages.filter(m => m.content?.toLowerCase().includes(chatSearchQuery.toLowerCase())).length} match(es)
-                  </span>
+                {chatSearchQuery.trim() && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 600 }}>
+                    {matchingMessages.length > 0 ? (
+                      <>
+                        <span>{activeMatchIndex + 1} of {matchingMessages.length}</span>
+                        <button onClick={handlePrevMatch} style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: 4, cursor: 'pointer', padding: '2px 6px', fontSize: 11, color: isDarkMode ? '#fff' : '#111' }} title="Previous match">▲</button>
+                        <button onClick={handleNextMatch} style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: 4, cursor: 'pointer', padding: '2px 6px', fontSize: 11, color: isDarkMode ? '#fff' : '#111' }} title="Next match">▼</button>
+                      </>
+                    ) : (
+                      <span style={{ color: '#ef4444' }}>No results</span>
+                    )}
+                  </div>
                 )}
                 <button onClick={() => { setInChatSearchOpen(false); setChatSearchQuery(''); }} style={{
                   background: 'none', border: 'none', color: isDarkMode ? '#94a3b8' : '#64748b',
-                  cursor: 'pointer', fontSize: 16, padding: '4px 8px'
-                }} title="Close search" type="button">✕</button>
+                  cursor: 'pointer', fontSize: 16, padding: '4px 8px', display: 'flex', alignItems: 'center'
+                }} title="Close search bar" type="button">✕</button>
               </div>
             )}
 
@@ -1348,8 +1409,10 @@ const MessagesPage = ({ userType = 'client' }) => {
               ) : messages.map(msg => {
                 const isMe = (msg.sender?._id || msg.sender) === myId;
                 const selected = selectedMessages.has(msg._id);
+                const isTargetMatch = matchingMessages[activeMatchIndex]?._id === msg._id;
+                const textContent = translatedMessages[msg._id] ? translatedMessages[msg._id] : msg.content;
                 return (
-                  <div key={msg._id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: 8, gap: 8, alignItems: 'flex-end' }}>
+                  <div id={`chat-msg-${msg._id}`} key={msg._id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: 8, gap: 8, alignItems: 'flex-end', transition: 'all 0.2s ease' }}>
                     {!isMe && <Avatar user={msg.sender} size={28} color={accentColor} />}
                     <div style={{ maxWidth: '65%', position: 'relative' }}>
                       {selectMode && (
@@ -1368,6 +1431,8 @@ const MessagesPage = ({ userType = 'client' }) => {
                         fontSize: 13.5, lineHeight: 1.5,
                         opacity: msg.isOptimistic ? 0.7 : 1,
                         fontStyle: msg.isDeleted ? 'italic' : 'normal',
+                        boxShadow: isTargetMatch ? '0 0 0 3px #2563eb, 0 4px 12px rgba(37,99,235,0.3)' : 'none',
+                        transition: 'box-shadow 0.2s ease'
                       }}>
                         {!msg.isDeleted && <AttachmentList attachments={msg.attachments} isMe={isMe} />}
                         {msg.content?.startsWith('[Voice Message]') ? (
@@ -1402,7 +1467,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                             <span style={{ fontSize: 11, opacity: 0.8 }}>0:08</span>
                           </div>
                         ) : (
-                          translatedMessages[msg._id] ? translatedMessages[msg._id] : msg.content
+                          renderHighlightedText(textContent, chatSearchQuery)
                         )}
                         {!msg.isDeleted && !msg.content?.startsWith('[Voice Message]') && (
                           <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
