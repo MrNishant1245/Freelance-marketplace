@@ -814,53 +814,9 @@ const MessagesPage = ({ userType = 'client' }) => {
     selectConversationRef.current = selectConversation;
   }, [selectConversation]);
 
-  const playVoiceNoteAudio = (msgId, content) => {
-    if (audioPlayerRef.current) {
-      try {
-        audioPlayerRef.current.pause();
-      } catch (err) {}
-      audioPlayerRef.current = null;
-    }
-
-    if (playingVoiceId === msgId) {
-      setPlayingVoiceId(null);
-      return;
-    }
-
-    if (content && content.startsWith('[Voice Message] url:')) {
-      const audioUrl = content.replace('[Voice Message] url:', '').trim();
-      if (audioUrl) {
-        setPlayingVoiceId(msgId);
-        toast.success('Playing voice message...', { icon: '🔊' });
-        try {
-          const audio = new Audio(audioUrl);
-          audioPlayerRef.current = audio;
-          audio.onended = () => {
-            setPlayingVoiceId(null);
-            audioPlayerRef.current = null;
-          };
-          audio.onerror = () => {
-            toast.error('Failed to play voice note.');
-            setPlayingVoiceId(null);
-            audioPlayerRef.current = null;
-          };
-          audio.play().catch(playErr => {
-            console.error('Audio play promise error:', playErr);
-            setPlayingVoiceId(null);
-            audioPlayerRef.current = null;
-          });
-        } catch (err) {
-          console.error('Audio play error:', err);
-          toast.error('Audio playback failed.');
-          setPlayingVoiceId(null);
-        }
-        return;
-      }
-    }
-
+  const playSynthVoiceTone = (msgId) => {
     setPlayingVoiceId(msgId);
-    toast.success('Playing audio note...', { icon: '🔊' });
-
+    toast.success('Playing voice note preview...', { icon: '🔊' });
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) {
@@ -880,12 +836,68 @@ const MessagesPage = ({ userType = 'client' }) => {
         });
       }
     } catch (err) {
-      console.error('Audio playback error:', err);
+      console.error('Audio synthesizer error:', err);
     }
 
     setTimeout(() => {
       setPlayingVoiceId(prev => prev === msgId ? null : prev);
     }, 1500);
+  };
+
+  const playVoiceNoteAudio = (msgId, content, attachments = []) => {
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+      } catch (err) {}
+      audioPlayerRef.current = null;
+    }
+
+    if (playingVoiceId === msgId) {
+      setPlayingVoiceId(null);
+      return;
+    }
+
+    let audioUrl = null;
+    if (attachments && attachments.length > 0) {
+      const audioAtt = attachments.find(att => att.url && (att.type === 'audio' || att.url.endsWith('.webm') || att.url.endsWith('.mp3') || att.url.endsWith('.wav') || att.url.endsWith('.ogg')));
+      if (audioAtt) audioUrl = audioAtt.url;
+      else if (attachments[0]?.url) audioUrl = attachments[0].url;
+    }
+
+    if (!audioUrl && content) {
+      if (content.includes('url:')) {
+        audioUrl = content.split('url:')[1]?.trim();
+      } else {
+        const match = content.match(/https?:\/\/[^\s]+/);
+        if (match) audioUrl = match[0];
+      }
+    }
+
+    if (audioUrl) {
+      setPlayingVoiceId(msgId);
+      toast.success('Playing voice message...', { icon: '🔊' });
+      try {
+        const audio = new Audio(audioUrl);
+        audioPlayerRef.current = audio;
+        audio.onended = () => {
+          setPlayingVoiceId(null);
+          audioPlayerRef.current = null;
+        };
+        audio.onerror = (e) => {
+          console.warn('Audio URL play error, fallback to synth:', e);
+          playSynthVoiceTone(msgId);
+        };
+        audio.play().catch(playErr => {
+          console.warn('Audio play promise rejected, fallback to synth:', playErr);
+          playSynthVoiceTone(msgId);
+        });
+        return;
+      } catch (err) {
+        console.warn('Audio init failed, fallback to synth:', err);
+      }
+    }
+
+    playSynthVoiceTone(msgId);
   };
 
   const startRecordingAudio = async () => {
@@ -1440,7 +1452,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, padding: '4px 0' }}>
                             <button 
                               style={{ width: 32, height: 32, borderRadius: '50%', background: isMe ? '#fff' : accentColor, border: 'none', color: isMe ? accentColor : '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 700 }}
-                              onClick={() => playVoiceNoteAudio(msg._id, msg.content)}
+                              onClick={() => playVoiceNoteAudio(msg._id, msg.content, msg.attachments)}
                             >
                               {playingVoiceId === msg._id ? '⏸' : '▶'}
                             </button>
