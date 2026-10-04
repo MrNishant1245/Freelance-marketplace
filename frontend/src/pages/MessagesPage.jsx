@@ -5,7 +5,7 @@ import api, { profileAPI, reviewAPI, jobAPI } from '../api';
 import { tokenStorage } from '../utils/tokenStorage';
 import toast from 'react-hot-toast';
 import { getSocket } from '../utils/socket';
-import AgoraRTC from 'agora-rtc-sdk-ng';
+import AgoraCall from '../components/common/AgoraCall';
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 const msgAPI = {
@@ -38,14 +38,6 @@ const formatFileSize = (bytes) => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-  ],
 };
 
 // ─── Get other participant from conversation ───────────────────────────────────
@@ -215,11 +207,10 @@ const MessagesPage = ({ userType = 'client' }) => {
   const ringtoneRef = useRef(null);
   const callTimeoutRef = useRef(null);
 
-  // WhatsApp Alert, Voice Messages & Emoji Picker
+  // WhatsApp Alert & Voice Messages
   const [whatsAppAlertsActive, setWhatsAppAlertsActive] = useState(true);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [voiceRecordDuration, setVoiceRecordDuration] = useState(0);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Auto-Translation state
   const [translatedMessages, setTranslatedMessages] = useState({});
@@ -334,181 +325,9 @@ const MessagesPage = ({ userType = 'client' }) => {
   const audioChunksRef = useRef([]);
   const audioPlayerRef = useRef(null);
 
-  const peerConnectionRef = useRef(null);
-  const localStreamRef    = useRef(null);
-  const remoteStreamRef   = useRef(null);
-  const iceCandidatesQueueRef = useRef([]);
-  const localVideoRef     = useRef(null);
-  const remoteVideoRef    = useRef(null);
-  const isAudioOnlyRef    = useRef(false);
-  const targetUserCallRef = useRef(null);
-
-  const agoraClientRef          = useRef(null);
-  const agoraLocalAudioTrackRef = useRef(null);
-  const agoraLocalVideoTrackRef = useRef(null);
-
   const myId        = user?._id || user?.id;
   const activeOther = activeConv ? getOtherParticipant(activeConv, myId) : null;
   const accentColor = userType === 'freelancer' ? '#16a34a' : '#2563eb';
-
-  const joinAgoraCall = async (channelName, withVideo = true) => {
-    try {
-      if (!agoraClientRef.current) {
-        agoraClientRef.current = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-      }
-      const client = agoraClientRef.current;
-
-      let appId = process.env.REACT_APP_AGORA_APP_ID || '8a61421f108d4b31a8b981f211eb5a7c';
-      let token = '';
-
-      try {
-        const res = await api.get(`/messages/agora-token?channelName=${channelName}`);
-        if (res.data?.success && res.data?.data) {
-          appId = res.data.data.appId || appId;
-          token = res.data.data.token || '';
-        }
-      } catch (e) {}
-
-      client.on('user-published', async (remoteUser, mediaType) => {
-        await client.subscribe(remoteUser, mediaType);
-        console.log('🎥 Agora remote user published:', remoteUser.uid, mediaType);
-
-        if (mediaType === 'video' && remoteVideoRef.current) {
-          remoteUser.videoTrack.play(remoteVideoRef.current);
-        }
-        if (mediaType === 'audio') {
-          remoteUser.audioTrack.play();
-        }
-      });
-
-      client.on('user-left', (remoteUser) => {
-        console.log('🎥 Agora remote user left:', remoteUser.uid);
-        toast('User left the call.', { icon: '📞' });
-      });
-
-      const uid = await client.join(appId, channelName, token || null, null);
-      console.log('🎥 Agora client joined channel:', channelName, 'UID:', uid);
-
-      const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      agoraLocalAudioTrackRef.current = localAudioTrack;
-
-      let tracksToPublish = [localAudioTrack];
-
-      if (withVideo) {
-        const localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-        agoraLocalVideoTrackRef.current = localVideoTrack;
-        if (localVideoRef.current) {
-          localVideoTrack.play(localVideoRef.current);
-        }
-        tracksToPublish.push(localVideoTrack);
-      }
-
-      await client.publish(tracksToPublish);
-      toast.success('Agora Video Room Connected!', { icon: '📞' });
-    } catch (err) {
-      console.error('Agora join error:', err);
-    }
-  };
-
-  const leaveAgoraCall = async () => {
-    try {
-      if (agoraLocalAudioTrackRef.current) {
-        agoraLocalAudioTrackRef.current.stop();
-        agoraLocalAudioTrackRef.current.close();
-        agoraLocalAudioTrackRef.current = null;
-      }
-      if (agoraLocalVideoTrackRef.current) {
-        agoraLocalVideoTrackRef.current.stop();
-        agoraLocalVideoTrackRef.current.close();
-        agoraLocalVideoTrackRef.current = null;
-      }
-      if (agoraClientRef.current) {
-        await agoraClientRef.current.leave();
-        agoraClientRef.current.removeAllListeners();
-        agoraClientRef.current = null;
-      }
-    } catch (err) {
-      console.error('Agora leave error:', err);
-    }
-  };
-
-  const createPeerConnection = async (targetUserId) => {
-    let serversConfig = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-      ],
-    };
-
-    const turnUrl = process.env.REACT_APP_TURN_URL;
-    const turnUser = process.env.REACT_APP_TURN_USERNAME;
-    const turnCred = process.env.REACT_APP_TURN_CREDENTIAL;
-    if (turnUrl && turnUser && turnCred) {
-      serversConfig.iceServers.push({
-        urls: turnUrl,
-        username: turnUser,
-        credential: turnCred,
-      });
-    }
-
-    try {
-      const res = await api.get('/messages/turn-credentials');
-      if (res.data?.success && Array.isArray(res.data?.iceServers)) {
-        serversConfig = { iceServers: res.data.iceServers };
-      }
-    } catch (e) {}
-
-    const pc = new RTCPeerConnection(serversConfig);
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socketRef.current?.emit('webrtc-ice-candidate', { targetUserId, candidate: event.candidate });
-      }
-    };
-
-    pc.ontrack = (event) => {
-      console.log('🎥 Received remote track:', event.streams);
-      if (event.streams && event.streams[0]) {
-        remoteStreamRef.current = event.streams[0];
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-        }
-      }
-    };
-
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-        toast.error('Call connection lost.');
-        handleEndCall();
-      }
-    };
-
-    return pc;
-  };
-
-  const startLocalMedia = async (withVideo = true) => {
-    try {
-      const constraints = { audio: true, video: withVideo };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      localStreamRef.current = stream;
-      if (localVideoRef.current && withVideo) {
-        localVideoRef.current.srcObject = stream;
-      }
-      if (peerConnectionRef.current) {
-        stream.getTracks().forEach(track => {
-          if (!peerConnectionRef.current.getSenders().some(s => s.track === track)) {
-            peerConnectionRef.current.addTrack(track, stream);
-          }
-        });
-      }
-      return stream;
-    } catch (err) {
-      console.error('Media access error:', err);
-      toast.error('Could not access camera/microphone. Please check permissions.');
-      throw err;
-    }
-  };
 
   // ── Socket setup ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -516,174 +335,54 @@ const MessagesPage = ({ userType = 'client' }) => {
     const s = getSocket(token);
     socketRef.current = s;
 
-    const handleNewMessage = (msg) => {
+    s.on('newMessage', (msg) => {
       setMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
       setConversations(prev =>
         prev.map(c => c._id === msg.conversation ? { ...c, lastMessage: msg } : c)
       );
-    };
-
-    const handleConvUpdated = (data) => {
+    });
+    s.on('conversationUpdated', (data) => {
       setConversations(prev =>
         prev.map(c => c._id === data.conversationId
           ? { ...c, lastMessage: data.lastMessage, unreadCount: data.unreadCount }
           : c)
       );
-    };
+    });
+    s.on('userTyping',        ({ userId }) => setTypingUsers(p => [...new Set([...p, userId])]));
+    s.on('userStoppedTyping', ({ userId }) => setTypingUsers(p => p.filter(id => id !== userId)));
+    s.on('messageDeleted',    ({ messageId }) =>
+      setMessages(p => p.map(m => m._id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted.' } : m))
+    );
 
-    const handleUserTyping = ({ userId }) => setTypingUsers(p => [...new Set([...p, userId])]);
-    const handleUserStoppedTyping = ({ userId }) => setTypingUsers(p => p.filter(id => id !== userId));
-    const handleMessageDeleted = ({ messageId }) =>
-      setMessages(p => p.map(m => m._id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted.' } : m));
-
-    const handleIncomingCallMsg = ({ conversationId, callerName, callerId }) => {
+    s.on('incomingCall', ({ conversationId, callerName, callerId }) => {
       setIncomingCall({ conversationId, callerName, callerId });
-      targetUserCallRef.current = callerId;
-    };
-
-    const flushIceCandidatesQueue = async () => {
-      const pc = peerConnectionRef.current;
-      if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) return;
-      while (iceCandidatesQueueRef.current.length > 0) {
-        const cand = iceCandidatesQueueRef.current.shift();
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(cand));
-        } catch (e) {
-          console.error('Flushing ICE candidate error:', e);
-        }
-      }
-    };
-
-    const handleCallAccepted = async ({ conversationId }) => {
+    });
+    s.on('callAccepted', ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
-      const targetUserId = targetUserCallRef.current || (activeOther ? (activeOther._id || activeOther) : null);
       setOutgoingCall(null);
       setVideoCallActive(true);
       setVideoCallDuration(0);
-      setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
-
-      // Connect to Agora RTC Channel
-      joinAgoraCall(conversationId || activeConv?._id || 'general-call', !isAudioOnlyRef.current);
-
-      try {
-        const stream = await startLocalMedia(!isAudioOnlyRef.current);
-        const pc = await createPeerConnection(targetUserId);
-        stream.getTracks().forEach(track => {
-          if (!pc.getSenders().some(s => s.track === track)) {
-            pc.addTrack(track, stream);
-          }
-        });
-        peerConnectionRef.current = pc;
-
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        s.emit('webrtc-offer', { targetUserId, offer });
-      } catch (err) {}
-    };
-
-    const handleWebRTCOffer = async ({ offer, callerId }) => {
-      try {
-        targetUserCallRef.current = callerId;
-        setVideoCallActive(true);
-        setVideoCallDuration(0);
-        setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
-
-        // Connect to Agora RTC Channel
-        joinAgoraCall(activeConv?._id || 'general-call', !isAudioOnlyRef.current);
-
-        let stream = localStreamRef.current;
-        if (!stream) {
-          try {
-            stream = await startLocalMedia(!isAudioOnlyRef.current);
-          } catch (e) {}
-        }
-
-        let pc = peerConnectionRef.current;
-        if (!pc) {
-          pc = await createPeerConnection(callerId);
-          peerConnectionRef.current = pc;
-        }
-        if (stream) {
-          stream.getTracks().forEach(track => {
-            if (!pc.getSenders().some(s => s.track === track)) {
-              pc.addTrack(track, stream);
-            }
-          });
-        }
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        await flushIceCandidatesQueue();
-
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        s.emit('webrtc-answer', { targetUserId: callerId, answer });
-      } catch (err) {
-        console.error('WebRTC offer error:', err);
-      }
-    };
-
-    const handleWebRTCAnswer = async ({ answer }) => {
-      try {
-        const pc = peerConnectionRef.current;
-        if (pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
-          await flushIceCandidatesQueue();
-        }
-      } catch (err) {
-        console.error('WebRTC answer error:', err);
-      }
-    };
-
-    const handleWebRTCICE = async ({ candidate }) => {
-      try {
-        const pc = peerConnectionRef.current;
-        if (pc && pc.remoteDescription && pc.remoteDescription.type) {
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
-        } else if (candidate) {
-          iceCandidatesQueueRef.current.push(candidate);
-        }
-      } catch (err) {
-        console.error('ICE candidate error:', err);
-      }
-    };
-
-    const handleCallDeclinedMsg = ({ conversationId }) => {
+      setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
+      toast.success('Call connected!', { icon: '📞' });
+    });
+    s.on('callDeclined', ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       setOutgoingCall(null);
       toast.error('Call declined by user.', { icon: '📞' });
-    };
-
-    const handleCallEndedMsg = ({ conversationId }) => {
+    });
+    s.on('callEnded', ({ conversationId }) => {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
-      handleEndCallCleanupOnly();
+      setIncomingCall(null);
+      setOutgoingCall(null);
+      setVideoCallActive(false);
       toast.error('Call ended.', { icon: '📞' });
-    };
-
-    s.on('newMessage', handleNewMessage);
-    s.on('conversationUpdated', handleConvUpdated);
-    s.on('userTyping', handleUserTyping);
-    s.on('userStoppedTyping', handleUserStoppedTyping);
-    s.on('messageDeleted', handleMessageDeleted);
-    s.on('incomingCall', handleIncomingCallMsg);
-    s.on('callAccepted', handleCallAccepted);
-    s.on('webrtc-offer', handleWebRTCOffer);
-    s.on('webrtc-answer', handleWebRTCAnswer);
-    s.on('webrtc-ice-candidate', handleWebRTCICE);
-    s.on('callDeclined', handleCallDeclinedMsg);
-    s.on('callEnded', handleCallEndedMsg);
+    });
 
     return () => {
-      s.off('newMessage', handleNewMessage);
-      s.off('conversationUpdated', handleConvUpdated);
-      s.off('userTyping', handleUserTyping);
-      s.off('userStoppedTyping', handleUserStoppedTyping);
-      s.off('messageDeleted', handleMessageDeleted);
-      s.off('incomingCall', handleIncomingCallMsg);
-      s.off('callAccepted', handleCallAccepted);
-      s.off('webrtc-offer', handleWebRTCOffer);
-      s.off('webrtc-answer', handleWebRTCAnswer);
-      s.off('webrtc-ice-candidate', handleWebRTCICE);
-      s.off('callDeclined', handleCallDeclinedMsg);
-      s.off('callEnded', handleCallEndedMsg);
+      s.off('newMessage'); s.off('conversationUpdated');
+      s.off('userTyping'); s.off('userStoppedTyping'); s.off('messageDeleted');
+      s.off('incomingCall'); s.off('callAccepted');
+      s.off('callDeclined'); s.off('callEnded');
     };
   }, [token]);
 
@@ -813,69 +512,17 @@ const MessagesPage = ({ userType = 'client' }) => {
     setSearchStatus('Review is not available for this job yet.');
   };
 
-  const handleEndCallCleanupOnly = () => {
-    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
-
-    leaveAgoraCall();
-
-    iceCandidatesQueueRef.current = [];
-
-    if (peerConnectionRef.current) {
-      try { peerConnectionRef.current.close(); } catch (e) {}
-      peerConnectionRef.current = null;
+  const handleVoiceCall = () => {
+    if (!activeOther?.phone) {
+      return alert('No phone number available for this user.');
     }
-    if (localStreamRef.current) {
-      try { localStreamRef.current.getTracks().forEach(t => t.stop()); } catch (e) {}
-      localStreamRef.current = null;
-    }
-    remoteStreamRef.current = null;
-    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-    if (localVideoRef.current) localVideoRef.current.srcObject = null;
-
-    setIncomingCall(null);
-    setOutgoingCall(null);
-    setVideoCallActive(false);
+    window.location.href = `tel:${activeOther.phone}`;
   };
 
-  useEffect(() => {
-    if (videoCallActive) {
-      if (localStreamRef.current && localVideoRef.current && !localVideoRef.current.srcObject) {
-        localVideoRef.current.srcObject = localStreamRef.current;
-      }
-      if (remoteStreamRef.current && remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
-        remoteVideoRef.current.srcObject = remoteStreamRef.current;
-      }
-    }
-  }, [videoCallActive]);
-
-  const handleEndCall = () => {
-    if (outgoingCall) {
-      socketRef.current?.emit('endCall', {
-        conversationId: outgoingCall.conversationId,
-        targetUserId: outgoingCall.targetUserId
-      });
-    } else if (activeConv && activeOther) {
-      socketRef.current?.emit('endCall', {
-        conversationId: activeConv._id,
-        targetUserId: activeOther._id || activeOther
-      });
-    } else if (targetUserCallRef.current) {
-      socketRef.current?.emit('endCall', {
-        conversationId: activeConv?._id,
-        targetUserId: targetUserCallRef.current
-      });
-    }
-
-    handleEndCallCleanupOnly();
-  };
-
-  const startCallProcess = (withVideo) => {
+  const handleVideoCall = () => {
     if (!activeConv || !activeOther) return;
-    isAudioOnlyRef.current = !withVideo;
     const callerName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Someone';
-    const rawTarget = activeOther._id || activeOther.id || activeOther;
-    const targetUserId = typeof rawTarget === 'object' ? String(rawTarget._id || rawTarget.id || rawTarget) : String(rawTarget);
-    targetUserCallRef.current = targetUserId;
+    const targetUserId = activeOther._id || activeOther;
 
     socketRef.current?.emit('callUser', {
       conversationId: activeConv._id,
@@ -891,22 +538,13 @@ const MessagesPage = ({ userType = 'client' }) => {
     callTimeoutRef.current = setTimeout(() => {
       handleEndCall();
       toast.error('No answer from user.', { icon: '📞' });
-    }, 20000);
+    }, 15000);
   };
 
-  const handleVoiceCall = () => {
-    startCallProcess(false);
-  };
-
-  const handleVideoCall = () => {
-    startCallProcess(true);
-  };
-
-  const handleAcceptCall = async () => {
+  const handleAcceptCall = () => {
     if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
     if (!incomingCall) return;
     const { conversationId, callerId } = incomingCall;
-    targetUserCallRef.current = callerId;
 
     socketRef.current?.emit('acceptCall', {
       conversationId,
@@ -916,17 +554,7 @@ const MessagesPage = ({ userType = 'client' }) => {
     setIncomingCall(null);
     setVideoCallActive(true);
     setVideoCallDuration(0);
-    setVideoCallState({ isMuted: false, isVideoOff: isAudioOnlyRef.current, isScreenSharing: false });
-
-    joinAgoraCall(conversationId || activeConv?._id || 'general-call', !isAudioOnlyRef.current);
-
-    try {
-      const withVideo = !isAudioOnlyRef.current;
-      const stream = await startLocalMedia(withVideo);
-      const pc = await createPeerConnection(callerId);
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
-      peerConnectionRef.current = pc;
-    } catch (err) {}
+    setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
   };
 
   const handleDeclineCall = () => {
@@ -939,35 +567,30 @@ const MessagesPage = ({ userType = 'client' }) => {
       targetUserId: callerId
     });
 
-    handleEndCallCleanupOnly();
+    setIncomingCall(null);
   };
 
-  const toggleMuteCallTrack = () => {
-    if (agoraLocalAudioTrackRef.current) {
-      const nextMuted = !videoCallState.isMuted;
-      agoraLocalAudioTrackRef.current.setEnabled(!nextMuted);
-      setVideoCallState(prev => ({ ...prev, isMuted: nextMuted }));
-      toast.success(nextMuted ? 'Microphone muted' : 'Microphone unmuted');
-    } else {
-      const track = localStreamRef.current?.getAudioTracks()[0];
-      if (track) track.enabled = !track.enabled;
-      setVideoCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
-      toast.success(videoCallState.isMuted ? 'Microphone unmuted' : 'Microphone muted');
+  const handleEndCall = () => {
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
+    if (outgoingCall) {
+      socketRef.current?.emit('endCall', {
+        conversationId: outgoingCall.conversationId,
+        targetUserId: outgoingCall.targetUserId
+      });
+      setOutgoingCall(null);
+      return;
     }
-  };
 
-  const toggleVideoCallTrack = () => {
-    if (agoraLocalVideoTrackRef.current) {
-      const nextVideoOff = !videoCallState.isVideoOff;
-      agoraLocalVideoTrackRef.current.setEnabled(!nextVideoOff);
-      setVideoCallState(prev => ({ ...prev, isVideoOff: nextVideoOff }));
-      toast.success(nextVideoOff ? 'Camera turned off' : 'Camera turned on');
-    } else {
-      const track = localStreamRef.current?.getVideoTracks()[0];
-      if (track) track.enabled = !track.enabled;
-      setVideoCallState(prev => ({ ...prev, isVideoOff: !prev.isVideoOff }));
-      toast.success(videoCallState.isVideoOff ? 'Camera turned on' : 'Camera turned off');
+    if (activeConv && activeOther) {
+      socketRef.current?.emit('endCall', {
+        conversationId: activeConv._id,
+        targetUserId: activeOther._id || activeOther
+      });
     }
+
+    setIncomingCall(null);
+    setOutgoingCall(null);
+    setVideoCallActive(false);
   };
 
   const toggleSelectMode = () => {
@@ -1358,38 +981,13 @@ const MessagesPage = ({ userType = 'client' }) => {
         selectConversationRef.current(match);
       }
       const startCall = queryParams.get('startCall');
-      const callerIdParam = queryParams.get('callerId');
       if (startCall === 'true') {
-        const callerId = callerIdParam || (match ? (getOtherParticipant(match, myId)?._id || getOtherParticipant(match, myId)) : null);
-        if (callerId) {
-          targetUserCallRef.current = typeof callerId === 'object' ? String(callerId._id || callerId) : String(callerId);
-        }
         setVideoCallActive(true);
         setVideoCallDuration(0);
         setVideoCallState({ isMuted: false, isVideoOff: false, isScreenSharing: false });
-
-        startLocalMedia(true).then(async (stream) => {
-          const target = targetUserCallRef.current;
-          if (target) {
-            let pc = peerConnectionRef.current;
-            if (!pc) {
-              pc = await createPeerConnection(target);
-              peerConnectionRef.current = pc;
-            }
-            stream.getTracks().forEach(track => {
-              if (!pc.getSenders().some(s => s.track === track)) {
-                pc.addTrack(track, stream);
-              }
-            });
-          }
-        }).catch(err => {
-          console.error("Failed to start local media on call accept:", err);
-        });
-
-        // Clear startCall and callerId query parameters from URL
+        // Clear startCall query parameter from URL
         const newSearch = new URLSearchParams(location.search);
         newSearch.delete('startCall');
-        newSearch.delete('callerId');
         navigate({ search: newSearch.toString() }, { replace: true });
       }
     }
@@ -1831,227 +1429,38 @@ const MessagesPage = ({ userType = 'client' }) => {
               )}
             </div>
 
-            {/* WhatsApp-Style Modern Chat Input Bar */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 16px',
-              background: isDarkMode ? '#111b21' : '#ffffff',
-              borderTop: isDarkMode ? '1px solid #222d34' : '1px solid #e2e8f0',
-              flexShrink: 0,
-              position: 'relative'
-            }}>
-              {/* Emoji Picker Popover Popup */}
-              {showEmojiPicker && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: 'calc(100% + 8px)',
-                  left: 16,
-                  background: isDarkMode ? '#202c33' : '#ffffff',
-                  border: `1px solid ${isDarkMode ? '#3b4a54' : '#cbd5e1'}`,
-                  borderRadius: 16,
-                  padding: '12px 14px',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
-                  zIndex: 100,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: 8,
-                  maxWidth: 300
-                }}>
-                  {['👍', '❤️', '😊', '😂', '🔥', '🎉', '🙏', '🚀', '💡', '👏', '💯', '🤝', '✅', '⭐', '💼', '📌', '🎯', '⚡', '📱', '💻', '😃', '👀'].map((emoji, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setInput(prev => prev + emoji);
-                        setShowEmojiPicker(false);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        fontSize: 20,
-                        cursor: 'pointer',
-                        padding: 4,
-                        borderRadius: 8,
-                        transition: 'transform 0.15s ease'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.25)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Hidden file input */}
-              <input 
-                ref={fileInputRef} 
-                type="file" 
-                multiple
+            {/* Input */}
+            <div style={styles.inputArea}>
+              <input ref={fileInputRef} type="file" multiple
                 accept="*/*"
-                style={{ display: 'none' }} 
-                onChange={handleFilesSelected} 
-              />
+                style={{ display: 'none' }} onChange={handleFilesSelected} />
+              <button onClick={handleAttachClick} disabled={uploadingFiles}
+                style={{ ...styles.attachBtn, opacity: uploadingFiles ? 0.5 : 1 }} title="Attach file" type="button">
+                {uploadingFiles ? '…' : <Icon name="paperclip" />}
+              </button>
 
-              {/* Sleek Pill Bar Container */}
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: isDarkMode ? '#202c33' : '#f0f2f5',
-                borderRadius: 24,
-                padding: '6px 14px',
-                border: isDarkMode ? '1px solid #2a3942' : '1px solid #e2e8f0',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-              }}>
-                {/* 1. Attachment Button 📎 */}
-                <button
-                  type="button"
-                  onClick={handleAttachClick}
-                  disabled={uploadingFiles}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: isDarkMode ? '#8696a0' : '#54656f',
-                    cursor: 'pointer',
-                    padding: 4,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: uploadingFiles ? 0.5 : 1,
-                    transition: 'color 0.15s ease'
-                  }}
-                  title="Attach file"
-                  onMouseEnter={(e) => e.currentTarget.style.color = accentColor}
-                  onMouseLeave={(e) => e.currentTarget.style.color = isDarkMode ? '#8696a0' : '#54656f'}
-                >
-                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                  </svg>
-                </button>
-
-                {/* 2. Emoji Button 😀 */}
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker(prev => !prev)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: showEmojiPicker ? accentColor : (isDarkMode ? '#8696a0' : '#54656f'),
-                    cursor: 'pointer',
-                    padding: 4,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'color 0.15s ease'
-                  }}
-                  title="Choose emoji"
-                  onMouseEnter={(e) => e.currentTarget.style.color = accentColor}
-                  onMouseLeave={(e) => e.currentTarget.style.color = showEmojiPicker ? accentColor : (isDarkMode ? '#8696a0' : '#54656f')}
-                >
-                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                    <line x1="9" y1="9" x2="9.01" y2="9"/>
-                    <line x1="15" y1="9" x2="15.01" y2="9"/>
-                  </svg>
-                </button>
-
-                {/* 3. Textarea Input */}
-                <textarea 
-                  value={input} 
-                  onChange={handleInputChange} 
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message"
-                  rows={1} 
-                  style={{
-                    flex: 1,
-                    background: 'transparent',
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: 14.5,
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                    color: isDarkMode ? '#e9edef' : '#111b21',
-                    resize: 'none',
-                    maxHeight: 100,
-                    lineHeight: 1.4,
-                    padding: '6px 0'
-                  }} 
-                />
-
-                {/* 4. Microphone Button 🎤 */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isRecordingVoice) {
-                      stopRecordingAudio();
-                    } else {
-                      startRecordingAudio();
-                    }
-                  }}
-                  style={{
-                    background: isRecordingVoice ? '#ef4444' : 'none',
-                    border: 'none',
-                    color: isRecordingVoice ? '#ffffff' : (isDarkMode ? '#8696a0' : '#54656f'),
-                    cursor: 'pointer',
-                    padding: 6,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.15s ease'
-                  }}
-                  title={isRecordingVoice ? 'Stop voice recording' : 'Record voice note'}
-                  onMouseEnter={(e) => {
-                    if (!isRecordingVoice) e.currentTarget.style.color = accentColor;
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isRecordingVoice) e.currentTarget.style.color = isDarkMode ? '#8696a0' : '#54656f';
-                  }}
-                >
-                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                    <line x1="12" y1="19" x2="12" y2="23"/>
-                    <line x1="8" y1="23" x2="16" y2="23"/>
-                  </svg>
-                </button>
-              </div>
-
-              {/* 5. Send Button Paper Plane */}
+              {/* Mic Button for voice notes */}
               <button 
+                onClick={() => {
+                  if (isRecordingVoice) {
+                    stopRecordingAudio();
+                  } else {
+                    startRecordingAudio();
+                  }
+                }} 
+                style={{ border: 'none', background: 'none', color: isRecordingVoice ? '#ef4444' : (isDarkMode ? '#9aa3b3' : '#6b7280'), fontSize: 18, cursor: 'pointer', padding: '0 8px', display: 'flex', alignItems: 'center' }}
+                title="Record voice note"
                 type="button"
-                onClick={handleSend} 
-                disabled={!canSend}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: canSend ? accentColor : (isDarkMode ? '#2a3942' : '#cbd5e1'),
-                  color: '#ffffff',
-                  fontSize: 16,
-                  cursor: canSend ? 'pointer' : 'default',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: canSend ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
-                  transition: 'all 0.2s ease'
-                }}
-                title="Send message"
               >
-                {sending ? '…' : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                  </svg>
-                )}
+                🎤
+              </button>
+
+              <textarea value={input} onChange={handleInputChange} onKeyDown={handleKeyDown}
+                placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
+                rows={1} style={styles.textarea} />
+              <button onClick={handleSend} disabled={!canSend}
+                style={{ ...styles.sendBtn, background: accentColor, opacity: canSend ? 1 : 0.5 }}>
+                {sending ? '…' : '➤'}
               </button>
             </div>
 
@@ -2123,113 +1532,18 @@ const MessagesPage = ({ userType = 'client' }) => {
                 </div>
               </div>
             )}
-            {/* Built-in Zoom-like Video Call Overlay */}
+            {/* Real Agora Video Call Overlay */}
             {videoCallActive && activeOther && (
-              <div style={{ position: 'fixed', inset: 0, background: '#0a0f1d', zIndex: 1000, display: 'flex', flexDirection: 'column', color: '#fff', fontFamily: "'DM Sans', sans-serif" }}>
-                {/* Header */}
-                <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ background: '#2563eb', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: '0.05em' }}>ZOOM ROOM</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Active Session with {activeOther.firstName} {activeOther.lastName}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                    <span style={{ fontSize: 13, color: '#94a3b8' }}>HD Connection • {formatCallDuration(videoCallDuration)}</span>
-                  </div>
-                </div>
-
-                {/* Call Content (Video feeds grid) */}
-                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr', padding: 24, position: 'relative', background: '#0f172a' }}>
-                  
-                  {/* Remote Feed (Main view) */}
-                  <div style={{ width: '100%', height: '100%', background: '#1e293b', borderRadius: 16, border: '2px solid #334155', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                    {/* Real P2P Remote Video Element */}
-                    <video
-                      ref={remoteVideoRef}
-                      autoPlay
-                      playsInline
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        borderRadius: 16,
-                        display: videoCallState.isVideoOff ? 'none' : 'block'
-                      }}
-                    />
-
-                    {videoCallState.isVideoOff && (
-                      <div style={{ textAlign: 'center' }}>
-                        <Avatar user={activeOther} size={120} color={accentColor} />
-                        <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600, color: '#94a3b8' }}>
-                          {activeOther.firstName} (Audio Active)
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Real P2P Local Video PIP Element */}
-                    <video
-                      ref={localVideoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      style={{
-                        position: 'absolute',
-                        bottom: 20,
-                        right: 20,
-                        width: 150,
-                        height: 110,
-                        objectFit: 'cover',
-                        borderRadius: 12,
-                        border: '2px solid #2563eb',
-                        background: '#090d16',
-                        boxShadow: '0 10px 20px rgba(0,0,0,0.6)'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Control Panel Footer */}
-                <div style={{ background: '#0f172a', borderTop: '1px solid #1e293b', padding: 24, display: 'flex', justifyContent: 'center', gap: 16 }}>
-                  
-                  {/* Mute Mic */}
-                  <button 
-                    onClick={toggleMuteCallTrack}
-                    style={{ background: videoCallState.isMuted ? '#ef4444' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                  >
-                    <span>{videoCallState.isMuted ? '🎤 Unmute' : '🎙️ Mute'}</span>
-                  </button>
-
-                  {/* Toggle Camera */}
-                  <button 
-                    onClick={toggleVideoCallTrack}
-                    style={{ background: videoCallState.isVideoOff ? '#ef4444' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                  >
-                    <span>{videoCallState.isVideoOff ? '📹 Start Video' : '🚫 Stop Video'}</span>
-                  </button>
-
-                  {/* Toggle Screen Sharing */}
-                  <button 
-                    onClick={() => {
-                      setVideoCallState(prev => ({ ...prev, isScreenSharing: !prev.isScreenSharing }));
-                      toast.success(videoCallState.isScreenSharing ? 'Screen sharing stopped' : 'Screen sharing active');
-                    }}
-                    style={{ background: videoCallState.isScreenSharing ? '#10b981' : '#1e293b', border: 'none', borderRadius: 8, padding: '12px 20px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                  >
-                    <span>💻 {videoCallState.isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</span>
-                  </button>
-
-                  {/* Hang Up (Red button) */}
-                  <button 
-                    onClick={() => {
-                      handleEndCall();
-                      toast.error(`Call disconnected. Total duration: ${formatCallDuration(videoCallDuration)}`, { icon: '📞' });
-                    }}
-                    style={{ background: '#dc2626', border: 'none', borderRadius: 8, padding: '12px 24px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                  >
-                    <span>🛑 Hang Up</span>
-                  </button>
-                </div>
-              </div>
+              <AgoraCall
+                conversationId={activeConv._id}
+                remoteName={`${activeOther.firstName || ''} ${activeOther.lastName || ''}`.trim() || 'User'}
+                remoteAvatar={<Avatar user={activeOther} size={100} color={accentColor} />}
+                durationText={formatCallDuration(videoCallDuration)}
+                onHangUp={() => {
+                  handleEndCall();
+                  toast.error(`Call disconnected. Total duration: ${formatCallDuration(videoCallDuration)}`, { icon: '📞' });
+                }}
+              />
             )}
           </>
         )}
