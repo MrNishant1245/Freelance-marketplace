@@ -57,14 +57,26 @@ export const AuthProvider = ({ children }) => {
       }
       try {
         const { data } = await authAPI.getMe();
-        dispatch({ type: 'AUTH_SUCCESS', payload: data.data.user });
+        const meUser = data.data?.user;
+        if (meUser) {
+          try { localStorage.setItem('fm_user', JSON.stringify(meUser)); } catch (e) {}
+          dispatch({ type: 'AUTH_SUCCESS', payload: meUser });
+        }
       } catch (error) {
         const status = error?.response?.status;
         if (status === 401 || status === 403) {
           tokenStorage.clear();
+          try { localStorage.removeItem('fm_user'); } catch (e) {}
           dispatch({ type: 'LOGOUT' });
         } else {
-          console.warn('Auth check failed (non-401):', status, '— keeping session');
+          console.warn('Auth check failed (non-401):', status, '— attempting cached session fallback');
+          try {
+            const rawCache = localStorage.getItem('fm_user');
+            if (rawCache) {
+              const cachedUser = JSON.parse(rawCache);
+              dispatch({ type: 'AUTH_SUCCESS', payload: cachedUser });
+            }
+          } catch (e) {}
         }
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -98,6 +110,7 @@ export const AuthProvider = ({ children }) => {
       const { user, accessToken, refreshToken } = data.data;
       tokenStorage.setAccess(accessToken);
       tokenStorage.setRefresh(refreshToken);
+      try { localStorage.setItem('fm_user', JSON.stringify(user)); } catch (e) {}
       dispatch({ type: 'AUTH_SUCCESS', payload: user });
       return data;
     } catch (error) {
@@ -113,6 +126,7 @@ export const AuthProvider = ({ children }) => {
       const { user, accessToken, refreshToken } = data.data;
       tokenStorage.setAccess(accessToken);
       tokenStorage.setRefresh(refreshToken);
+      try { localStorage.setItem('fm_user', JSON.stringify(user)); } catch (e) {}
       dispatch({ type: 'AUTH_SUCCESS', payload: user });
       return data;
     } catch (error) {
@@ -135,6 +149,7 @@ export const AuthProvider = ({ children }) => {
       await authAPI.logout(tokenStorage.getRefresh());
     } catch {}
     tokenStorage.clear();
+    try { localStorage.removeItem('fm_user'); } catch (e) {}
     dispatch({ type: 'LOGOUT' });
   }, []);
 

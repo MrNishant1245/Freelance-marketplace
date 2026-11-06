@@ -24,11 +24,11 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-// New: general-purpose uploader for portfolio / proposals / job submissions
+// New: general-purpose uploader for portfolio / proposals / job submissions / message attachments
 const uploadDoc = multer({
   storage,
   fileFilter: docFileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
 });
 
 module.exports = upload;

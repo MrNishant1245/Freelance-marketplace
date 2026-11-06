@@ -30,8 +30,19 @@ const getInitials = (user) => {
   return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
 };
 
-const IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+const IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
 const isImageFile = (nameOrUrl = '') => IMAGE_EXT.some((ext) => nameOrUrl.toLowerCase().includes(ext));
+
+const getDocBadge = (fileName = '') => {
+  const ext = (fileName || '').split('.').pop()?.toLowerCase() || '';
+  if (['pdf'].includes(ext)) return { icon: '📄', label: 'PDF', bg: '#fee2e2', color: '#991b1b' };
+  if (['doc', 'docx'].includes(ext)) return { icon: '📝', label: 'DOCX', bg: '#dbeafe', color: '#1e40af' };
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return { icon: '📊', label: 'EXCEL', bg: '#dcfce7', color: '#166534' };
+  if (['ppt', 'pptx'].includes(ext)) return { icon: '📊', label: 'PPT', bg: '#ffedd5', color: '#9a3412' };
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return { icon: '📦', label: 'ZIP', bg: '#f3e8ff', color: '#6b21a8' };
+  if (['txt', 'rtf', 'md', 'json'].includes(ext)) return { icon: '📄', label: 'TXT', bg: '#f3f4f6', color: '#374151' };
+  return { icon: '📁', label: ext ? ext.toUpperCase() : 'FILE', bg: '#e2e8f0', color: '#334155' };
+};
 
 const formatFileSize = (bytes) => {
   if (!bytes) return '';
@@ -170,32 +181,49 @@ const AttachmentList = ({ attachments, isMe, isVoiceNote }) => {
   const { isDarkMode } = useAuth();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 6 }}>
-      {filtered.map((att, i) =>
-        (att.type === 'image' || isImageFile(att.name || att.url)) ? (
-          <a key={i} href={att.url} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
-            <img src={att.url} alt={att.name || 'image'} style={{ maxWidth: 220, maxHeight: 180, borderRadius: 10, display: 'block', objectFit: 'cover' }} />
-          </a>
-        ) : (
+      {filtered.map((att, i) => {
+        const isImg = att.type === 'image' || isImageFile(att.name || att.url);
+        if (isImg) {
+          return (
+            <a key={i} href={att.url} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
+              <img src={att.url} alt={att.name || 'image'} style={{ maxWidth: 240, maxHeight: 190, borderRadius: 10, display: 'block', objectFit: 'cover' }} />
+            </a>
+          );
+        }
+        const badge = getDocBadge(att.name || att.url);
+        return (
           <a
             key={i}
             href={att.url}
             target="_blank"
             rel="noreferrer noopener"
+            download={att.name || true}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10,
-              background: isMe ? 'rgba(255,255,255,0.18)' : (isDarkMode ? '#071422' : '#fff'),
-              border: isMe ? '1px solid rgba(255,255,255,0.28)' : (isDarkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid #e5e7eb'),
-              color: isMe ? '#fff' : (isDarkMode ? '#e6eef8' : '#111'), textDecoration: 'none', maxWidth: 320,
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 12,
+              background: isMe ? 'rgba(255,255,255,0.2)' : (isDarkMode ? '#071422' : '#ffffff'),
+              border: isMe ? '1px solid rgba(255,255,255,0.3)' : (isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0'),
+              color: isMe ? '#ffffff' : (isDarkMode ? '#e6eef8' : '#0f172a'), textDecoration: 'none', maxWidth: 320,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)', transition: 'transform 0.12s ease'
             }}
           >
-            <Icon name="file" />
-            <div style={{ flex: 1, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {att.name || 'File'}
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, background: badge.bg, color: badge.color,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0
+            }}>
+              {badge.icon}
             </div>
-            <span style={{ fontSize: 12, color: isMe ? '#f9fafb' : (isDarkMode ? '#9aa3b3' : '#737373') }}>Open</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {att.name || 'Document'}
+              </div>
+              <div style={{ fontSize: 10.5, opacity: 0.8, marginTop: 1 }}>
+                {badge.label} • Open / Download
+              </div>
+            </div>
+            <span style={{ fontSize: 13, opacity: 0.9, marginLeft: 2 }}>⬇️</span>
           </a>
-        )
-      )}
+        );
+      })}
     </div>
   );
 };
@@ -273,6 +301,16 @@ const MessagesPage = ({ userType = 'client' }) => {
   const [voiceRecordDuration, setVoiceRecordDuration] = useState(0);
   const voiceDurationRef = useRef(0);
 
+  const resolveAudioUrl = (rawUrl) => {
+    if (!rawUrl) return null;
+    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('blob:')) {
+      return rawUrl;
+    }
+    const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+    const serverBase = apiBase.replace(/\/api\/?$/, '');
+    return `${serverBase}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+  };
+
   const getVoiceNoteDuration = (msg) => {
     if (msg?.content) {
       const durMatch = msg.content.match(/duration:(\d+)/i);
@@ -292,7 +330,7 @@ const MessagesPage = ({ userType = 'client' }) => {
       }
     }
 
-    return '0:03';
+    return '0:00';
   };
 
   // Auto-Translation state
@@ -724,6 +762,11 @@ const MessagesPage = ({ userType = 'client' }) => {
     }));
   };
 
+  const handlePayments = () => {
+    setMenuOpen(false);
+    navigate('/payment');
+  };
+
   const handleContactInfo = () => {
     setMenuOpen(false);
     setContactInfoOpen(true);
@@ -846,36 +889,6 @@ const MessagesPage = ({ userType = 'client' }) => {
     selectConversationRef.current = selectConversation;
   }, [selectConversation]);
 
-  const playSynthVoiceTone = (msgId) => {
-    setPlayingVoiceId(msgId);
-    toast.success('Playing voice note preview...', { icon: '🔊' });
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        const ctx = new AudioContext();
-        const melody = [262, 330, 392, 440, 523, 659, 784, 880];
-        melody.forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.15);
-          gain.gain.setValueAtTime(0.12, ctx.currentTime + idx * 0.15);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (idx + 1) * 0.15);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + idx * 0.15);
-          osc.stop(ctx.currentTime + (idx + 1) * 0.15);
-        });
-      }
-    } catch (err) {
-      console.error('Audio synthesizer error:', err);
-    }
-
-    setTimeout(() => {
-      setPlayingVoiceId(prev => prev === msgId ? null : prev);
-    }, 1500);
-  };
-
   const playVoiceNoteAudio = (msgId, content, attachments = []) => {
     if (audioPlayerRef.current) {
       try {
@@ -889,61 +902,88 @@ const MessagesPage = ({ userType = 'client' }) => {
       return;
     }
 
-    let audioUrl = null;
+    let rawAudioUrl = null;
     if (attachments && attachments.length > 0) {
-      const audioAtt = attachments.find(att => att.url && (att.type === 'audio' || att.url.endsWith('.webm') || att.url.endsWith('.mp3') || att.url.endsWith('.wav') || att.url.endsWith('.ogg')));
-      if (audioAtt) audioUrl = audioAtt.url;
-      else if (attachments[0]?.url) audioUrl = attachments[0].url;
+      const audioAtt = attachments.find(att => att.url && (att.type === 'audio' || att.name?.startsWith('voicenote') || att.url.endsWith('.webm') || att.url.endsWith('.mp3') || att.url.endsWith('.wav') || att.url.endsWith('.ogg') || att.url.endsWith('.mp4') || att.url.endsWith('.m4a')));
+      if (audioAtt) rawAudioUrl = audioAtt.url;
+      else if (attachments[0]?.url) rawAudioUrl = attachments[0].url;
     }
 
-    if (!audioUrl && content) {
-      if (content.includes('url:')) {
-        audioUrl = content.split('url:')[1]?.trim();
+    if (!rawAudioUrl && content) {
+      const urlMatch = content.match(/url:\s*([^\s]+)/i);
+      if (urlMatch && urlMatch[1]) {
+        rawAudioUrl = urlMatch[1];
       } else {
-        const match = content.match(/https?:\/\/[^\s]+/);
-        if (match) audioUrl = match[0];
+        const httpMatch = content.match(/(https?:\/\/[^\s]+|\/uploads\/[^\s]+)/i);
+        if (httpMatch) rawAudioUrl = httpMatch[0];
       }
     }
 
-    if (audioUrl) {
-      setPlayingVoiceId(msgId);
-      toast.success('Playing voice message...', { icon: '🔊' });
-      try {
-        const audio = new Audio(audioUrl);
-        audioPlayerRef.current = audio;
-        audio.onended = () => {
-          setPlayingVoiceId(null);
-          audioPlayerRef.current = null;
-        };
-        audio.onerror = (e) => {
-          console.warn('Audio URL play error, fallback to synth:', e);
-          playSynthVoiceTone(msgId);
-        };
-        audio.play().catch(playErr => {
-          console.warn('Audio play promise rejected, fallback to synth:', playErr);
-          playSynthVoiceTone(msgId);
-        });
-        return;
-      } catch (err) {
-        console.warn('Audio init failed, fallback to synth:', err);
-      }
+    const audioUrl = resolveAudioUrl(rawAudioUrl);
+
+    if (!audioUrl) {
+      toast.error('Voice note audio URL is missing or unavailable.');
+      return;
     }
 
-    playSynthVoiceTone(msgId);
+    setPlayingVoiceId(msgId);
+    toast.success('Playing voice message...', { icon: '🔊', id: 'voice-play-toast' });
+    try {
+      const audio = new Audio(audioUrl);
+      audioPlayerRef.current = audio;
+
+      audio.onended = () => {
+        setPlayingVoiceId(null);
+        audioPlayerRef.current = null;
+      };
+
+      audio.onerror = (e) => {
+        console.error('Audio element error playing voice note:', e, audioUrl);
+        setPlayingVoiceId(null);
+        audioPlayerRef.current = null;
+        toast.error('Failed to play voice note. Audio file is corrupted or unsupported.');
+      };
+
+      audio.play().catch(playErr => {
+        console.error('Audio play promise rejected:', playErr);
+        setPlayingVoiceId(null);
+        audioPlayerRef.current = null;
+        toast.error('Cannot play voice note: browser blocked playback or file unavailable.');
+      });
+    } catch (err) {
+      console.error('Audio initialization error:', err);
+      setPlayingVoiceId(null);
+      toast.error('Audio playback initialization failed.');
+    }
+  };
+
+  const getSupportedMimeType = () => {
+    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return { mimeType: '', ext: 'webm' };
+    const candidates = [
+      { mimeType: 'audio/webm;codecs=opus', ext: 'webm' },
+      { mimeType: 'audio/webm', ext: 'webm' },
+      { mimeType: 'audio/mp4', ext: 'mp4' },
+      { mimeType: 'audio/aac', ext: 'm4a' },
+      { mimeType: 'audio/ogg;codecs=opus', ext: 'ogg' },
+      { mimeType: 'audio/ogg', ext: 'ogg' }
+    ];
+    for (const c of candidates) {
+      if (MediaRecorder.isTypeSupported(c.mimeType)) return c;
+    }
+    return { mimeType: '', ext: 'webm' };
   };
 
   const startRecordingAudio = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      toast.error('Microphone access is not supported by your browser or context.');
+      toast.error('Microphone access is not supported by your browser.');
       return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
-      let options = {};
-      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm')) {
-        options = { mimeType: 'audio/webm' };
-      }
+      const mimeInfo = getSupportedMimeType();
+      const options = mimeInfo.mimeType ? { mimeType: mimeInfo.mimeType } : {};
+
       const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
 
@@ -956,11 +996,15 @@ const MessagesPage = ({ userType = 'client' }) => {
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (audioBlob.size === 0) return;
+        const blobType = mimeInfo.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: blobType });
+        if (audioBlob.size === 0) {
+          toast.error('Recorded audio was empty. Please try speaking again.');
+          return;
+        }
 
-        const fileName = `voicenote-${Date.now()}.webm`;
-        const audioFile = new File([audioBlob], fileName, { type: 'audio/webm' });
+        const fileName = `voicenote-${Date.now()}.${mimeInfo.ext}`;
+        const audioFile = new File([audioBlob], fileName, { type: blobType });
 
         setUploadingFiles(true);
         const loadingToastId = toast.loading('Uploading voice note...');
@@ -968,7 +1012,7 @@ const MessagesPage = ({ userType = 'client' }) => {
           const formData = new FormData();
           formData.append('file', audioFile);
           const res = await profileAPI.uploadFile(formData);
-          const url  = res.data?.data?.url || res.data?.url || res.data?.fileUrl;
+          const url = res.data?.data?.url || res.data?.url || res.data?.fileUrl;
           if (url) {
             const durSecs = voiceDurationRef.current || voiceRecordDuration || 1;
             const formattedDur = formatCallDuration(durSecs);
@@ -1001,6 +1045,11 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   const stopRecordingAudio = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        if (typeof mediaRecorderRef.current.requestData === 'function') {
+          mediaRecorderRef.current.requestData();
+        }
+      } catch (err) {}
       mediaRecorderRef.current.stop();
       setIsRecordingVoice(false);
     }
@@ -1119,27 +1168,71 @@ const MessagesPage = ({ userType = 'client' }) => {
 
   const handleFilesSelected = async (e) => {
     const files = Array.from(e.target.files || []);
-    e.target.value = '';
-    if (!files.length) return;
+    if (e.target) e.target.value = '';
+    if (!files.length || !activeConv) return;
+    if (isBlocked) {
+      toast.error('You cannot send files to a blocked user.');
+      return;
+    }
+
     setUploadingFiles(true);
+    const toastId = toast.loading(`Uploading ${files.length} document(s)...`);
+    const uploadedAttachments = [];
+
     try {
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const formData = new FormData();
         formData.append('file', file);
-        const res = await profileAPI.uploadFile(formData);
-        // ✅ Handle nested data.data.url from Cloudinary
-        const url  = res.data?.data?.url || res.data?.url || res.data?.fileUrl;
-        const name = res.data?.data?.originalName || file.name;
-        const uploadedType = res.data?.data?.fileType || file.type || '';
-        const type = uploadedType.startsWith('image/') ? 'image' : 'file';
-        if (url) {
-          setPendingFiles(prev => [...prev, { name, url, size: file.size, type }]);
-        } else {
-          alert(`Upload failed: ${file.name}`);
+        try {
+          const res = await profileAPI.uploadFile(formData);
+          const url  = res.data?.data?.url || res.data?.url || res.data?.fileUrl;
+          const name = res.data?.data?.originalName || file.name;
+          const uploadedType = res.data?.data?.fileType || file.type || '';
+          const type = uploadedType.startsWith('image/') ? 'image' : 'file';
+          if (url) {
+            uploadedAttachments.push({ name, url, size: file.size, type });
+          } else {
+            toast.error(`Could not upload ${file.name}`);
+          }
+        } catch (singleErr) {
+          console.error(`Failed to upload ${file.name}:`, singleErr);
+          toast.error(`Upload failed for ${file.name}`);
         }
       }
+
+      if (uploadedAttachments.length > 0) {
+        toast.dismiss(toastId);
+        const text = input.trim();
+        setInput('');
+        setPendingFiles([]);
+
+        const optimistic = {
+          _id: `temp-${Date.now()}`,
+          content: text,
+          attachments: uploadedAttachments,
+          sender: { _id: myId, firstName: user?.firstName, lastName: user?.lastName },
+          createdAt: new Date().toISOString(),
+          isOptimistic: true,
+        };
+        setMessages(prev => [...prev, optimistic]);
+
+        try {
+          const res = await msgAPI.sendMessage(activeConv._id, { content: text, attachments: uploadedAttachments });
+          setMessages(prev => prev.map(m => m._id === optimistic._id ? res.data.data : m));
+          toast.success(`${uploadedAttachments.length} file(s) sent successfully!`, { icon: '📄' });
+        } catch (sendErr) {
+          setMessages(prev => prev.filter(m => m._id !== optimistic._id));
+          toast.error('Failed to send document message.');
+          console.error('Send file message error:', sendErr);
+        }
+      } else {
+        toast.dismiss(toastId);
+        toast.error('No files were successfully uploaded.');
+      }
     } catch (err) {
-      alert('File upload error: ' + (err.response?.data?.message || err.message));
+      toast.dismiss(toastId);
+      toast.error('File upload error: ' + (err.response?.data?.message || err.message));
     } finally {
       setUploadingFiles(false);
     }
@@ -1409,6 +1502,9 @@ const MessagesPage = ({ userType = 'client' }) => {
                             <button onClick={toggleFavorite} style={styles.menuItem} type="button">
                               {favoriteConversations[activeConv._id] ? '⭐ Remove from favorites' : '⭐ Add to favorites'}
                             </button>
+                            
+                            <button onClick={handlePayments} style={styles.menuItem} type="button">💳 Payments</button>
+
                             <button onClick={handleBlockUser} style={styles.menuItem} type="button">
                               {isBlocked ? '🔓 Unblock user' : '🚫 Block user'}
                             </button>
@@ -1479,7 +1575,16 @@ const MessagesPage = ({ userType = 'client' }) => {
             )}
 
             {/* Messages */}
-            <div style={styles.msgList}>
+            <div
+              style={styles.msgList}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files?.length) {
+                  handleFilesSelected({ target: { files: e.dataTransfer.files } });
+                }
+              }}
+            >
               {msgLoading ? (
                 <div style={styles.centerMsg}>Loading messages…</div>
               ) : messages.length === 0 ? (
@@ -1547,20 +1652,7 @@ const MessagesPage = ({ userType = 'client' }) => {
                         ) : (
                           renderHighlightedText(textContent, chatSearchQuery)
                         )}
-                        {!msg.isDeleted && !msg.content?.startsWith('[Voice Message]') && (
-                          <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
-                            <button 
-                              onClick={() => toggleTranslation(msg._id, msg.content)}
-                              style={{
-                                background: 'none', border: 'none', padding: 0,
-                                color: isMe ? '#e0e7ff' : '#4f46e5', fontSize: 10.5, fontWeight: 700,
-                                cursor: 'pointer', opacity: 0.85
-                              }}
-                            >
-                              🌐 {translatedMessages[msg._id] ? 'Show Original' : 'Translate (Hindi/English)'}
-                            </button>
-                          </div>
-                        )}
+
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                         <span style={{ fontSize: 11, color: '#a3a3a3' }}>{formatTime(msg.createdAt)}</span>
@@ -1586,56 +1678,47 @@ const MessagesPage = ({ userType = 'client' }) => {
             {/* Pending files preview */}
             {pendingFiles.length > 0 && (
               <div style={styles.pendingWrap}>
-                {pendingFiles.map((f, i) => (
-                  <div key={i} style={styles.pendingChip}>
-                    {isImageFile(f.name)
-                      ? <img src={f.url} alt={f.name} style={styles.pendingThumb} />
-                      : <div style={styles.pendingIconBox}><Icon name="file" /></div>}
-                    <div style={{ minWidth: 0 }}>
-                      <div style={styles.pendingName}>{f.name}</div>
-                      <div style={styles.pendingSize}>{formatFileSize(f.size)}</div>
+                {pendingFiles.map((f, i) => {
+                  const badge = getDocBadge(f.name);
+                  return (
+                    <div key={i} style={styles.pendingChip}>
+                      {isImageFile(f.name) ? (
+                        <img src={f.url} alt={f.name} style={styles.pendingThumb} />
+                      ) : (
+                        <div style={{ ...styles.pendingIconBox, background: badge.bg, color: badge.color }}>
+                          {badge.icon}
+                        </div>
+                      )}
+                      <div style={{ minWidth: 0 }}>
+                        <div style={styles.pendingName}>{f.name}</div>
+                        <div style={styles.pendingSize}>{formatFileSize(f.size) || badge.label}</div>
+                      </div>
+                      <button onClick={() => removePendingFile(i)} style={styles.pendingRemove} title="Remove attachment">
+                        <Icon name="x" />
+                      </button>
                     </div>
-                    <button onClick={() => removePendingFile(i)} style={styles.pendingRemove}><Icon name="x" /></button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
-            {/* WhatsApp Alert & Voice Record Status strip */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDarkMode ? '#071422' : '#f8fafc', padding: '6px 16px', borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e5e7eb'}`, borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e5e7eb'}`, fontSize: 12 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#16a34a', fontWeight: 700, cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={whatsAppAlertsActive} 
-                  onChange={(e) => {
-                    setWhatsAppAlertsActive(e.target.checked);
-                    toast.success(`WhatsApp notification sync ${e.target.checked ? 'activated' : 'deactivated'}.`);
-                  }} 
-                  style={{ accentColor: '#16a34a' }}
-                />
-                💬 Sync copy to WhatsApp (+91 98*** ***54)
-              </label>
-
-              {isRecordingVoice && (
+            {/* Voice Record Status strip */}
+            {isRecordingVoice && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', background: isDarkMode ? '#071422' : '#f8fafc', padding: '6px 16px', borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e5e7eb'}`, borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#e5e7eb'}`, fontSize: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ef4444', fontWeight: 700 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', animation: 'pulse 1s infinite' }} />
                   <span>Recording Voice Note... ({voiceRecordDuration}s)</span>
                   <button 
                     onClick={() => {
-                      const durSecs = voiceDurationRef.current || voiceRecordDuration || 1;
-                      const formattedDur = formatCallDuration(durSecs);
-                      setIsRecordingVoice(false);
-                      const voiceContent = `[Voice Message] duration:${durSecs} 🎤 Voice Note (${formattedDur})`;
-                      sendVoiceMessage(voiceContent, []);
-                      toast.success(`Voice note (${formattedDur}) sent!`, { icon: '🎙️' });
+                      stopRecordingAudio();
                     }}
                     style={{ border: 'none', background: '#ef4444', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 10, cursor: 'pointer' }}
                   >
                     Done
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* WhatsApp Style Input Bar matching Image 2 */}
             {emojiPickerOpen && (
@@ -1759,12 +1842,17 @@ const MessagesPage = ({ userType = 'client' }) => {
                     width: 42, height: 42, borderRadius: '50%', border: 'none',
                     background: accentColor, color: '#ffffff', fontSize: 16,
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, opacity: canSend ? 1 : 0.5
+                    flexShrink: 0, opacity: canSend ? 1 : 0.5,
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
                   }}
                   title="Send message"
                   type="button"
                 >
-                  {sending ? '…' : '➤'}
+                  {sending ? '…' : (
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style={{ transform: 'translateX(1px) translateY(-1px)' }}>
+                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                  )}
                 </button>
               )}
             </div>

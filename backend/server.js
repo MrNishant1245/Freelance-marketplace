@@ -6,6 +6,7 @@ const morgan     = require('morgan');
 const rateLimit  = require('express-rate-limit');
 const dns        = require('dns');
 const http       = require('http');          // ✅ NEW
+const path       = require('path');
 const { Server } = require('socket.io');    // ✅ NEW
 require('dotenv').config();
 
@@ -137,8 +138,9 @@ const authLimiter = rateLimit({
 
 app.use(limiter);
 app.use(morgan('dev'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth',     authLimiter, authRoutes);

@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const User = require('../models/User.model');
 
@@ -6,6 +8,30 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+const saveFileLocally = (file, req) => {
+  const uploadsDir = path.join(__dirname, '../uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const filename = `${Date.now()}-${safeName}`;
+  const filePath = path.join(uploadsDir, filename);
+  fs.writeFileSync(filePath, file.buffer);
+
+  const protocol = req.protocol || 'http';
+  const host = req.get('host') || 'localhost:5000';
+  const localUrl = `${protocol}://${host}/uploads/${filename}`;
+
+  return {
+    url: localUrl,
+    publicId: filename,
+    originalName: file.originalname,
+    fileType: file.mimetype,
+    size: file.size,
+    cloudinaryResourceType: 'local',
+  };
+};
 
 // ─── Get profile (public) ─────────────────────────────────────────────────────
 const getProfile = async (req, res) => {
@@ -171,49 +197,78 @@ const uploadProfilePhoto = async (req, res) => {
 };
 
 // ─── Generic file upload (portfolio images, proposal attachments, job submission files) ──
-// Accepts any single file under field name "file", uploads it to Cloudinary, and
-// returns the secure URL + original filename + resource type. The frontend then
-// stores this URL wherever it's needed (portfolio.imageUrl, proposal.attachments, etc).
 const uploadFile = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file provided.' });
     }
 
-    const resourceType = req.file.mimetype?.startsWith('image/') ? 'image' : 'raw';
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'freelance-marketplace/uploads',
-          resource_type: resourceType,
-          use_filename: true,
-          unique_filename: true,
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+    const hasCloudinaryConfig = Boolean(
+      process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+    );
+
+    if (hasCloudinaryConfig) {
+      try {
+        const isAudioOrVideo = req.file.mimetype?.startsWith('audio/') ||
+                               req.file.mimetype?.startsWith('video/') ||
+                               /\.(webm|mp3|wav|ogg|m4a|aac|flac|opus|mp4)$/i.test(req.file.originalname);
+        const resourceType = req.file.mimetype?.startsWith('image/')
+          ? 'image'
+          : isAudioOrVideo
+          ? 'video'
+          : 'auto';
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: 'freelance-marketplace/uploads',
+              resource_type: resourceType,
+              use_filename: true,
+              unique_filename: true,
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+
+        let secureUrl = result.secure_url;
+        if (resourceType === 'raw' && secureUrl.includes('/image/upload/')) {
+          secureUrl = secureUrl.replace('/image/upload/', '/raw/upload/');
         }
-      );
-      stream.end(req.file.buffer);
-    });
 
-    let secureUrl = result.secure_url;
-    if (resourceType === 'raw' && secureUrl.includes('/image/upload/')) {
-      secureUrl = secureUrl.replace('/image/upload/', '/raw/upload/');
+        return res.status(201).json({
+          success: true,
+          message: 'File uploaded successfully.',
+          data: {
+            url: secureUrl,
+            publicId: result.public_id,
+            originalName: req.file.originalname,
+            fileType: req.file.mimetype,
+            size: req.file.size,
+            cloudinaryResourceType: resourceType,
+          },
+        });
+      } catch (cloudinaryError) {
+        console.warn('Cloudinary upload warning, using local file storage fallback:', cloudinaryError?.message || cloudinaryError);
+        const localData = saveFileLocally(req.file, req);
+        return res.status(201).json({
+          success: true,
+          message: 'File uploaded successfully.',
+          data: localData,
+        });
+      }
+    } else {
+      const localData = saveFileLocally(req.file, req);
+      return res.status(201).json({
+        success: true,
+        message: 'File uploaded successfully.',
+        data: localData,
+      });
     }
-
-    return res.status(201).json({
-      success: true,
-      message: 'File uploaded successfully.',
-      data: {
-        url: secureUrl,
-        publicId: result.public_id,
-        originalName: req.file.originalname,
-        fileType: req.file.mimetype,
-        size: req.file.size,
-        cloudinaryResourceType: resourceType,
-      },
-    });
   } catch (error) {
     console.error('File upload error:', error);
     res.status(500).json({ success: false, message: 'Failed to upload file.' });
