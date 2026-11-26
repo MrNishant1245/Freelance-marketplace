@@ -9,12 +9,17 @@ export const getSocket = (token) => {
     socket = null;
   }
   if (!socket || !socket.connected) {
-    socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000', {
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000');
+    socket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+      autoConnect: true,
+    });
+    socket.on('connect_error', (err) => {
+      console.warn('Realtime connection note:', err.message);
     });
   }
   return socket;

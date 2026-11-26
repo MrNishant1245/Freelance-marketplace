@@ -172,23 +172,37 @@ app.use(errorHandler);
 
 // Database connection
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 8000,
+    });
     console.log('✅ MongoDB connected');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    process.exit(1);
   }
 };
 
+// Ensure database connection for incoming requests in serverless environments
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState === 0) {
+    await connectDB();
+  }
+  next();
+});
+
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
-  // ✅ server.listen (not app.listen) — required for Socket.io to work
-  server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
-    console.log(`🔌 Socket.io ready`);
+if (!process.env.VERCEL) {
+  connectDB().then(() => {
+    // ✅ server.listen (not app.listen) — required for Socket.io to work
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+      console.log(`🔌 Socket.io ready`);
+    });
   });
-});
+}
 
 module.exports = app;
