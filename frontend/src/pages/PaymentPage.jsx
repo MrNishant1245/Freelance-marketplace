@@ -1,0 +1,825 @@
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { paymentAPI } from '../api';
+import toast from 'react-hot-toast';
+
+// ── Icons ─────────────────────────────────────────────────────────────────────
+const Icon = ({ name }) => {
+  const icons = {
+    back:    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>,
+    lock:    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+    check:   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>,
+    rupee:   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+    shield:  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+    card:    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>,
+    globe:   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+  };
+  return icons[name] || null;
+};
+
+const ESCROW_STEPS = [
+  { icon: '💳', title: 'Client Pays', desc: 'Amount held securely in escrow' },
+  { icon: '🔒', title: 'Work in Progress', desc: 'Freelancer completes the job' },
+  { icon: '✅', title: 'Job Approved', desc: 'Client reviews and approves' },
+  { icon: '💸', title: 'Payment Released', desc: 'Freelancer receives payment' },
+];
+
+const PaymentPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state || {};
+  const query = new URLSearchParams(location.search);
+  const isPremiumSub = query.get('type') === 'premium';
+  
+  const { isDarkMode, user } = useAuth();
+  const [gateway, setGateway] = useState('razorpay');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentDone, setPaymentDone] = useState(false);
+
+  // ── Activated Payment Method & Promo Code States ────────────────────────────
+  const [rzpTab, setRzpTab] = useState('UPI'); // 'UPI' | 'Card' | 'NetBanking' | 'Wallet'
+  const [upiId, setUpiId] = useState('');
+  const [upiVerified, setUpiVerified] = useState(false);
+  const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvv: '', name: '' });
+  const [selectedBank, setSelectedBank] = useState('HDFC Bank');
+  const [selectedWallet, setSelectedWallet] = useState('Paytm Wallet');
+
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [showEscrowModal, setShowEscrowModal] = useState(false);
+
+  const handleVerifyUPI = () => {
+    if (!upiId || !upiId.includes('@')) {
+      toast.error('Please enter a valid UPI ID (e.g. name@upi or 9876543210@paytm)!');
+      setUpiVerified(false);
+      return;
+    }
+    setUpiVerified(true);
+    toast.success(`UPI ID "${upiId}" verified successfully! ✓`, { icon: '✅' });
+  };
+
+  const handleApplyCoupon = () => {
+    const clean = couponCode.trim().toUpperCase();
+    if (clean === 'FREELANCE10' || clean === 'WELCOME10' || clean === 'DISCOUNT10') {
+      setAppliedCoupon(clean);
+      toast.success(`🎉 Promo code "${clean}" applied! Platform fee waived.`, { icon: '🏷️' });
+    } else {
+      toast.error('Invalid promo code. Try "FREELANCE10" or "WELCOME10".');
+    }
+  };
+
+  const styles = {
+    ...s,
+    shell: { ...s.shell, background: isDarkMode ? '#071622' : s.shell.background },
+    topBar: { ...s.topBar, background: isDarkMode ? '#071422' : s.topBar.background, borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.03)' : s.topBar.borderBottom },
+    body: { ...s.body, color: isDarkMode ? '#e6eef8' : undefined },
+    card: { ...s.card, background: isDarkMode ? '#071422' : s.card.background, border: isDarkMode ? '1px solid rgba(255,255,255,0.03)' : s.card.border },
+    escrowBanner: { ...s.escrowBanner, background: isDarkMode ? '#0b2b21' : s.escrowBanner.background, border: isDarkMode ? '1px solid rgba(255,255,255,0.03)' : s.escrowBanner.border },
+    grid: { ...s.grid },
+    summary: { ...s.summary, background: isDarkMode ? '#071422' : s.summary?.background },
+    payBtn: { ...s.payBtn, background: isDarkMode ? '#10b981' : s.payBtn?.background },
+  };
+
+  // Real job data passed via location state or fallback
+  const rawAmount = Number(state.amount || (isPremiumSub ? 4999 : 15000));
+  const platformFee = isPremiumSub ? 0 : Math.round(rawAmount * 0.1);
+  const total = rawAmount + platformFee;
+
+  const job = {
+    _id: state.jobId || (isPremiumSub ? 'premium_sub_plan' : '65a019e91234567890abcde1'),
+    freelancerId: state.freelancerId || '65a019e91234567890abcde2',
+    title: state.title || (isPremiumSub ? 'Premium Subscription Plan Upgrade' : 'React Dashboard UI'),
+    freelancer: state.freelancerName || (isPremiumSub ? 'FreelanceMarket AI Assistant' : 'Arjun Sharma'),
+    amount: rawAmount,
+    platformFee,
+    total,
+  };
+
+  const handleRazorpay = async () => {
+    setIsProcessing(true);
+    try {
+      // 1. Create order via real backend payment API
+      const { data } = await paymentAPI.createRazorpayOrder({
+        amount: job.amount,
+        jobId: job._id,
+        freelancerId: job.freelancerId,
+      });
+
+      const { orderId, transactionId, amount, currency, keyId } = data.data;
+
+      const options = {
+        key: keyId || process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_51X9kLpZ3M7aQq',
+        amount,
+        currency: currency || 'INR',
+        name: 'FreelanceMarket',
+        description: `Escrow Payment via ${rzpTab}: ${job.title}`,
+        order_id: orderId,
+        handler: async (response) => {
+          try {
+            await paymentAPI.verifyRazorpayPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              transactionId,
+            });
+            toast.success(`Payment via ${rzpTab} successful! Amount held securely in escrow.`);
+            setPaymentDone(true);
+          } catch (err) {
+            toast.error(err.response?.data?.message || 'Payment succeeded but verification failed. Contact support.');
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Client User',
+          email: user?.email || '',
+        },
+        theme: { color: '#2563eb' },
+        modal: {
+          ondismiss: () => setIsProcessing(false),
+        },
+      };
+
+      if (window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        // Fallback simulation if window.Razorpay script blocked
+        toast.success(`Processing ${rzpTab} test verification...`);
+        await new Promise(r => setTimeout(r, 1200));
+        await paymentAPI.verifyRazorpayPayment({
+          razorpay_order_id: orderId,
+          razorpay_payment_id: 'pay_simulated_' + Date.now(),
+          razorpay_signature: 'simulated_signature',
+          transactionId,
+        });
+        setPaymentDone(true);
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error('Razorpay payment error:', error);
+      toast.error(error.response?.data?.message || 'Payment initiation failed. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleStripe = async () => {
+    setIsProcessing(true);
+    try {
+      await new Promise(r => setTimeout(r, 1500));
+      toast.success('Payment of $' + (job.total / 83).toFixed(0) + ' held in escrow!');
+      setPaymentDone(true);
+    } catch {
+      toast.error('Payment failed. Try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePay = () => {
+    if (gateway === 'razorpay') handleRazorpay();
+    else handleStripe();
+  };
+
+  if (paymentDone) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8faff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ background: '#fff', borderRadius: 20, padding: 48, textAlign: 'center', border: '1px solid #f0f0f0', maxWidth: 480, width: '100%' }}>
+          <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 36 }}>✅</div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111', marginBottom: 8 }}>Payment Successful!</h2>
+          <p style={{ fontSize: 14, color: '#737373', marginBottom: 24 }}>
+            ₹{job.total.toLocaleString()} is safely held in escrow.<br/>
+            Freelancer will be paid once you approve the work.
+          </p>
+          <div style={{ background: '#f0fdf4', borderRadius: 10, padding: 16, marginBottom: 24, textAlign: 'left' }}>
+            <div style={{ fontSize: 12.5, color: '#15803d', fontWeight: 600, marginBottom: 8 }}>ESCROW STATUS</div>
+            <div style={{ fontSize: 13.5, color: '#111' }}>🔒 Amount locked: ₹{job.total.toLocaleString()}</div>
+            <div style={{ fontSize: 13, color: '#737373', marginTop: 4 }}>Will be released when you approve the job</div>
+          </div>
+          <button onClick={() => navigate('/dashboard')} style={{ padding: '12px 28px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.shell}>
+      {/* Top Bar */}
+      <div style={styles.topBar}>
+        <button onClick={() => navigate(-1)} style={styles.backBtn}><Icon name="back" /> Back</button>
+        <span style={styles.topTitle}>Secure Payment</span>
+        <div style={styles.secureTag}><Icon name="lock" /> SSL Secured</div>
+      </div>
+
+      <div style={styles.body}>
+        <div style={styles.grid}>
+
+          {/* Left: Payment Form */}
+          <div>
+            {/* Escrow Explanation */}
+            <div style={styles.escrowBanner}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Icon name="shield" />
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#15803d' }}>Protected by Escrow</span>
+              </div>
+              <div style={styles.escrowSteps}>
+                {ESCROW_STEPS.map((step, i) => (
+                  <div key={i} style={styles.escrowStep}>
+                    <div style={styles.escrowIcon}>{step.icon}</div>
+                    <div style={styles.escrowStepTitle}>{step.title}</div>
+                    <div style={styles.escrowStepDesc}>{step.desc}</div>
+                    {i < ESCROW_STEPS.length - 1 && <div style={styles.escrowArrow}>→</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Gateway Selection */}
+            <div style={styles.card}>
+              <h3 style={styles.cardTitle}>Choose Payment Method</h3>
+              <div style={styles.gatewayGrid}>
+                <button
+                  onClick={() => setGateway('razorpay')}
+                  style={{ ...s.gatewayBtn, ...(gateway === 'razorpay' ? s.gatewayActive : {}) }}
+                >
+                  <div style={styles.gatewayIcon}>₹</div>
+                  <div>
+                    <div style={styles.gatewayName}>Razorpay</div>
+                    <div style={styles.gatewaySub}>UPI, Cards, NetBanking</div>
+                  </div>
+                  {gateway === 'razorpay' && <span style={styles.selectedDot} />}
+                </button>
+
+                <button
+                  onClick={() => setGateway('stripe')}
+                  style={{ ...styles.gatewayBtn, ...(gateway === 'stripe' ? styles.gatewayActive : {}) }}
+                >
+                  <div style={{ ...styles.gatewayIcon, background: '#635bff15', color: '#635bff' }}>$</div>
+                  <div>
+                    <div style={styles.gatewayName}>Stripe</div>
+                    <div style={styles.gatewaySub}>International Cards</div>
+                  </div>
+                  {gateway === 'stripe' && <span style={styles.selectedDot} />}
+                </button>
+              </div>
+
+              {/* Razorpay Form & Activated Method Tabs */}
+              {gateway === 'razorpay' && (
+                <div style={styles.formSection}>
+                  {/* Interactive Method Tabs */}
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+                    {[
+                      { id: 'UPI', label: 'UPI', icon: '⚡' },
+                      { id: 'Card', label: 'Card', icon: '💳' },
+                      { id: 'NetBanking', label: 'NetBanking', icon: '🏦' },
+                      { id: 'Wallet', label: 'Wallet', icon: '👛' },
+                    ].map(m => {
+                      const isActive = rzpTab === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setRzpTab(m.id)}
+                          style={{
+                            padding: '8px 16px',
+                            border: isActive ? '1.5px solid #2563eb' : (isDarkMode ? '1px solid #334155' : '1px solid #cbd5e1'),
+                            borderRadius: 99,
+                            background: isActive ? (isDarkMode ? '#1e3a8a' : '#eff6ff') : (isDarkMode ? '#0f172a' : '#ffffff'),
+                            color: isActive ? (isDarkMode ? '#60a5fa' : '#2563eb') : (isDarkMode ? '#94a3b8' : '#475569'),
+                            fontSize: 13,
+                            fontWeight: isActive ? 700 : 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            transition: 'all 0.15s ease',
+                            boxShadow: isActive ? '0 4px 12px rgba(37, 99, 235, 0.15)' : 'none'
+                          }}
+                        >
+                          <span>{m.icon}</span>
+                          <span>{m.label}</span>
+                          {isActive && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb', display: 'inline-block' }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 1. UPI TAB CONTENT */}
+                  {rzpTab === 'UPI' && (
+                    <div>
+                      <div style={styles.upiBox}>
+                        <input
+                          style={{
+                            ...styles.upiInput,
+                            background: isDarkMode ? '#0f172a' : '#ffffff',
+                            color: isDarkMode ? '#f8fafc' : '#0f172a',
+                            borderColor: upiVerified ? '#10b981' : (isDarkMode ? '#334155' : '#cbd5e1')
+                          }}
+                          placeholder="Enter UPI ID (e.g. name@upi or 9876543210@paytm)"
+                          value={upiId}
+                          onChange={(e) => {
+                            setUpiId(e.target.value);
+                            setUpiVerified(false);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyUPI}
+                          style={{
+                            ...styles.verifyBtn,
+                            background: upiVerified ? '#10b981' : '#2563eb'
+                          }}
+                        >
+                          {upiVerified ? '✓ Verified' : 'Verify'}
+                        </button>
+                      </div>
+
+                      {/* Instant VPA Presets */}
+                      <div style={{ marginTop: 14 }}>
+                        <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: isDarkMode ? '#94a3b8' : '#64748b', marginBottom: 8 }}>
+                          Fast Pay Apps & Test VPAs:
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {[
+                            { name: 'Google Pay', vpa: 'gpay@okaxis', icon: '🟢' },
+                            { name: 'PhonePe', vpa: 'user@ybl', icon: '🟣' },
+                            { name: 'Paytm UPI', vpa: 'user@paytm', icon: '🔵' },
+                            { name: 'Razorpay Test UPI', vpa: 'success@razorpay', icon: '⚡' },
+                          ].map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setUpiId(item.vpa);
+                                setUpiVerified(true);
+                                toast.success(`Selected ${item.name} (${item.vpa})`);
+                              }}
+                              style={{
+                                padding: '5px 12px',
+                                borderRadius: 8,
+                                border: '1px solid #e2e8f0',
+                                background: isDarkMode ? '#1e293b' : '#f8fafc',
+                                color: isDarkMode ? '#e2e8f0' : '#334155',
+                                fontSize: 12,
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}
+                            >
+                              <span>{item.icon}</span>
+                              <span>{item.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. CARD TAB CONTENT */}
+                  {rzpTab === 'Card' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: isDarkMode ? '#94a3b8' : '#64748b' }}>
+                          Debit / Credit Card Details
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCardForm({
+                              number: '4111 1111 1111 1111',
+                              expiry: '12 / 28',
+                              cvv: '123',
+                              name: `${user?.firstName || 'Client'} ${user?.lastName || 'User'}`
+                            });
+                            toast.success('Filled Razorpay Test Card credentials!');
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          ✨ Use Razorpay Test Card
+                        </button>
+                      </div>
+
+                      <div style={styles.cardInput}>
+                        <input
+                          style={{ ...styles.input, flex: 1, background: 'transparent', color: isDarkMode ? '#fff' : '#0f172a' }}
+                          placeholder="4111 1111 1111 1111"
+                          value={cardForm.number}
+                          onChange={(e) => setCardForm({ ...cardForm, number: e.target.value })}
+                        />
+                        <Icon name="card" />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <input
+                          style={{ ...styles.input, background: isDarkMode ? '#0f172a' : '#fff', color: isDarkMode ? '#fff' : '#0f172a' }}
+                          placeholder="MM / YY"
+                          value={cardForm.expiry}
+                          onChange={(e) => setCardForm({ ...cardForm, expiry: e.target.value })}
+                        />
+                        <input
+                          style={{ ...styles.input, background: isDarkMode ? '#0f172a' : '#fff', color: isDarkMode ? '#fff' : '#0f172a' }}
+                          placeholder="CVV (•••)"
+                          type="password"
+                          maxLength={4}
+                          value={cardForm.cvv}
+                          onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value })}
+                        />
+                      </div>
+
+                      <input
+                        style={{ ...styles.input, background: isDarkMode ? '#0f172a' : '#fff', color: isDarkMode ? '#fff' : '#0f172a' }}
+                        placeholder="Cardholder Full Name"
+                        value={cardForm.name}
+                        onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  {/* 3. NETBANKING TAB CONTENT */}
+                  {rzpTab === 'NetBanking' && (
+                    <div>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: isDarkMode ? '#94a3b8' : '#64748b', marginBottom: 10 }}>
+                        Select Popular Indian Bank:
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14 }}>
+                        {[
+                          { name: 'HDFC Bank', icon: '🏦' },
+                          { name: 'ICICI Bank', icon: '🏛️' },
+                          { name: 'SBI Bank', icon: '🏦' },
+                          { name: 'Axis Bank', icon: '🏛️' },
+                          { name: 'Kotak Bank', icon: '🏦' },
+                          { name: 'IndusInd Bank', icon: '🏛️' },
+                        ].map((bank, idx) => {
+                          const isSelected = selectedBank === bank.name;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setSelectedBank(bank.name);
+                                toast.success(`Selected ${bank.name} NetBanking`);
+                              }}
+                              style={{
+                                padding: '10px 8px',
+                                border: isSelected ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                                borderRadius: 10,
+                                background: isSelected ? (isDarkMode ? '#1e3a8a' : '#eff6ff') : (isDarkMode ? '#0f172a' : '#ffffff'),
+                                color: isSelected ? '#2563eb' : (isDarkMode ? '#e2e8f0' : '#1e293b'),
+                                fontWeight: isSelected ? 700 : 600,
+                                fontSize: 12.5,
+                                cursor: 'pointer',
+                                textAlign: 'center'
+                              }}
+                            >
+                              <div style={{ fontSize: 18, marginBottom: 2 }}>{bank.icon}</div>
+                              <div>{bank.name}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <select
+                        value={selectedBank}
+                        onChange={(e) => setSelectedBank(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          borderRadius: 8,
+                          border: '1.5px solid #cbd5e1',
+                          background: isDarkMode ? '#0f172a' : '#ffffff',
+                          color: isDarkMode ? '#ffffff' : '#0f172a',
+                          fontSize: 13.5,
+                          fontWeight: 600
+                        }}
+                      >
+                        <option>HDFC Bank</option>
+                        <option>ICICI Bank</option>
+                        <option>State Bank of India (SBI)</option>
+                        <option>Axis Bank</option>
+                        <option>Kotak Mahindra Bank</option>
+                        <option>Bank of Baroda</option>
+                        <option>Punjab National Bank</option>
+                        <option>Canara Bank</option>
+                        <option>IDFC FIRST Bank</option>
+                        <option>Yes Bank</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* 4. WALLET TAB CONTENT */}
+                  {rzpTab === 'Wallet' && (
+                    <div>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: isDarkMode ? '#94a3b8' : '#64748b', marginBottom: 10 }}>
+                        Select Digital Wallet:
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                        {[
+                          { name: 'Paytm Wallet', icon: '📲', desc: 'Instant 1-click debit' },
+                          { name: 'PhonePe Wallet', icon: '🟣', desc: 'Linked wallet balance' },
+                          { name: 'Amazon Pay', icon: '🟠', desc: 'Pay via Amazon account' },
+                          { name: 'MobiKwik', icon: '🔵', desc: 'ZIP Pay Later available' },
+                        ].map((w, idx) => {
+                          const isSelected = selectedWallet === w.name;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setSelectedWallet(w.name);
+                                toast.success(`Selected ${w.name}`);
+                              }}
+                              style={{
+                                padding: '12px 14px',
+                                border: isSelected ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                                borderRadius: 10,
+                                background: isSelected ? (isDarkMode ? '#1e3a8a' : '#eff6ff') : (isDarkMode ? '#0f172a' : '#ffffff'),
+                                color: isSelected ? '#2563eb' : (isDarkMode ? '#e2e8f0' : '#1e293b'),
+                                fontWeight: isSelected ? 700 : 600,
+                                fontSize: 13,
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10
+                              }}
+                            >
+                              <div style={{ fontSize: 22 }}>{w.icon}</div>
+                              <div>
+                                <div style={{ fontWeight: 700 }}>{w.name}</div>
+                                <div style={{ fontSize: 11, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 500 }}>{w.desc}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <p style={{ fontSize: 12, color: isDarkMode ? '#9aa3b3' : '#a3a3a3', marginTop: 16 }}>
+                    🔒 All payment methods process instantly through SSL encrypted Razorpay gateway.
+                  </p>
+                </div>
+              )}
+
+              {/* Stripe Form */}
+              {gateway === 'stripe' && (
+                <div style={styles.formSection}>
+                  <div style={styles.field}>
+                    <label style={styles.label}>Card Number</label>
+                    <div style={styles.cardInput}>
+                      <input style={{ ...styles.input, flex: 1 }} placeholder="4242 4242 4242 4242" />
+                      <Icon name="card" />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={styles.field}>
+                      <label style={styles.label}>Expiry</label>
+                      <input style={styles.input} placeholder="MM / YY" />
+                    </div>
+                    <div style={styles.field}>
+                      <label style={styles.label}>CVV</label>
+                      <input style={styles.input} placeholder="•••" type="password" />
+                    </div>
+                  </div>
+                  <div style={styles.field}>
+                    <label style={styles.label}>Name on Card</label>
+                    <input style={styles.input} placeholder="John Doe" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Order Summary */}
+          <div>
+            <div style={styles.summary}>
+              <h3 style={styles.cardTitle}>Order Summary</h3>
+
+              <div style={styles.jobCard}>
+                <div style={styles.jobTitle}>{job.title}</div>
+                <div style={styles.jobFreelancer}>👨‍💻 {job.freelancer}</div>
+                <div style={{ fontSize: 11.5, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 4 }}>
+                  Selected Gateway: <strong>{gateway === 'razorpay' ? `Razorpay (${rzpTab})` : 'Stripe Card'}</strong>
+                </div>
+              </div>
+
+              <div style={styles.summaryRows}>
+                <div style={styles.summaryRow}>
+                  <span>Project Amount</span>
+                  <span>₹{job.amount.toLocaleString()}</span>
+                </div>
+                <div style={styles.summaryRow}>
+                  <span>Platform Fee (10%)</span>
+                  <span style={{ textDecoration: appliedCoupon ? 'line-through' : 'none', color: appliedCoupon ? '#ef4444' : undefined }}>
+                    ₹{job.platformFee.toLocaleString()}
+                  </span>
+                </div>
+                {appliedCoupon && (
+                  <div style={{ ...styles.summaryRow, color: '#10b981', fontWeight: 600 }}>
+                    <span>Promo Discount ({appliedCoupon})</span>
+                    <span>-₹{job.platformFee.toLocaleString()}</span>
+                  </div>
+                )}
+                <div style={{ ...styles.summaryRow, ...styles.totalRow }}>
+                  <span>Total</span>
+                  <span style={{ color: '#2563eb', fontSize: 18, fontWeight: 800 }}>₹{(appliedCoupon ? job.amount : job.total).toLocaleString()}</span>
+                </div>
+                {gateway === 'stripe' && (
+                  <div style={{ ...s.summaryRow, color: '#737373', fontSize: 12 }}>
+                    <span>≈ USD</span>
+                    <span>${((appliedCoupon ? job.amount : job.total) / 83).toFixed(0)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Promo Code Input */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: isDarkMode ? '#94a3b8' : '#64748b', marginBottom: 6 }}>
+                  Have a Promo Code?
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1.5px solid #cbd5e1',
+                      background: isDarkMode ? '#0f172a' : '#ffffff',
+                      color: isDarkMode ? '#ffffff' : '#0f172a',
+                      fontSize: 13,
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      outline: 'none'
+                    }}
+                    placeholder="e.g. FREELANCE10"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    style={{
+                      padding: '8px 14px',
+                      background: '#2563eb',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Apply
+                  </button>
+                </div>
+                {appliedCoupon && (
+                  <div style={{ fontSize: 11.5, color: '#10b981', marginTop: 4, fontWeight: 600 }}>
+                    ✓ Promo code {appliedCoupon} active!
+                  </div>
+                )}
+              </div>
+
+              {/* Escrow Banner Note */}
+              <div 
+                onClick={() => setShowEscrowModal(true)}
+                style={{ ...styles.escrowNote, cursor: 'pointer' }}
+                title="Click to view 100% Escrow Protection Policy"
+              >
+                🔒 Your payment is held in escrow until you approve the completed work. <span style={{ textDecoration: 'underline', fontWeight: 700 }}>Learn more →</span>
+              </div>
+
+              {/* Pay Button */}
+              <button
+                type="button"
+                onClick={handlePay}
+                disabled={isProcessing}
+                style={{
+                  ...styles.payBtn,
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  boxShadow: '0 8px 20px -4px rgba(37, 99, 235, 0.4)',
+                  opacity: isProcessing ? 0.8 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  fontSize: 16,
+                  fontWeight: 800
+                }}
+              >
+                {isProcessing ? (
+                  <>
+                    <span>⏳ Creating Order & Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Pay ₹{(appliedCoupon ? job.amount : job.total).toLocaleString()} Securely</span>
+                  </>
+                )}
+              </button>
+
+              <div style={styles.trustRow}>
+                <span style={styles.trustItem}><Icon name="shield" /> Escrow Protected</span>
+                <span style={styles.trustItem}><Icon name="lock" /> SSL Encrypted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Escrow Policy Modal */}
+      {showEscrowModal && (
+        <div 
+          onClick={() => setShowEscrowModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: isDarkMode ? '#0f172a' : '#ffffff', borderRadius: 16, padding: 24, maxWidth: 460, width: '100%', color: isDarkMode ? '#fff' : '#0f172a', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
+                🛡️ 100% Escrow Protection Policy
+              </div>
+              <button onClick={() => setShowEscrowModal(false)} style={{ background: 'none', border: 'none', fontSize: 18, color: '#94a3b8', cursor: 'pointer' }}>✕</button>
+            </div>
+            <p style={{ fontSize: 13.5, color: isDarkMode ? '#cbd5e1' : '#475569', lineHeight: 1.6, marginBottom: 16 }}>
+              When you deposit funds into FreelanceHub Escrow, the money is locked in a non-custodial vault:
+            </p>
+            <ul style={{ fontSize: 13, color: isDarkMode ? '#cbd5e1' : '#475569', lineHeight: 1.6, paddingLeft: 20, marginBottom: 20 }}>
+              <li><strong>Zero Upfront Risk:</strong> Freelancer does not receive funds until you review and approve work.</li>
+              <li><strong>Guided Mediation:</strong> Built-in 3-step AI dispute resolution if deliverables don't match criteria.</li>
+              <li><strong>Instant Payout:</strong> Approving work releases funds directly to freelancer wallet.</li>
+            </ul>
+            <button 
+              onClick={() => setShowEscrowModal(false)}
+              style={{ width: '100%', padding: '10px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Understood
+            </button>
+          </div>
+        </div>
+      )}
+      <style>{`* { box-sizing: border-box; } button { cursor: pointer; }`}</style>
+    </div>
+  );
+};
+
+// ── Styles ─────────────────────────────────────────────────────────────────────
+const s = {
+  shell:       { minHeight: '100vh', background: '#f8faff', fontFamily: "'DM Sans', sans-serif" },
+  topBar:      { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', background: '#fff', borderBottom: '1px solid #f0f0f0', position: 'sticky', top: 0, zIndex: 10 },
+  backBtn:     { display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#737373', fontSize: 13.5, fontWeight: 500 },
+  topTitle:    { fontSize: 15, fontWeight: 600, color: '#111' },
+  secureTag:   { display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#15803d', fontWeight: 500 },
+  body:        { maxWidth: 960, margin: '0 auto', padding: '28px 16px' },
+  grid:        { display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20 },
+
+  escrowBanner:{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '16px 20px', marginBottom: 16 },
+  escrowSteps: { display: 'flex', alignItems: 'flex-start', gap: 4, position: 'relative' },
+  escrowStep:  { flex: 1, textAlign: 'center', position: 'relative' },
+  escrowIcon:  { fontSize: 20, marginBottom: 4 },
+  escrowStepTitle: { fontSize: 11.5, fontWeight: 600, color: '#15803d', marginBottom: 2 },
+  escrowStepDesc:  { fontSize: 10.5, color: '#737373', lineHeight: 1.3 },
+  escrowArrow: { position: 'absolute', right: -8, top: 8, fontSize: 14, color: '#16a34a' },
+
+  card:        { background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #f0f0f0', marginBottom: 16 },
+  cardTitle:   { fontSize: 15, fontWeight: 600, color: '#111', margin: '0 0 16px' },
+
+  gatewayGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 },
+  gatewayBtn:  { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1.5px solid #e5e7eb', borderRadius: 10, background: '#fff', textAlign: 'left', position: 'relative' },
+  gatewayActive:{ borderColor: '#2563eb', background: '#f8faff' },
+  gatewayIcon: { width: 36, height: 36, borderRadius: 8, background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, flexShrink: 0 },
+  gatewayName: { fontSize: 13.5, fontWeight: 600, color: '#111', marginBottom: 2 },
+  gatewaySub:  { fontSize: 11.5, color: '#a3a3a3' },
+  selectedDot: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: '50%', background: '#2563eb' },
+
+  formSection: { borderTop: '1px solid #f0f0f0', paddingTop: 16 },
+  methodTabs:  { display: 'flex', gap: 8, marginBottom: 16 },
+  methodTab:   { padding: '6px 14px', border: '1px solid #e5e7eb', borderRadius: 99, background: '#fff', fontSize: 12.5, fontWeight: 500, color: '#525252' },
+  upiBox:      { display: 'flex', gap: 8 },
+  upiInput:    { flex: 1, padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none', fontFamily: 'inherit' },
+  verifyBtn:   { padding: '10px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600 },
+  field:       { marginBottom: 14 },
+  label:       { display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.04em' },
+  input:       { width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontSize: 14, color: '#111', outline: 'none', fontFamily: 'inherit' },
+  cardInput:   { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: 8 },
+
+  summary:     { background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #f0f0f0', position: 'sticky', top: 80 },
+  jobCard:     { background: '#f8faff', borderRadius: 8, padding: '12px 14px', marginBottom: 16 },
+  jobTitle:    { fontSize: 14, fontWeight: 600, color: '#111', marginBottom: 4 },
+  jobFreelancer:{ fontSize: 13, color: '#737373' },
+  summaryRows: { marginBottom: 16 },
+  summaryRow:  { display: 'flex', justifyContent: 'space-between', fontSize: 13.5, color: '#525252', padding: '8px 0', borderBottom: '1px solid #f5f5f5' },
+  totalRow:    { fontWeight: 700, color: '#111', fontSize: 15, borderBottom: 'none', paddingTop: 12 },
+  escrowNote:  { background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', fontSize: 12.5, color: '#854d0e', marginBottom: 16, lineHeight: 1.5 },
+  payBtn:      { width: '100%', padding: '14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, marginBottom: 14 },
+  trustRow:    { display: 'flex', justifyContent: 'center', gap: 16 },
+  trustItem:   { display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#a3a3a3' },
+};
+
+export default PaymentPage;

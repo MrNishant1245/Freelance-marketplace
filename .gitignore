@@ -1,0 +1,22 @@
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+frontend/node_modules/.cache/
+.eslintcache
+frontend/build/
+backend/build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+!.env.example
+!backend/.env.example
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+Desktop - Shortcut.lnk
